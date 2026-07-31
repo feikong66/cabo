@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>卡波计分 · Cabo Scorer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#2e7d52">
+<style>
+:root{
+ --bg:#eef1f4; --card:#ffffff; --accent:#2e7d52; --accent-dark:#1f5d3c;
+ --text:#1c242b; --muted:#6b7780; --danger:#c0392b; --line:#e3e8ec;
+ --gold:#ffc107; --shadow:0 2px 10px rgba(20,40,30,.08);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.4;
+  background-image:radial-gradient(1200px 500px at 50% -200px, rgba(46,125,82,.12), transparent 70%);}
+.app{max-width:560px;margin:0 auto;padding:16px 14px 40px;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+h1{font-size:20px;margin:0;display:flex;align-items:center;gap:8px}
+h1 .badge{background:var(--accent);color:#fff;border-radius:8px;padding:2px 8px;font-size:13px;font-weight:600}
+.header-actions{display:flex;gap:8px}
+button{font-family:inherit;font-size:15px;cursor:pointer;border:none;border-radius:12px;padding:12px 14px;background:var(--card);color:var(--text);box-shadow:var(--shadow);transition:transform .05s ease, filter .15s}
+button:active{transform:scale(.97)}
+button.primary{background:var(--accent);color:#fff;font-weight:600;font-size:17px;padding:15px}
+button.primary:disabled{opacity:.5;filter:grayscale(.3)}
+button.ghost{background:transparent;box-shadow:none;color:var(--muted)}
+button.danger{color:var(--danger);background:transparent;box-shadow:none}
+button:disabled{cursor:default}
+.icon-btn{width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:18px;padding:0}
+.btn-kami{background:linear-gradient(135deg,#ff7043,#e53935);color:#fff;font-weight:600}
+.setup-card{background:var(--card);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+.setup-card h2{margin:0 0 14px;font-size:18px}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:14px;color:var(--muted);margin-bottom:8px}
+.seg{display:flex;gap:8px}
+.seg button{flex:1;background:#f1f4f6;box-shadow:none}
+.seg button.active{background:var(--accent);color:#fff;font-weight:600;box-shadow:var(--shadow)}
+.name-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.name-row .pidx{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;flex:0 0 auto;font-size:14px}
+input[type=number],input[type=text]{width:100%;padding:12px;font-size:17px;border:1px solid var(--line);border-radius:12px;background:#fbfcfd;color:var(--text);font-family:inherit}
+input:focus{outline:none;border-color:var(--accent)}
+.row2{display:flex;gap:10px}
+.row2>div{flex:1}
+.round-info{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:14px;margin:4px 2px 12px}
+.player-card{background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);margin-bottom:12px;animation:rise .25s ease both;transition:box-shadow .3s}
+.player-card.lead{box-shadow:0 0 0 2px var(--gold), 0 8px 22px rgba(255,193,7,.35)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pc-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.pc-name{font-size:17px;font-weight:600}
+.pc-name .crown{margin-left:6px}
+.pc-total{font-size:30px;font-weight:800;color:var(--accent);transition:color .3s}
+.pc-total small{font-size:13px;color:var(--muted);font-weight:500;margin-right:3px}
+.pc-inputs{display:flex;gap:10px}
+.pc-inputs .lab{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+.pc-inputs>div{flex:1}
+.actions{position:sticky;bottom:0;background:linear-gradient(transparent, var(--bg) 22%);padding-top:10px;margin-top:6px}
+.actions .primary{width:100%;margin-bottom:10px}
+.action-row{display:flex;gap:10px;margin-bottom:10px}
+.action-row button{flex:1}
+.history{margin-top:18px;background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow)}
+.history h3{margin:0 0 10px;font-size:15px;color:var(--muted)}
+.history .r{font-size:14px;padding:6px 0;border-bottom:1px dashed var(--line);display:flex;justify-content:space-between;gap:8px}
+.history .r:last-child{border-bottom:none}
+.history .r .d.pos{color:var(--accent);font-weight:600}
+.history .r .d.neg{color:var(--danger);font-weight:600}
+.overlay{position:fixed;inset:0;background:rgba(15,30,22,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.overlay.hidden{display:none}
+.modal{background:var(--card);border-radius:18px;padding:22px;width:100%;max-width:420px;max-height:86vh;overflow:auto}
+.modal h2{margin:0 0 12px}
+.go-win{text-align:center;padding:6px 0}
+.go-win .trophy{font-size:54px;animation:pop .5s ease both}
+@keyframes pop{0%{transform:scale(0) rotate(-30deg)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.go-win .who{font-size:24px;font-weight:800;color:var(--accent);margin:6px 0}
+.go-list{margin:14px 0;text-align:left}
+.go-list .li{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line);font-size:15px}
+.go-list .li.win{font-weight:700;color:var(--accent)}
+.modal-actions{display:flex;gap:10px;margin-top:14px}
+.modal-actions button{flex:1}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:rgba(28,36,43,.92);color:#fff;padding:10px 16px;border-radius:20px;font-size:14px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.rules-block{margin-top:6px;border-top:1px solid var(--line);padding-top:12px}
+.rules-block>label{display:block;font-size:14px;color:var(--muted);margin-bottom:10px}
+.rule-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.rule-row:last-child{border-bottom:none}
+.rule-row .desc{flex:1;line-height:1.35}
+.rule-row input[type=number]{width:62px;padding:6px;display:inline-block;font-size:15px;margin:0 2px}
+.toggle{min-width:56px;padding:8px 12px;border-radius:20px;background:#eceff1;color:#90a4ae;font-weight:700;font-size:13px;box-shadow:none}
+.toggle.on{background:var(--accent);color:#fff}
+.event-banner{position:fixed;top:0;left:50%;transform:translate(-50%,-140%);z-index:70;background:linear-gradient(135deg,#ffd54f,#ffb300);color:#5a3d00;padding:16px 22px;border-radius:0 0 20px 20px;box-shadow:0 10px 30px rgba(255,160,0,.45);text-align:center;min-width:260px;transition:transform .5s cubic-bezier(.2,1.3,.4,1)}
+.event-banner.show{transform:translate(-50%,0)}
+.event-banner.kamikaze{background:linear-gradient(135deg,#ff7043,#e53935);color:#fff}
+.eb-emoji{font-size:34px;animation:pop .5s ease both}
+.eb-title{font-size:21px;font-weight:800;margin:2px 0}
+.eb-sub{font-size:14px;opacity:.95}
+.note{color:var(--muted);font-size:13px;margin:-2px 0 14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header></header>
+  <main id="screen"></main>
+</div>
+<div id="overlay" class="overlay hidden"></div>
+<script>
+const KEY = "cabo-scorer-v1";
+const screen = document.querySelector("#screen");
+const overlay = document.querySelector("#overlay");
+
+let state = load();
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); }
+function defaultState(){
+  return {
+    started:false,
+    players:[{name:"玩家1"},{name:"玩家2"}],
+    endScore:100, winRule:"low", rounds:[],
+    adjust:[0,0],
+    hundredUsed:false,
+    bonusApplied:false,
+    sound:true,
+    rules:{
+      lowBonus:{enabled:true, amount:10},
+      hundredHalf:{enabled:true},
+      kamikaze:{enabled:false, threshold:120}
+    }
+  };
+}
+if(!state) state = defaultState();
+
+function normalize(){
+  if(!state.rules) state.rules = {lowBonus:{enabled:true,amount:10}, hundredHalf:{enabled:true}, kamikaze:{enabled:false, threshold:120}};
+  if(!state.rules.lowBonus) state.rules.lowBonus={enabled:true,amount:10};
+  if(!state.rules.hundredHalf) state.rules.hundredHalf={enabled:true};
+  if(!state.rules.kamikaze) state.rules.kamikaze={enabled:false, threshold:120};
+  if(!Array.isArray(state.adjust) || state.adjust.length !== state.players.length)
+    state.adjust = state.players.map(()=>0);
+  if(typeof state.hundredUsed !== "boolean") state.hundredUsed = false;
+  if(typeof state.bonusApplied !== "boolean") state.bonusApplied = false;
+  if(typeof state.sound !== "boolean") state.sound = true;
+}
+normalize();
+
+function roundSum(i){ return state.rounds.reduce((s,r)=> s + (r[i]||0), 0); }
+function totals(){ return state.players.map((_,i)=> roundSum(i) + (state.adjust[i]||0)); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function syncCount(n){
+  while(state.players.length < n) state.players.push({name:"玩家"+(state.players.length+1)});
+  while(state.players.length > n) state.players.pop();
+  if(!Array.isArray(state.adjust) || state.adjust.length !== state.players.length)
+    state.adjust = state.players.map(()=>0);
+}
+function toast(msg){
+  let t = document.querySelector("#toast");
+  if(!t){ t = document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(()=> t.classList.remove("show"), 1400);
+}
+
+/* ---------- effects ---------- */
+function launchConfetti(ms){
+  ms = ms || 3200;
+  const c = document.createElement("canvas");
+  c.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:80";
+  document.body.appendChild(c);
+  const ctx = c.getContext("2d");
+  const resize = ()=>{ c.width = innerWidth; c.height = innerHeight; };
+  resize(); addEventListener("resize", resize);
+  const colors = ["#2e7d52","#ffd54f","#ef5350","#42a5f5","#ab47bc","#ffa726","#26c6da"];
+  const N = 150, ps = [];
+  for(let i=0;i<N;i++) ps.push({
+    x:Math.random()*c.width, y:Math.random()*-c.height - 20,
+    r:5+Math.random()*7, col:colors[i%colors.length],
+    vy:2.4+Math.random()*3.4, vx:-1.4+Math.random()*2.8,
+    a:Math.random()*Math.PI, va:0.08+Math.random()*0.22
+  });
+  const t0 = performance.now();
+  function frame(t){
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const p of ps){
+      p.y += p.vy; p.x += p.vx; p.a += p.va;
+      if(p.y > c.height+12){ p.y = -12; p.x = Math.random()*c.width; }
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle = p.col;
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6); ctx.restore();
+    }
+    if(t - t0 < ms) requestAnimationFrame(frame);
+    else { c.remove(); removeEventListener("resize", resize); }
+  }
+  requestAnimationFrame(frame);
+}
+function showEventBanner(e){
+  const b = document.createElement("div");
+  b.className = "event-banner" + (e.type==="kamikaze" ? " kamikaze" : "");
+  let html = "";
+  if(e.type === "hundred")
+    html = `<div class="eb-emoji">💯</div><div class="eb-title">百分减半！</div><div class="eb-sub">${escapeHtml(e.name)} 刚好 100 分 → 直接减半到 50！</div>`;
+  else if(e.type === "kamikaze")
+    html = `<div class="eb-emoji">🚀</div><div class="eb-title">神风特工队！</div><div class="eb-sub">${escapeHtml(e.name)} 本局 0 分，其余全员本局 50 分！</div>`;
+  b.innerHTML = html;
+  document.body.appendChild(b);
+  if(e.type === "hundred") playDing();
+  else if(e.type === "kamikaze") playWhoosh();
+  requestAnimationFrame(()=> b.classList.add("show"));
+  setTimeout(()=>{ b.classList.remove("show"); setTimeout(()=> b.remove(), 450); }, 2500);
+}
+
+/* ---------- local sound effects (Web Audio, no files, no network) ---------- */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, t0, dur, type, peak){
+  const ctx = audioCtx; const o = ctx.createOscillator(); const g = ctx.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak || 0.25, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t0); o.stop(t0 + dur + 0.03);
+}
+function playDing(){               /* 百分减半：清脆「叮」 */
+  if(!state.sound) return; const ctx = ensureAudio(); if(!ctx) return;
+  const t = ctx.currentTime;
+  tone(988, t, 0.5, "sine", 0.32);      // B5
+  tone(1318.5, t, 0.65, "sine", 0.18); // E6 泛音
+}
+function playWhoosh(){             /* 神风特工队：呼啸「咻」 */
+  if(!state.sound) return; const ctx = ensureAudio(); if(!ctx) return;
+  const t = ctx.currentTime, dur = 0.65;
+  const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = Math.random()*2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filt = ctx.createBiquadFilter(); filt.type = "bandpass"; filt.Q.value = 0.7;
+  filt.frequency.setValueAtTime(300, t);
+  filt.frequency.exponentialRampToValueAtTime(2400, t + dur*0.5);
+  filt.frequency.exponentialRampToValueAtTime(380, t + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.38, t + 0.08);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  src.start(t); src.stop(t + dur);
+}
+function playCheer(){              /* 获胜：上行欢呼琶音 + 小亮片 */
+  if(!state.sound) return; const ctx = ensureAudio(); if(!ctx) return;
+  const t = ctx.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
+  notes.forEach((f,i)=> tone(f, t + i*0.12, 0.42, "triangle", 0.22));
+  tone(1568, t + 0.5, 0.55, "sine", 0.12);
+}
+
+/* special-rule detection (mid-game events) */
+function checkEvents(){
+  const events = [];
+  if(state.rules.hundredHalf.enabled && !state.hundredUsed){
+    const ts = totals();
+    state.players.forEach((p,i)=>{
+      if(ts[i] === 100){
+        state.adjust[i] = (state.adjust[i]||0) - 50;
+        state.hundredUsed = true;            // 整场仅一次
+        events.push({type:"hundred", name:p.name});
+      }
+    });
+  }
+  return events;
+}
+
+function render(){ state.started ? renderGame() : renderSetup(); }
+
+function renderHeader(){
+  const h = document.querySelector("header");
+  h.innerHTML = `<h1>卡波计分 <span class="badge">Cabo</span></h1>
+    <div class="header-actions"><button class="icon-btn ghost" id="setBtn" title="设置">⚙️</button></div>`;
+  document.querySelector("#setBtn").onclick = openSettings;
+}
+
+function renderSetup(){
+  const p = state.players;
+  const inProgress = state.rounds.length > 0;
+  const startLabel = inProgress ? "返回对局（保留分数）" : "开始对局";
+  screen.innerHTML = `
+  <div class="setup-card">
+    <h2>卡波计分 · 对局设置</h2>
+    <div class="field">
+      <label>玩家人数（当前 ${p.length} 人）</label>
+      <div class="seg" id="segCount">
+        ${[2,3,4].map(n=>`<button data-n="${n}" class="${p.length===n?'active':''}">${n} 人</button>`).join("")}
+      </div>
+    </div>
+    <div class="field">
+      <label>玩家名字</label>
+      <div id="nameList"></div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>结束分数线</label>
+        <input type="number" id="endScore" value="${state.endScore}" min="1">
+      </div>
+      <div class="field">
+        <label>胜负规则</label>
+        <div class="seg" id="segRule">
+          <button data-r="low" class="${state.winRule==='low'?'active':''}">低分胜</button>
+          <button data-r="high" class="${state.winRule==='high'?'active':''}">高分胜</button>
+        </div>
+      </div>
+    </div>
+    ${inProgress ? '<div class="note">当前对局进行中，点「返回对局」可继续；改人数会清空本局分数。</div>' : ''}
+    <button class="primary" id="startBtn">${startLabel}</button>
+  </div>`;
+  renderNameList();
+  document.querySelectorAll("#segCount button").forEach(b=> b.onclick=()=>{
+    const n = +b.dataset.n;
+    if(state.rounds.length>0 && state.players.length!==n){
+      if(!confirm("更改人数会清空当前对局分数，确定继续？")){ renderSetup(); return; }
+      state.rounds=[]; state.adjust=state.players.map(()=>0); state.hundredUsed=false; state.bonusApplied=false;
+    }
+    syncCount(n); renderSetup();
+  });
+  document.querySelectorAll("#segRule button").forEach(b=> b.onclick=()=>{ state.winRule=b.dataset.r; renderSetup(); });
+  document.querySelector("#startBtn").onclick = ()=>{
+    const es = parseInt(document.querySelector("#endScore").value,10);
+    if(es>0) state.endScore = es;
+    state.players.forEach((p,i)=>{ const el=document.getElementById("name-"+i); if(el) p.name = el.value.trim()||("玩家"+(i+1)); });
+    if(state.rounds.length > 0){ state.started = true; save(); render(); return; } // 返回对局，保留分数
+    state.started = true; state.rounds = []; state.adjust = state.players.map(()=>0); state.hundredUsed=false; state.bonusApplied=false;
+    save(); render();
+  };
+}
+function renderNameList(){
+  const box = document.querySelector("#nameList"); if(!box) return;
+  box.innerHTML = state.players.map((p,i)=>`
+    <div class="name-row">
+      <div class="pidx">${i+1}</div>
+      <input type="text" id="name-${i}" value="${escapeHtml(p.name)}" placeholder="玩家${i+1}" maxlength="10">
+    </div>`).join("");
+}
+
+function renderGame(){
+  const ts = totals();
+  const roundNo = state.rounds.length + 1;
+  let minT = Infinity; ts.forEach(t=>{ if(t<minT) minT=t; });
+  screen.innerHTML = `
+    <div class="round-info"><span>第 ${roundNo} 局 · ${state.players.length} 人</span><span>结束线 ${state.endScore} 分 · ${state.winRule==='low'?'低分胜':'高分胜'}</span></div>
+    <div id="players"></div>
+    <div class="actions">
+      <button class="primary" id="submitBtn">提交本局</button>
+      <div class="action-row">
+        <button id="undoBtn">↩ 撤销上一局</button>
+        <button id="clearBtn">🧹 重置本局</button>
+      </div>
+      <div class="action-row">
+        <button class="btn-kami" id="kamiBtn">🚀 神风特工队</button>
+        <button class="ghost" id="backBtn">← 返回设置</button>
+      </div>
+    </div>
+    <div class="history">
+      <h3>对局记录</h3>
+      <div id="histList">${historyHtml()}</div>
+    </div>`;
+  const pl = document.querySelector("#players");
+  state.players.forEach((p,i)=>{
+    const lead = ts[i] === minT;
+    pl.insertAdjacentHTML("beforeend", `
+      <div class="player-card ${lead?'lead':''}">
+        <div class="pc-top">
+          <div class="pc-name">${escapeHtml(p.name)}${lead?'<span class="crown">👑</span>':''}</div>
+          <div class="pc-total"><small>总分</small>${ts[i]}</div>
+        </div>
+        <div class="pc-inputs">
+          <div><span class="lab">本局牌点</span><input type="number" id="pts-${i}" inputmode="numeric" placeholder="0"></div>
+          <div><span class="lab">± 特殊分</span><input type="number" id="adj-${i}" inputmode="numeric" placeholder="0"></div>
+        </div>
+      </div>`);
+  });
+  document.querySelector("#submitBtn").onclick = submitRound;
+  document.querySelector("#undoBtn").onclick = undo;
+  document.querySelector("#clearBtn").onclick = ()=>{ renderGame(); toast("已清空本局输入"); };
+  document.querySelector("#kamiBtn").onclick = openKamikaze;
+  document.querySelector("#backBtn").onclick = ()=>{ state.started=false; save(); render(); };
+  const ub = document.querySelector("#undoBtn");
+  if(state.rounds.length===0){ ub.disabled=true; ub.style.opacity=.45; }
+  checkEnd(ts);
+}
+function openKamikaze(){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>🚀 神风特工队</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 14px">选择成员：<b>本局</b>该玩家记 0 分，其余全员各记 50 分（作为一局计入，不影响之前各局）。</p>
+      <div id="kamiList"></div>
+      <div class="modal-actions"><button class="ghost" id="kamiCancel">取消</button></div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#kamiList").innerHTML = state.players.map((p,i)=>`<button class="primary" style="width:100%;margin-bottom:10px" data-i="${i}">${escapeHtml(p.name)}</button>`).join("");
+  document.querySelectorAll("#kamiList button").forEach(b=> b.onclick=()=>{
+    const idx = +b.dataset.i;
+    applyKamikaze(idx);
+    overlay.classList.add("hidden");
+    showEventBanner({type:"kamikaze", name:state.players[idx].name});
+    render();
+  });
+  document.querySelector("#kamiCancel").onclick = ()=> overlay.classList.add("hidden");
+}
+function applyKamikaze(idx){
+  // 神风特工队 = 当前这一局：选中者本局 0 分、其余本局各 50 分，作为一局计入
+  const deltas = state.players.map((_,i)=> (i===idx) ? 0 : 50);
+  state.rounds.push(deltas);
+  const events = checkEvents();   // 若本局把某人正好推到 100，照常触发百分减半
+  save();
+  events.forEach((e,ei)=> setTimeout(()=> showEventBanner(e), ei*2700));
+}
+function historyHtml(){
+  if(state.rounds.length===0) return '<div style="color:var(--muted);font-size:14px">还没有提交过局数</div>';
+  return state.rounds.map((r,k)=>{
+    const parts = r.map((d,i)=> `${escapeHtml(state.players[i].name)} <span class="d ${d>=0?'pos':'neg'}">${d>=0?'+':''}${d}</span>`).join("，");
+    return `<div class="r"><span>第 ${k+1} 局</span><span>${parts}</span></div>`;
+  }).join("");
+}
+function submitRound(){
+  const deltas = state.players.map((_,i)=>{
+    const pts = parseFloat(document.getElementById("pts-"+i).value)||0;
+    const adj = parseFloat(document.getElementById("adj-"+i).value)||0;
+    return pts + adj;
+  });
+  if(deltas.every(d=> d===0)){ toast("本局全是 0，确认要提交？"); }
+  state.rounds.push(deltas);
+  const events = checkEvents();
+  save();
+  events.forEach((e,idx)=> setTimeout(()=> showEventBanner(e), idx*2700));
+  render();
+}
+function undo(){
+  if(state.rounds.length===0) return;
+  state.rounds.pop();
+  // 百分减半：整场仅一次，已用过则不再触发；未用过且当前正好 100 才触发
+  if(!state.hundredUsed && state.rules.hundredHalf.enabled){
+    let ts = totals();
+    state.players.forEach((p,i)=>{ if(ts[i]===100){ state.adjust[i]=(state.adjust[i]||0)-50; state.hundredUsed=true; ts=totals(); } });
+  }
+  save(); render(); toast("已撤销上一局");
+}
+function checkEnd(ts){
+  const reached = ts.findIndex(t=> t >= state.endScore);
+  if(reached >= 0) showGameOver(ts, reached);
+}
+function showGameOver(ts, reachedIdx){
+  let winIdx = 0;
+  if(state.winRule==="low"){ let m=Infinity; ts.forEach((t,i)=>{ if(t<m){m=t;winIdx=i;} }); }
+  else { let m=-Infinity; ts.forEach((t,i)=>{ if(t>m){m=t;winIdx=i;} }); }
+  let bonusTxt = "";
+  if(state.rules.lowBonus.enabled && !state.bonusApplied){
+    const amt = state.rules.lowBonus.amount || 0;
+    if(amt > 0){
+      state.adjust[winIdx] = (state.adjust[winIdx]||0) - amt;
+      state.bonusApplied = true;
+      ts = totals();
+      bonusTxt = `（险胜嘉奖 -${amt}）`;
+      if(state.winRule==="low"){ let m=Infinity; ts.forEach((t,i)=>{ if(t<m){m=t;winIdx=i;} }); }
+      else { let m=-Infinity; ts.forEach((t,i)=>{ if(t>m){m=t;winIdx=i;} }); }
+    }
+  }
+  const list = state.players.map((p,i)=> `<div class="li ${i===winIdx?'win':''}"><span>${escapeHtml(p.name)}</span><span>${ts[i]} 分</span></div>`).join("");
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="go-win"><div class="trophy">🏆</div>
+        <div class="who">🎉 恭喜 ${escapeHtml(state.players[winIdx].name)} 获胜！</div>
+        <div style="color:var(--muted);font-size:14px">${escapeHtml(state.players[reachedIdx].name)} 达到结束线 ${state.endScore} 分 ${bonusTxt}</div>
+      </div>
+      <div class="go-list">${list}</div>
+      <div class="modal-actions">
+        <button class="primary" id="newBtn">开始新对局</button>
+        <button class="ghost" id="closeBtn">查看详情</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  launchConfetti(3400);
+  playCheer();
+  document.querySelector("#newBtn").onclick = ()=>{ state.rounds=[]; state.adjust=state.players.map(()=>0); state.hundredUsed=false; state.bonusApplied=false; save(); overlay.classList.add("hidden"); render(); };
+  document.querySelector("#closeBtn").onclick = ()=> overlay.classList.add("hidden");
+}
+function openSettings(){
+  const r = state.rules;
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>设置</h2>
+      <div class="field"><label>玩家名字</label><div id="setNames"></div></div>
+      <div class="row2">
+        <div class="field"><label>结束分数线</label><input type="number" id="setEnd" value="${state.endScore}" min="1"></div>
+        <div class="field"><label>胜负规则</label>
+          <div class="seg" id="setRule">
+            <button data-r="low" class="${state.winRule==='low'?'active':''}">低分胜</button>
+            <button data-r="high" class="${state.winRule==='high'?'active':''}">高分胜</button>
+          </div></div>
+      </div>
+      <div class="rules-block">
+        <label>特殊规则（可在对局中触发特效）</label>
+        <div class="rule-row">
+          <div class="desc">低分嘉奖：结束时获胜者分数 -<input type="number" id="setBonus" value="${r.lowBonus.amount}" min="0"> 分</div>
+          <button class="toggle ${r.lowBonus.enabled?'on':''}" data-r="lowBonus">${r.lowBonus.enabled?'开':'关'}</button>
+        </div>
+        <div class="rule-row">
+          <div class="desc">百分减半：分数刚好 100 自动减半到 50（整场仅 1 次）</div>
+          <button class="toggle ${r.hundredHalf.enabled?'on':''}" data-r="hundredHalf">${r.hundredHalf.enabled?'开':'关'}</button>
+        </div>
+        <div class="rule-row">
+          <div class="desc">音效：减半「叮」· 神风「咻」· 获胜欢呼</div>
+          <button class="toggle ${state.sound?'on':''}" data-snd="1">${state.sound?'开':'关'}</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary" id="saveSet">保存</button>
+        <button class="danger" id="resetAll">重置全部</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#setNames").innerHTML = state.players.map((p,i)=> `<div class="name-row"><div class="pidx">${i+1}</div><input type="text" id="sname-${i}" value="${escapeHtml(p.name)}" maxlength="10"></div>`).join("");
+  document.querySelectorAll("#setRule button").forEach(b=> b.onclick=()=>{ state.winRule=b.dataset.r; openSettings(); });
+  document.querySelectorAll(".toggle").forEach(b=> b.onclick=()=>{ state.rules[b.dataset.r].enabled = !state.rules[b.dataset.r].enabled; openSettings(); });
+  const snd = document.querySelector('[data-snd="1"]');
+  if(snd) snd.onclick = ()=>{ state.sound = !state.sound; save(); openSettings(); };
+  const sb = document.querySelector("#setBonus"); if(sb) sb.oninput = e=> state.rules.lowBonus.amount = Math.max(0, parseInt(e.target.value,10)||0);
+  document.querySelector("#saveSet").onclick = ()=>{
+    state.players.forEach((p,i)=>{ const el=document.getElementById("sname-"+i); if(el) p.name = el.value.trim()||("玩家"+(i+1)); });
+    const es = parseInt(document.querySelector("#setEnd").value,10); if(es>0) state.endScore = es;
+    save(); overlay.classList.add("hidden"); render();
+  };
+  document.querySelector("#resetAll").onclick = ()=>{
+    if(confirm("确定要重置全部对局吗？所有分数将清空。")){ state = defaultState(); save(); overlay.classList.add("hidden"); render(); }
+  };
+}
+
+renderHeader();
+render();
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
