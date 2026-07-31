@@ -132,6 +132,14 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .eb-title{font-size:21px;font-weight:800;margin:2px 0}
 .eb-sub{font-size:14px;opacity:.95}
 .note{color:var(--muted);font-size:13px;margin:-2px 0 14px}
+.save-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--card)}
+.save-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.save-name{font-weight:700;font-size:15px}
+.save-time{color:var(--muted);font-size:12px;flex:0 0 auto}
+.save-sub{color:var(--muted);font-size:12.5px;margin:4px 0 9px;line-height:1.5}
+.save-actions{display:flex;gap:8px}
+.mini{flex:1;padding:9px;border-radius:10px;font-size:13.5px;background:#f1f4f6;color:var(--text);box-shadow:none;font-weight:600}
+.mini.danger{background:transparent;color:var(--danger);box-shadow:none}
 </style>
 </head>
 <body>
@@ -443,6 +451,10 @@ function renderGame(){
           <button class="ghost" id="countBtn">👥 ${state.players.length} 人</button>
           <button class="ghost" id="newGameBtn">🔄 新对局</button>
         </div>
+        <div class="action-row">
+          <button class="ghost" id="saveBtn">💾 保存对局</button>
+          <button class="ghost" id="savesBtn">📂 我的存档</button>
+        </div>
       </div>
     </div>
     <div class="history">
@@ -478,6 +490,8 @@ function renderGame(){
   document.querySelector("#backBtn").onclick = ()=>{ state.started=false; save(); render(); };
   document.querySelector("#countBtn").onclick = openCountPicker;
   document.querySelector("#newGameBtn").onclick = newGame;
+  document.querySelector("#saveBtn").onclick = openSaveDialog;
+  document.querySelector("#savesBtn").onclick = openSavesList;
   const ub = document.querySelector("#undoBtn");
   if(state.rounds.length===0){ ub.disabled=true; ub.style.opacity=.45; }
   checkEnd(ts);
@@ -545,6 +559,96 @@ function newGame(){
   };
   if(state.rounds.length > 0) askConfirm("新对局", "开始新对局？当前分数会清空。", go);
   else go();
+}
+/* ---------- named saves (multiple finished/in-progress games) ---------- */
+const SAVE_KEY = "cabo-saves-v1";
+function deep(o){ return JSON.parse(JSON.stringify(o)); }
+function fmtTime(ts){
+  const d = new Date(ts), p = n => (n<10?"0":"")+n;
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function loadSaves(){
+  try{ const r = localStorage.getItem(SAVE_KEY); return r ? JSON.parse(r) : []; }catch(e){ return []; }
+}
+function saveSaves(list){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(list)); }catch(e){} }
+function openSaveDialog(){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>💾 保存对局</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 14px">给这场对局起个名字，之后可在「我的存档」里载入继续或回看。</p>
+      <input type="text" id="saveName" placeholder="例如：周五夜局" maxlength="20" value="对局 ${fmtTime(Date.now())}">
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="ghost" id="saveCancel">取消</button>
+        <button class="primary" id="saveOk">保存</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  const inp = document.querySelector("#saveName");
+  inp.focus(); inp.select();
+  document.querySelector("#saveCancel").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#saveOk").onclick = ()=>{
+    const name = inp.value.trim() || ("对局 " + fmtTime(Date.now()));
+    overlay.classList.add("hidden");
+    const list = loadSaves();
+    list.unshift({
+      id: Date.now(), name, time: Date.now(),
+      players: state.players.map(p=>({name:p.name})),
+      rounds: deep(state.rounds), adjust: state.adjust.slice(),
+      hundredUsed: state.hundredUsed, bonusApplied: state.bonusApplied,
+      endScore: state.endScore, winRule: state.winRule, rules: deep(state.rules)
+    });
+    saveSaves(list);
+    toast("已保存：" + name);
+  };
+}
+function openSavesList(){
+  const list = loadSaves();
+  let body;
+  if(list.length===0) body = '<div style="color:var(--muted);font-size:14px">还没有保存的对局。</div>';
+  else body = list.map(s=>{
+    const scores = s.players.map((p,i)=>{
+      const t = s.rounds.reduce((a,r)=> a + ((r.pts&&r.pts[i])||0) + ((r.adj&&r.adj[i])||0), 0) + (s.adjust[i]||0);
+      return `${escapeHtml(p.name)} ${t}`;
+    }).join(" · ");
+    return `<div class="save-item">
+      <div class="save-head"><span class="save-name">${escapeHtml(s.name)}</span><span class="save-time">${fmtTime(s.time)}</span></div>
+      <div class="save-sub">${s.players.length} 人 · ${s.rounds.length} 局 · ${scores}</div>
+      <div class="save-actions">
+        <button class="mini" data-load="${s.id}">载入继续</button>
+        <button class="mini danger" data-del="${s.id}">删除</button>
+      </div>
+    </div>`;
+  }).join("");
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>📂 我的存档</h2>
+      <div id="saveList" style="max-height:60vh;overflow:auto;margin:4px 0 10px">${body}</div>
+      <div class="modal-actions"><button class="ghost" id="savesClose">关闭</button></div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#savesClose").onclick = ()=> overlay.classList.add("hidden");
+  overlay.querySelectorAll("[data-load]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); loadSave(+b.dataset.load); });
+  overlay.querySelectorAll("[data-del]").forEach(b=> b.onclick=()=>{
+    askConfirm("删除存档", "确定删除这个存档？", ()=>{
+      saveSaves(loadSaves().filter(s=> s.id !== +b.dataset.del));
+      openSavesList();
+    });
+  });
+}
+function loadSave(id){
+  const s = loadSaves().find(x=> x.id===id);
+  if(!s) return;
+  state.players = s.players.map(p=>({name:p.name}));
+  state.rounds = deep(s.rounds);
+  state.adjust = s.adjust.slice();
+  state.hundredUsed = !!s.hundredUsed;
+  state.bonusApplied = !!s.bonusApplied;
+  state.endScore = s.endScore;
+  state.winRule = s.winRule;
+  state.rules = deep(s.rules);
+  state.started = true;
+  save(); render();
+  toast("已载入：" + s.name);
 }
 function historyHtml(){
   if(state.rounds.length===0) return '<div style="color:var(--muted);font-size:14px">还没有提交过局数</div>';
