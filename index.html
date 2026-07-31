@@ -159,6 +159,21 @@ function toast(msg){
   t.textContent = msg; t.classList.add("show");
   clearTimeout(t._t); t._t = setTimeout(()=> t.classList.remove("show"), 1400);
 }
+/* 应用内确认弹窗（替代原生 confirm，避免手机/PWA 下被拦截导致“点不动”） */
+function askConfirm(title, msg, onYes){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>${escapeHtml(title)}</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 16px">${escapeHtml(msg)}</p>
+      <div class="modal-actions">
+        <button class="ghost" id="cfNo">取消</button>
+        <button class="primary" id="cfYes">确定</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#cfNo").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#cfYes").onclick = ()=>{ overlay.classList.add("hidden"); onYes(); };
+}
 
 /* ---------- effects ---------- */
 function launchConfetti(ms){
@@ -319,8 +334,11 @@ function renderSetup(){
   document.querySelectorAll("#segCount button").forEach(b=> b.onclick=()=>{
     const n = +b.dataset.n;
     if(state.rounds.length>0 && state.players.length!==n){
-      if(!confirm("更改人数会清空当前对局分数，确定继续？")){ renderSetup(); return; }
-      state.rounds=[]; state.adjust=state.players.map(()=>0); state.hundredUsed=false; state.bonusApplied=false;
+      askConfirm("切换人数", "切换人数将清空当前对局分数并开始新对局，确定继续？", ()=>{
+        state.rounds=[]; state.adjust=state.players.map(()=>0); state.hundredUsed=false; state.bonusApplied=false;
+        syncCount(n); renderSetup();
+      });
+      return;
     }
     syncCount(n); renderSetup();
   });
@@ -360,6 +378,10 @@ function renderGame(){
         <button class="btn-kami" id="kamiBtn">🚀 神风特工队</button>
         <button class="ghost" id="backBtn">← 返回设置</button>
       </div>
+      <div class="action-row">
+        <button class="ghost" id="countBtn">👥 ${state.players.length} 人</button>
+        <button class="ghost" id="newGameBtn">🔄 新对局</button>
+      </div>
     </div>
     <div class="history">
       <h3>对局记录</h3>
@@ -385,6 +407,8 @@ function renderGame(){
   document.querySelector("#clearBtn").onclick = ()=>{ renderGame(); toast("已清空本局输入"); };
   document.querySelector("#kamiBtn").onclick = openKamikaze;
   document.querySelector("#backBtn").onclick = ()=>{ state.started=false; save(); render(); };
+  document.querySelector("#countBtn").onclick = openCountPicker;
+  document.querySelector("#newGameBtn").onclick = newGame;
   const ub = document.querySelector("#undoBtn");
   if(state.rounds.length===0){ ub.disabled=true; ub.style.opacity=.45; }
   checkEnd(ts);
@@ -415,6 +439,41 @@ function applyKamikaze(idx){
   const events = checkEvents();   // 若本局把某人正好推到 100，照常触发百分减半
   save();
   events.forEach((e,ei)=> setTimeout(()=> showEventBanner(e), ei*2700));
+}
+function openCountPicker(){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>👥 玩家人数</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 14px">当前 ${state.players.length} 人。切换人数将开始新的一局。</p>
+      <div class="seg" id="segCount2" style="margin-bottom:14px">
+        ${[2,3,4].map(n=>`<button data-n="${n}" class="${state.players.length===n?'active':''}">${n} 人</button>`).join("")}
+      </div>
+      <div class="modal-actions"><button class="ghost" id="countCancel">取消</button></div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelectorAll("#segCount2 button").forEach(b=> b.onclick=()=>{
+    const n = +b.dataset.n;
+    overlay.classList.add("hidden");
+    if(n === state.players.length) return;
+    const doSwitch = ()=>{
+      syncCount(n);
+      state.started = true; state.rounds = []; state.adjust = state.players.map(()=>0);
+      state.hundredUsed = false; state.bonusApplied = false;
+      save(); render();
+    };
+    if(state.rounds.length > 0) askConfirm("切换人数", "切换人数将开始新对局，当前分数会清空，确定继续？", doSwitch);
+    else doSwitch();
+  });
+  document.querySelector("#countCancel").onclick = ()=> overlay.classList.add("hidden");
+}
+function newGame(){
+  const go = ()=>{
+    state.rounds = []; state.adjust = state.players.map(()=>0);
+    state.hundredUsed = false; state.bonusApplied = false;
+    save(); render();
+  };
+  if(state.rounds.length > 0) askConfirm("新对局", "开始新对局？当前分数会清空。", go);
+  else go();
 }
 function historyHtml(){
   if(state.rounds.length===0) return '<div style="color:var(--muted);font-size:14px">还没有提交过局数</div>';
@@ -532,7 +591,7 @@ function openSettings(){
     save(); overlay.classList.add("hidden"); render();
   };
   document.querySelector("#resetAll").onclick = ()=>{
-    if(confirm("确定要重置全部对局吗？所有分数将清空。")){ state = defaultState(); save(); overlay.classList.add("hidden"); render(); }
+    askConfirm("重置全部", "确定要重置全部对局吗？所有分数将清空。", ()=>{ state = defaultState(); save(); overlay.classList.add("hidden"); render(); });
   };
 }
 
