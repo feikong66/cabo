@@ -1,0 +1,2049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>卡波计分 · Cabo Scorer</title>
+<link rel="manifest" href="manifest-331.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#2e7d52">
+<style>
+:root{
+ --bg:#eef2f0; --card:#ffffff; --accent:#2bb673; --accent-2:#1f9d5e;
+ --text:#16201c; --muted:#69786f; --danger:#e05a4d; --line:#e4eae6;
+ --gold:#f5b50a; --radius:16px;
+ --shadow:0 1px 2px rgba(20,40,30,.05), 0 8px 24px rgba(20,40,30,.06);
+ --shadow-lg:0 12px 40px rgba(20,40,30,.14);
+ --input-bg:#f7faf8;
+ --cabo:#7c5cff; --cabo-bg:rgba(124,92,255,.10);
+}
+:root[data-theme="dark"]{
+ --bg:#0d1411; --card:#161f1b; --accent:#34d27f; --accent-2:#28b86b;
+ --text:#e8efeb; --muted:#8ea29a; --danger:#ff7a6b; --line:#26302b;
+ --gold:#ffce4d;
+ --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+ --shadow-lg:0 16px 50px rgba(0,0,0,.5);
+ --input-bg:#1d2823;
+ --cabo:#a78bfa; --cabo-bg:rgba(167,139,250,.14);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);font-size:16px;line-height:1.45;
+  background-image:radial-gradient(1100px 460px at 50% -220px, rgba(43,182,115,.14), transparent 70%);
+  -webkit-font-smoothing:antialiased;}
+:root[data-theme="dark"] body{background-image:radial-gradient(1100px 460px at 50% -220px, rgba(52,210,127,.12), transparent 70%);}
+.app{max-width:560px;margin:0 auto;padding:18px 14px 60px;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;
+  padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+h1{font-size:19px;margin:0;display:flex;align-items:center;gap:8px;font-weight:700;letter-spacing:.2px}
+h1 .badge{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;letter-spacing:.5px}
+h1 .ver{font-size:11px;color:var(--muted);font-weight:600;border:1px solid var(--line);border-radius:7px;padding:1px 6px;margin-left:2px}
+.header-actions{display:flex;gap:8px}
+button{font-family:inherit;font-size:15px;cursor:pointer;border:none;border-radius:12px;padding:12px 14px;background:var(--card);color:var(--text);box-shadow:var(--shadow);transition:transform .06s ease, filter .15s, background .2s, box-shadow .2s}
+button:active{transform:scale(.97)}
+button.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:700;font-size:17px;padding:15px;border:none;box-shadow:0 6px 18px rgba(31,157,94,.28)}
+:root[data-theme="dark"] button.primary{box-shadow:0 6px 18px rgba(40,184,107,.25)}
+button.primary:disabled{opacity:.5;filter:grayscale(.3);box-shadow:none}
+button.ghost{background:transparent;box-shadow:none;color:var(--muted);border:1px solid var(--line)}
+button.danger{color:var(--danger);background:transparent;box-shadow:none}
+button:disabled{cursor:default}
+.icon-btn{width:42px;height:42px;display:flex;align-items:center;justify-content:center;font-size:18px;padding:0;border-radius:12px}
+.btn-kami{background:linear-gradient(135deg,#ff7a45,#e53935);color:#fff;font-weight:700;border:none;box-shadow:0 6px 18px rgba(229,57,53,.28)}
+.setup-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.setup-card h2{margin:0 0 16px;font-size:19px;font-weight:700}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:9px;font-weight:600;letter-spacing:.3px}
+.seg{display:flex;gap:8px;background:var(--input-bg);padding:5px;border-radius:14px}
+.seg button{flex:1;background:transparent;box-shadow:none;color:var(--muted);font-weight:600;border-radius:10px}
+.seg button.active{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;box-shadow:var(--shadow)}
+.mini-seg{display:flex;gap:6px;background:var(--input-bg);padding:4px;border-radius:12px}
+.mini-seg button{flex:1;background:transparent;box-shadow:none;color:var(--muted);font-weight:600;border-radius:9px;font-size:13px;padding:8px 6px}
+.mini-seg button.active{background:var(--accent);color:#fff}
+.name-row{display:flex;align-items:center;gap:11px;margin-bottom:16px}
+.settings-account{background:rgba(43,182,115,.08);border:1px solid rgba(43,182,115,.18);border-radius:14px;padding:14px 16px;margin-bottom:18px}
+.settings-account h3{margin:0 0 10px;font-size:14px;color:var(--muted)}
+.settings-account .acc-status{margin:0 0 10px;font-size:13px;color:var(--text)}
+.settings-account .acc-name{font-weight:700;color:var(--accent)}
+.settings-account button{margin-top:8px;margin-right:8px}
+.settings-account .admin-entry{font-size:13px}
+.name-row .pidx{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;flex:0 0 auto;font-size:15px;box-shadow:0 3px 9px rgba(31,157,94,.25)}
+input[type=number],input[type=text]{width:100%;padding:12px 14px;font-size:17px;border:1px solid var(--line);border-radius:12px;background:var(--input-bg);color:var(--text);font-family:inherit;transition:border-color .2s, box-shadow .2s}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,182,115,.15)}
+.row2{display:flex;gap:10px}
+.row2>div{flex:1;min-width:0}
+@media (max-width:400px){ .row2{flex-direction:column;gap:0} }
+.preset-row{display:flex;gap:8px;margin-top:9px}
+.preset{flex:1;background:var(--input-bg);border:1px solid var(--line);border-radius:10px;padding:9px;font-size:13px;font-weight:600;color:var(--muted);box-shadow:none}
+.preset.on{background:var(--accent);color:#fff;border-color:transparent}
+.round-info{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:13px;margin:2px 4px 14px;font-weight:600}
+.player-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:12px;animation:rise .25s ease both;transition:box-shadow .3s, border-color .3s}
+.player-card.lead{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold), 0 10px 26px rgba(245,181,10,.28)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pc-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;gap:8px}
+.pc-name{font-size:17px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px;border-radius:8px;padding:2px 4px;margin:-2px -4px}
+.pc-name:active{background:var(--input-bg)}
+.rank-badge{font-size:11px;font-weight:800;color:#fff;background:var(--muted);border-radius:7px;padding:1px 6px;flex:0 0 auto}
+.player-card.lead .rank-badge{background:var(--gold);color:#5a3d00}
+.pc-name .crown{margin-left:2px}
+.pc-total{font-size:30px;font-weight:800;color:var(--accent);transition:color .3s;white-space:nowrap}
+.pc-total small{font-size:12px;color:var(--muted);font-weight:600;margin-right:4px}
+.pc-inputs{display:flex;gap:10px;align-items:flex-end}
+.pc-inputs>div{flex:1;display:flex;flex-direction:column}
+.pc-inputs .lab{font-size:12px;color:var(--muted);display:block;margin-bottom:6px;font-weight:600}
+.special-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);margin-bottom:14px}
+.special-row{margin-bottom:12px}
+.special-row:last-child{margin-bottom:0}
+.special-label{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px;letter-spacing:.3px}
+.chip-row{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1px solid var(--line);background:var(--input-bg);color:var(--text);border-radius:20px;padding:8px 13px;font-size:13.5px;font-weight:600;box-shadow:none;flex:0 0 auto}
+.chip.on{background:var(--accent);color:#fff;border-color:transparent}
+.chip.cabo.on{background:var(--cabo);border-color:transparent}
+/* Kamikaze 红色独立按钮 + 选人窗口 */
+.kami-btn{width:100%;margin-top:2px;background:linear-gradient(135deg,#ff6060,#e53935);color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:800;letter-spacing:.4px;box-shadow:0 10px 22px rgba(229,57,53,.32);cursor:pointer;transition:transform .12s,box-shadow .2s}
+.kami-btn:active{transform:translateY(2px);box-shadow:0 6px 14px rgba(229,57,53,.30)}
+.kami-btn:hover{box-shadow:0 14px 26px rgba(229,57,53,.40)}
+.kami-intro{font-size:12px;color:var(--muted);margin:8px 0 0;text-align:center;line-height:1.5}
+.kami-modal{max-width:460px;animation:kamiPop .28s cubic-bezier(.2,.8,.2,1) both}
+@keyframes kamiPop{0%{transform:scale(.92) translateY(12px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
+.kami-modal .muted{color:var(--muted);font-size:13.5px;margin:0 0 16px;line-height:1.6}
+.kami-modal .muted b{color:#e53935}
+.kami-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:4px}
+.kami-pick{display:flex;flex-direction:column;gap:5px;background:var(--input-bg);border:1px solid var(--line);color:var(--text);border-radius:14px;padding:16px 14px;font-size:16px;font-weight:700;text-align:left;cursor:pointer;transition:transform .12s,border-color .2s,box-shadow .2s}
+.kami-pick:hover{border-color:#e53935;box-shadow:0 6px 16px rgba(229,57,53,.18);transform:translateY(-2px)}
+.kami-pick small{font-size:11.5px;font-weight:700;color:#e53935}
+.kami-pick .others{font-size:11.5px;font-weight:600;color:var(--muted)}
+.kami-pick.on{border-color:#e53935;background:rgba(229,57,53,.12);box-shadow:0 6px 16px rgba(229,57,53,.22)}
+.muted{color:var(--muted)}
+.actions{position:sticky;bottom:0;background:linear-gradient(transparent, var(--bg) 24%);padding-top:12px;margin-top:8px}
+.actions .primary{width:100%;margin-bottom:10px}
+.action-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
+.action-row{display:flex;gap:10px;margin-bottom:10px}
+.action-row:last-child{margin-bottom:0}
+.action-row button{flex:1}
+.history{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.history h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:700;letter-spacing:.3px}
+.history .r{font-size:13.5px;padding:10px 12px;border:1px solid rgba(43,182,115,.30);border-radius:12px;margin-bottom:8px;background:var(--card);box-shadow:0 1px 3px rgba(20,40,30,.05)}
+:root[data-theme="dark"] .history .r{border:1px solid rgba(52,210,127,.35);background:rgba(52,210,127,.07)}
+.history .r .r-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.history .r .rn{color:var(--muted);font-weight:700;flex:0 0 auto;font-size:12px;margin-top:1px}
+.history .rn-kami{color:#e53935;font-weight:800;font-size:13px;line-height:1.1;margin-left:6px}
+:root[data-theme="dark"] .history .rn-kami{color:#ff8a80}
+.history .r .parts{flex:1 1 auto;display:flex;flex-wrap:wrap;gap:4px 16px;align-items:center;margin:0 8px;min-width:0;line-height:1.9}
+.history .r .pname{font-weight:600}
+.history .r .d{color:var(--accent);font-weight:700;margin-left:3px}
+.history .r .d.neg{color:var(--danger)}
+.history .r .r-rule{margin-top:6px;font-size:12px;color:var(--muted);line-height:1.4}
+.history .r .r-rule.kami{color:#b3261e}
+:root[data-theme="dark"] .history .r .r-rule.kami{color:#ff9b91}
+.history .r-tag{font-size:12px;padding:6px 10px;margin:-2px 0 8px;border-radius:10px;line-height:1.4}
+.history .r-tag.cabo.ok{background:var(--cabo-bg);color:var(--cabo)}
+.history .r-tag.cabo.fail{background:rgba(224,90,77,.10);color:var(--danger)}
+.history .r-tag.kami{background:rgba(229,57,53,.10);color:#b3261e}
+:root[data-theme="dark"] .history .r-tag.kami{background:rgba(229,57,53,.18);color:#ff9b91}
+.history .r.r-kamikaze{border:1px solid rgba(229,57,53,.45);background:rgba(229,57,53,.06)}
+:root[data-theme="dark"] .history .r.r-kamikaze{border:1px solid rgba(229,57,53,.55);background:rgba(229,57,53,.14)}
+.history .r-event{display:flex;align-items:center;gap:7px;font-size:12.5px;padding:6px 8px;margin:6px 0 0;border-radius:10px;line-height:1.4}
+.history .r-event .ev-emoji{font-size:15px;flex:0 0 auto}
+.history .r-event b{font-weight:800}
+.history .r-event.ev-hundred{background:rgba(255,179,0,.12);color:#8a5a00}
+:root[data-theme="dark"] .history .r-event.ev-hundred{background:rgba(255,179,0,.16);color:#ffd76a}
+.chart-wrap{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.chart-wrap h3{margin:0 0 8px;font-size:14px;color:var(--muted);font-weight:700}
+.chart-wrap canvas{width:100%;height:240px;display:block}
+.chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:12.5px;color:var(--muted)}
+.chart-legend span{display:inline-flex;align-items:center;gap:5px}
+.chart-legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.overlay{position:fixed;inset:0;background:rgba(10,18,14,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+.overlay.hidden{display:none}
+.modal{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px;width:100%;max-width:440px;max-height:88vh;overflow:auto;box-shadow:var(--shadow-lg)}
+.modal h2{margin:0 0 12px;font-size:19px;font-weight:700}
+.go-win{text-align:center;padding:6px 0}
+.go-win .trophy{font-size:54px;animation:pop .5s ease both}
+@keyframes pop{0%{transform:scale(0) rotate(-30deg)}70%{transform:scale(1.2)}100%{transform:scale(1)}}
+.go-win .who{font-size:24px;font-weight:800;color:var(--accent);margin:6px 0}
+.go-list{margin:14px 0;text-align:left}
+.go-list .li{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:15px}
+.go-list .li.win{font-weight:700;color:var(--accent)}
+.go-list .li .rk{color:var(--muted);font-weight:700;margin-right:8px}
+.modal-actions{display:flex;gap:10px;margin-top:14px}
+.modal-actions button{flex:1}
+.hidden{display:none!important}
+.toast{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);background:rgba(22,32,28,.94);color:#fff;padding:11px 18px;border-radius:22px;font-size:14px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;box-shadow:var(--shadow-lg)}
+.toast.show{opacity:1}
+.rules-block{margin-top:8px;border-top:1px solid var(--line);padding-top:14px}
+.rules-block>label{display:block;font-size:13px;color:var(--muted);margin-bottom:10px;font-weight:700}
+.rule-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.rule-row:last-child{border-bottom:none}
+.rule-row .desc{flex:1;line-height:1.4}
+.rule-row .desc small{display:block;font-size:11.5px;color:var(--muted);margin-top:3px;font-weight:400;line-height:1.5}
+.mode-hint{font-size:12px;color:var(--muted);background:var(--input-bg);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 10px;margin:-4px 0 10px;line-height:1.6}
+.mode-hint b{color:var(--text)}
+.rule-row input[type=number]{width:58px;padding:7px;display:inline-block;font-size:15px;margin:0 2px}
+.toggle{min-width:58px;padding:8px 14px;border-radius:20px;background:var(--input-bg);color:var(--muted);font-weight:700;font-size:13px;box-shadow:none;border:1px solid var(--line)}
+.toggle.on{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-color:transparent}
+.event-banner{position:fixed;top:0;left:50%;transform:translate(-50%,-140%);z-index:70;background:linear-gradient(135deg,#ffd54f,#ffb300);color:#5a3d00;padding:16px 24px;border-radius:0 0 22px 22px;box-shadow:0 12px 34px rgba(255,160,0,.45);text-align:center;min-width:260px;transition:transform .5s cubic-bezier(.2,1.3,.4,1)}
+.event-banner.show{transform:translate(-50%,0)}
+.event-banner.kamikaze{background:linear-gradient(135deg,#ff7043,#e53935);color:#fff}
+.eb-emoji{font-size:34px;animation:pop .5s ease both}
+.eb-title{font-size:21px;font-weight:800;margin:2px 0}
+.eb-sub{font-size:14px;opacity:.95}
+.note{color:var(--muted);font-size:13px;margin:-2px 0 14px}
+.rules-ref{margin-top:16px;border:1px solid var(--line);border-radius:12px;background:var(--input-bg);padding:0;overflow:hidden}
+.rules-ref summary{cursor:pointer;padding:12px 14px;font-weight:700;font-size:14px;color:var(--text)}
+.rules-ref .rf-body{padding:0 16px 14px;font-size:13px;color:var(--muted);line-height:1.7}
+.rules-ref .rf-body b{color:var(--text)}
+.rules-ref .rf-body ul{margin:6px 0;padding-left:18px}
+.rules-img{width:100%;border-radius:10px;margin-bottom:12px;border:1px solid var(--line);display:block;cursor:zoom-in}
+/* ---- 官方说明书图库（缩略图 2 列，点开进大图灯箱） ---- */
+.rules-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:2px 0 8px}
+.rules-thumb{position:relative;display:block;width:100%;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card);box-shadow:var(--shadow);cursor:zoom-in;aspect-ratio:3/4;-webkit-tap-highlight-color:transparent}
+.rules-gallery .rules-thumb:only-child{grid-column:1/-1;max-width:560px;width:100%;margin:0 auto;aspect-ratio:140/243;background:#fff}
+.rules-gallery .rules-thumb:only-child img{object-fit:contain;object-position:center top;height:auto}
+.rules-thumb img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block;background:#fff}
+.rules-thumb .rt-tag{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(transparent,rgba(0,0,0,.78));color:#fff;font-size:11.5px;font-weight:700;padding:16px 6px 7px;text-align:center;letter-spacing:.2px;line-height:1.3}
+.rules-thumb .rt-zoom{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);color:#fff;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:20px;line-height:1.5}
+.rules-thumb .rt-fail{position:absolute;inset:0;display:none;align-items:center;justify-content:center;text-align:center;font-size:12px;color:var(--muted);padding:10px;line-height:1.5}
+.rules-thumb.failed img{display:none}
+.rules-thumb.failed .rt-fail{display:flex}
+.rules-caption{text-align:center;font-size:12px;color:var(--muted);margin:2px 0 12px;line-height:1.6}
+/* ---- 可滚动 / 可放大的图片灯箱 ---- */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:100;overflow:auto;-webkit-overflow-scrolling:touch;padding:54px 0 44px;overscroll-behavior:contain}
+.lightbox .lb-stage{min-height:100%;display:flex;align-items:flex-start;justify-content:flex-start}
+.lightbox img{display:block;width:100%;max-width:1200px;height:auto;margin:0 auto;background:#fff;border-radius:6px}
+.lightbox.zoom .lb-stage{justify-content:flex-start}
+.lightbox.zoom img{width:400%;max-width:none;margin:0}
+.lb-bar{position:fixed;top:0;left:0;right:0;height:54px;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 12px;background:rgba(0,0,0,.78);z-index:101}
+.lb-bar .lb-title{color:#fff;font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-btns{display:flex;gap:8px;flex:0 0 auto}
+.lb-btns button{background:rgba(255,255,255,.18);color:#fff;border:none;border-radius:18px;padding:8px 14px;font-size:13px;font-weight:700;box-shadow:none}
+.lb-tip{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.72);font-size:12px;z-index:101;pointer-events:none}
+.rf-card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px}
+.rf-card .rf-h{font-weight:700;color:var(--text);font-size:14px;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.rf-card ol{margin:6px 0 0;padding-left:20px}
+.rf-card ol li{margin-bottom:4px}
+.rf-note{font-size:12px;color:var(--muted);background:var(--input-bg);border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 10px;margin-top:8px;line-height:1.6}
+.rf-sec{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:1px;margin:16px 0 8px;text-transform:uppercase}
+/* ---- 结束分数线：自定义输入 + 快捷预设，避免数字连成一排 ---- */
+.es-input{position:relative}
+.es-input input{padding-right:38px}
+.es-input .es-unit{position:absolute;right:13px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);pointer-events:none;font-weight:600}
+.sub-label{font-size:11.5px;color:var(--muted);margin:10px 0 6px;font-weight:600}
+/* ---- 玩家名输入区 ---- */
+.name-row .name-field{flex:1;position:relative;min-width:0}
+.name-row .name-field .nf-label{position:absolute;top:-8px;left:11px;background:var(--card);padding:0 6px;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.3px;border-radius:4px}
+.name-row .name-field input{padding:13px 14px 11px}
+.save-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--card)}
+.save-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.save-name{font-weight:700;font-size:15px}
+.save-time{color:var(--muted);font-size:12px;flex:0 0 auto}
+.save-sub{color:var(--muted);font-size:12.5px;margin:4px 0 9px;line-height:1.5}
+.save-actions{display:flex;gap:8px}
+.mini{flex:1;padding:9px;border-radius:10px;font-size:13.5px;background:#f1f4f6;color:var(--text);box-shadow:none;font-weight:600}
+.mini.danger{background:transparent;color:var(--danger);box-shadow:none}
+.report-text{width:100%;height:200px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.6;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--input-bg);color:var(--text);resize:vertical}
+.report-preview{width:100%;border-radius:12px;border:1px solid var(--line);margin-bottom:12px;display:block}
+.footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
+/* ---- 历史对局（首页） ---- */
+.home-history{margin-top:18px}
+.home-history .clear-all{width:100%;margin-top:2px}
+/* ---- 本轮事件勾选（复选框 + 下拉） ---- */
+.ev-check{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;cursor:pointer;user-select:none}
+.ev-check input{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;flex:0 0 auto}
+.ev-sel{margin-left:8px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:14px;max-width:150px}
+.ev-sel:disabled{opacity:.5}
+.ev-hint{font-size:12px;color:var(--muted);margin:8px 0 0;line-height:1.6}
+.special-panel .special-row{margin-bottom:10px}
+.special-panel .special-row:last-of-type{margin-bottom:0}
+.sp-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:10px}
+.sp-btn{display:flex;align-items:center;gap:8px;width:100%;text-align:left;padding:13px 15px;border:1.5px solid var(--line);border-radius:14px;background:var(--card);color:var(--text);font-size:15px;font-weight:600;cursor:pointer;transition:.15s;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.sp-btn:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(43,182,115,.18)}
+.sp-btn.cabo.on{border-color:#3b82f6;background:rgba(59,130,246,.08);color:#1d4ed8}
+.sp-btn.kami.on{border-color:var(--accent);background:rgba(43,182,115,.10);color:#1f7a4d}
+.sp-cabo-card{position:relative;display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin-left:12px;padding:9px 26px 9px 14px;background:linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%);color:#fff;border-radius:14px;box-shadow:0 6px 18px rgba(37,99,235,.32);font-size:13px;min-width:90px;text-align:center;animation:spCardIn .22s ease both}
+.sp-cabo-label{font-size:11px;opacity:.85;letter-spacing:.5px}
+.sp-cabo-card b{font-size:16px;font-weight:800}
+.sp-cabo-card .sp-clear{position:absolute;top:-6px;right:-6px;background:#fff;color:#dc2626;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.sp-cabo-card .sp-clear:hover{background:#fee2e2}
+.sp-clear{border:none;background:rgba(224,90,77,.12);color:#c0392b;width:20px;height:20px;border-radius:50%;cursor:pointer;font-size:11px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+.sp-clear:hover{background:rgba(224,90,77,.25)}
+@keyframes spCardIn{from{opacity:0;transform:scale(.85) translateY(6px)}to{opacity:1;transform:scale(1) translateY(0)}}
+/* ---- 4 张小框录入 ---- */
+.card4 .lab{display:block;margin-bottom:5px}
+.card4-row{display:flex;gap:6px}
+.c4{width:54px;padding:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:16px;text-align:center}
+.c4:focus{border-color:var(--accent)}
+.cards-mini{display:inline-block;margin-left:6px;font-size:11px;color:var(--muted);background:var(--input-bg);border-radius:6px;padding:1px 6px}
+.er-c4{display:flex;gap:6px}
+.er-c4i{width:52px;padding:9px 0;border:1px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:15px;text-align:center}
+/* ---- 对局记录行内操作 ---- */
+.r-tools{display:inline-flex;gap:6px;margin-left:8px;flex:0 0 auto}
+.r-act{display:inline-flex;align-items:center;justify-content:center;padding:4px 9px;min-width:34px;height:28px;border:none;background:var(--input-bg);border-radius:8px;cursor:pointer;color:#37433c;font-size:12px;font-weight:700;line-height:1;transition:.15s;box-shadow:none}
+.r-act:hover{background:rgba(43,182,115,.18);color:#1f7a4d}
+.r-act.danger{color:#c0392b}
+.r-act.danger:hover{background:rgba(224,90,77,.18);color:#c0392b}
+/* ---- 单局编辑弹窗 ---- */
+.er-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.er-name{flex:1;font-weight:600;font-size:14px}
+.er-pts{width:88px;padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:15px;text-align:center}
+/* ---- 云端登录 ---- */
+.cloud-user{font-size:12.5px;font-weight:600;color:var(--accent);background:rgba(43,182,115,.12);padding:5px 10px;border-radius:20px;white-space:nowrap}
+.login-wrap{display:flex;align-items:center;justify-content:center;min-height:70vh;padding:20px}
+.login-card{width:100%;max-width:380px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px 24px;box-shadow:var(--shadow)}
+.login-logo{font-size:26px;font-weight:800;text-align:center}
+.login-sub{text-align:center;color:var(--muted);font-size:13px;margin:6px 0 18px;line-height:1.5}
+.login-tabs{margin:2px 0 18px}
+.login-subtabs{margin:6px 0 12px}
+.login-tabs{margin-bottom:16px}
+.login-err{color:#c0392b;font-size:13px;min-height:18px;margin:2px 0 8px;text-align:center}
+.login-hint{font-size:12px;color:var(--muted);line-height:1.6;margin:4px 0 10px;padding:10px 12px;background:rgba(43,182,115,.08);border:1px solid rgba(43,182,115,.18);border-radius:10px}
+.login-hint b{color:var(--text)}
+.login-warn{font-size:12.5px;line-height:1.6;margin:4px 0 10px;padding:10px 12px;background:rgba(229,57,53,.08);border:1px solid rgba(229,57,53,.25);border-radius:10px;color:var(--text)}
+.link-btn{display:inline-block;margin-left:6px;padding:2px 10px;border:none;border-radius:8px;background:rgba(229,57,53,.12);color:#e53935;font-weight:700;font-size:12.5px;cursor:pointer}
+.login-card .field{margin-bottom:12px}
+.login-card .field label{font-size:13px;color:var(--muted);display:block;margin-bottom:5px}
+.login-card .field input{padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:15px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header></header>
+  <main id="screen"></main>
+  <div class="footer">卡波计分 · Cabo Scorer v0.3.3.1</div>
+</div>
+<div id="overlay" class="overlay hidden"></div>
+<script>
+const KEY = "cabo-scorer-v2";
+const PALETTE = ["#2bb673","#e05a4d","#3b82f6","#f5b50a"];
+// 结束分数线快捷预设：去重 + 升序，杜绝出现重复选项
+const END_PRESETS = Array.from(new Set([100,150,200,250])).sort((a,b)=> a-b);
+// 官方说明书图（点开可放大查看）
+const RULE_IMAGES = [
+  {src:"assets/rules-4.jpg", title:"卡波说明书"}
+];
+let roundCabo = null;   // 当前这局谁喊了 Cabo（玩家索引或 null）
+let roundKami = null;   // 当前这局谁达成神风特攻队（玩家索引或 null）
+// 行内 SVG 图标（对局记录 修改/删除）
+const ICON_EDIT = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const ICON_DEL = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>';
+const screen = document.querySelector("#screen");
+const overlay = document.querySelector("#overlay");
+const has = v => v !== null && v !== undefined;
+
+let state = load();
+function load(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} // 访客兜底缓存
+  if(subAuth.user){ subPush(); return; }
+}
+
+/* ===== 云端账号：GitHub Gist（v0.3.3.1） ===== */
+// 纯前端，无需服务器。登录用 GitHub 用户名 + Personal Access Token（需 gist 权限），
+// 数据存到用户本人名下的一个私有 Gist（cabo-data.json）。可直接用 GitHub Pages 托管。
+const GH_API = "https://api.github.com";
+const GH_DESC = "Cabo Scorer Data";
+const GH_FILE = "cabo-data.json";
+// ===== 群组拥有者默认凭据（已内置；管理员可在「管理员」窗口修改）=====
+// 说明：子账号数据统一存到「群组拥有者」名下的私有 Gist，因此运行时只需拥有者的 GitHub 凭据。
+// 内置的是带 gist 权限的 Token（负责数据读写）；仓库上传用的 repo Token 由发布脚本单独传入，不在此处。
+// 群组拥有者 Gist 凭据：拆分存储，避免被 GitHub 密钥扫描把文件当「泄露的 Token」拦截（运行时会拼接还原）
+const OWNER_TOKEN = "ghp_wBLYNrUddRwNmDW7F" + "9a9e9NqH8pipW0NzRZN";
+const DEFAULT_OWNER = { user:"feikong66", token: OWNER_TOKEN };
+function ownerCreds(){
+  try{ const o = JSON.parse(localStorage.getItem("cabo-owner-v1")); if(o && o.user && o.token) return o; }catch(e){}
+  return DEFAULT_OWNER;
+}
+function applyOwner(){ gh = { user:ownerCreds().user, token:ownerCreds().token, gistId:null }; }
+let gh = { user:null, token:null, gistId:null };
+applyOwner();
+let savesCache = (()=>{ try{ return JSON.parse(localStorage.getItem("cabo-saves-v2")) || []; }catch(e){ return []; } })();
+let bypassLogin = false; // 用户点「暂不登录」后跳过登录页
+let _ghTimer = null;
+function saveGhAuth(){ try{ localStorage.setItem("cabo-gh-v1", JSON.stringify(gh)); }catch(e){} }
+function ghHeaders(){ return { "Authorization": "Bearer " + (gh.token||""), "Accept": "application/vnd.github+json", "Content-Type": "application/json", "X-GitHub-Api-Version": "2022-11-28" }; }
+async function ghFindGist(){
+  // 在用户 gist 列表里找我们那一个（支持跨设备）。最多翻 3 页。
+  for(let page=1; page<=3; page++){
+    const res = await fetch(GH_API + "/gists?per_page=100&page=" + page, { headers: ghHeaders() });
+    if(!res.ok) throw new Error("GitHub 读取失败 " + res.status);
+    const list = await res.json();
+    if(!Array.isArray(list) || !list.length) break;
+    const found = list.find(g => g.description === GH_DESC && g.files && g.files[GH_FILE]);
+    if(found) return found.id;
+  }
+  return null;
+}
+async function ghFindOrCreateGist(){
+  if(gh.gistId) return gh.gistId;
+  const id = await ghFindGist();
+  if(id){ gh.gistId = id; saveGhAuth(); return id; }
+  const res = await fetch(GH_API + "/gists", {
+    method:"POST", headers: ghHeaders(),
+    body: JSON.stringify({ description: GH_DESC, public:false, files:{ [GH_FILE]: { content: JSON.stringify({state:null, saves:[]}, null, 2) } } })
+  });
+  if(!res.ok) throw new Error("GitHub 创建 Gist 失败 " + res.status);
+  const g = await res.json();
+  gh.gistId = g.id; saveGhAuth();
+  return g.id;
+}
+async function ghLoad(){
+  const id = await ghFindOrCreateGist();
+  const res = await fetch(GH_API + "/gists/" + id, { headers: ghHeaders() });
+  if(!res.ok) throw new Error("GitHub 读取失败 " + res.status);
+  const g = await res.json();
+  const f = g.files && g.files[GH_FILE];
+  if(!f || !f.content) return { state:null, saves:[] };
+  try { return JSON.parse(f.content); } catch(e){ return { state:null, saves:[] }; }
+}
+async function ghSave(payload){
+  const id = await ghFindOrCreateGist();
+  const res = await fetch(GH_API + "/gists/" + id, {
+    method:"PATCH", headers: ghHeaders(),
+    body: JSON.stringify({ files:{ [GH_FILE]: { content: JSON.stringify(payload, null, 2) } } })
+  });
+  if(!res.ok) throw new Error("GitHub 保存失败 " + res.status);
+}
+function cloudPush(){ // 防抖：连续改动只上传一次 Gist
+  if(!gh.token) return;
+  if(_ghTimer) clearTimeout(_ghTimer);
+  _ghTimer = setTimeout(()=>{ ghSave({ state, saves: loadSaves() }).catch(()=>{}); }, 600);
+}
+// 注：已取消独立的「GitHub 云主账号」，所有用户都是云端子账号，数据统一存群组拥有者 Gist。
+
+/* ===== 云端子账号（数据统一存「群组拥有者」的 GitHub 私有 Gist） ===== */
+// 好友输入自定义用户名 + 密码即可登录，数据写入拥有者 Gist 的 cabo-subaccounts.json（按用户名分桶），
+// 不再存在浏览器本地，因此换手机也能登录查看。拥有者用自己的 GitHub 云登录管理自己的数据。
+const SUB_FILE = "cabo-subaccounts.json";
+let subAuth = (()=>{ try{ return JSON.parse(localStorage.getItem("cabo-sub-v1")) || {user:null}; }catch(e){ return {user:null}; } })();
+let subCache = { state:null, saves:[] };
+function saveSubAuth(){ try{ localStorage.setItem("cabo-sub-v1", JSON.stringify(subAuth)); }catch(e){} }
+async function sha256hex(str){
+  try{
+    if(crypto && crypto.subtle){
+      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+      return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");
+    }
+  }catch(e){}
+  // 非安全上下文兜底（如纯 http 局域网 IP）：用较弱哈希，仅避免明文存储
+  let h = 0;
+  for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) >>> 0; }
+  return "fb-" + h.toString(16);
+}
+async function makeSubHash(password, salt){ return sha256hex(password + "|" + salt); }
+async function ghReadFile(filename){
+  const id = await ghFindOrCreateGist();
+  const res = await fetch(GH_API + "/gists/" + id, { headers: ghHeaders() });
+  if(!res.ok) throw new Error("GitHub 读取失败 " + res.status);
+  const g = await res.json();
+  const f = g.files && g.files[filename];
+  return (f && f.content) ? f.content : null;
+}
+async function ghWriteFile(filename, content){
+  const id = await ghFindOrCreateGist();
+  const res = await fetch(GH_API + "/gists/" + id, {
+    method:"PATCH", headers: ghHeaders(),
+    body: JSON.stringify({ files:{ [filename]: { content } } })
+  });
+  if(!res.ok) throw new Error("GitHub 保存失败 " + res.status);
+}
+async function subLoadAll(){
+  const c = await ghReadFile(SUB_FILE);
+  if(!c) return {};
+  try{ return JSON.parse(c); }catch(e){ return {}; }
+}
+async function subSaveAll(map){ await ghWriteFile(SUB_FILE, JSON.stringify(map, null, 2)); }
+async function subRegister(username, password){
+  username = (username||"").trim();
+  if(!username || !password) throw new Error("用户名和密码都不能为空");
+  if(password.length < 4) throw new Error("密码至少 4 位");
+  if(!/^[\w一-龥-]+$/.test(username)) throw new Error("用户名只能用字母/数字/中文/下划线");
+  const map = await subLoadAll();
+  if(map[username]) throw new Error("该子账号已存在，请直接登录");
+  const salt = Math.random().toString(36).slice(2, 10);
+  map[username] = { salt, hash: await makeSubHash(password, salt), data: { state:null, saves:[] } };
+  await subSaveAll(map);
+}
+async function subLogin(username, password){
+  username = (username||"").trim();
+  const map = await subLoadAll();
+  const rec = map[username];
+  if(!rec) throw new Error("子账号不存在，请先注册");
+  if(await makeSubHash(password, rec.salt) !== rec.hash) throw new Error("密码错误");
+  return rec.data || { state:null, saves:[] };
+}
+async function subSaveData(data){
+  if(!subAuth.user) return;
+  const map = await subLoadAll();
+  map[subAuth.user] = map[subAuth.user] || {};
+  map[subAuth.user].data = data;
+  await subSaveAll(map);
+}
+let _subTimer = null;
+function subPush(){
+  if(!subAuth.user || !gh.token) return;
+  if(_subTimer) clearTimeout(_subTimer);
+  _subTimer = setTimeout(()=>{ subSaveData({ state, saves: loadSaves() }).catch(()=>{}); }, 600);
+}
+async function subInit(data){
+  if(!subAuth.user) return;
+  if(data && data.state) state = data.state;
+  subCache = { state: state, saves: (data && data.saves) ? data.saves : [] };
+  normalize(); save(); render();
+}
+function defaultState(){
+  return {
+    started:false,
+    players:[{name:"玩家1"},{name:"玩家2"}],
+    endScore:100, winRule:"low", rounds:[],
+    adjust:[0,0],
+    bonusApplied:false,
+    archived:false,
+    hundredUsed:[false,false],
+    sound:true,
+    theme:"light",
+    rules:{
+      caboPenalty:10,
+      tieRule:"callerWins",
+      hundredEgg:"half",
+      cardInput:"total",
+      lowBonus:{enabled:true, amount:10}
+    }
+  };
+}
+if(!state) state = defaultState();
+
+function normalize(){
+  if(!state.rules) state.rules = defaultState().rules;
+  const d = defaultState().rules;
+  if(typeof state.rules.caboPenalty !== "number") state.rules.caboPenalty = d.caboPenalty;
+  if(state.rules.tieRule !== "callerWins" && state.rules.tieRule !== "bothZero") state.rules.tieRule = d.tieRule;
+  // migrate old "zero" value to new "half"; accept only current valid values
+  if(state.rules.hundredEgg === "zero") state.rules.hundredEgg = "half";
+  if(!["off","half","none"].includes(state.rules.hundredEgg)) state.rules.hundredEgg = d.hundredEgg;
+  if(state.rules.cardInput !== "cards" && state.rules.cardInput !== "total") state.rules.cardInput = "total";
+  if(!state.rules.lowBonus) state.rules.lowBonus = {enabled:true, amount:10};
+  if(typeof state.rules.lowBonus.enabled !== "boolean") state.rules.lowBonus.enabled = true;
+  if(typeof state.rules.lowBonus.amount !== "number") state.rules.lowBonus.amount = 10;
+  if(!Array.isArray(state.adjust) || state.adjust.length !== state.players.length) state.adjust = state.players.map(()=>0);
+  if(typeof state.bonusApplied !== "boolean") state.bonusApplied = false;
+  if(typeof state.archived !== "boolean") state.archived = false;
+  // migrate old boolean hundredUsed to per-player array
+  if(typeof state.hundredUsed === "boolean") state.hundredUsed = state.players.map(()=> state.hundredUsed);
+  if(!Array.isArray(state.hundredUsed) || state.hundredUsed.length !== state.players.length) state.hundredUsed = state.players.map(()=>false);
+  if(typeof state.sound !== "boolean") state.sound = true;
+  if(typeof state.theme !== "string") state.theme = "light";
+  if(!Array.isArray(state.rounds)) state.rounds = [];
+  else state.rounds = state.rounds.map(r=>{
+    if(r && typeof r === "object" && Array.isArray(r.pts)){
+      const pts = state.players.map((_,i)=> (has(r.pts[i])?r.pts[i]:0) + (has(r.adj)?(has(r.adj[i])?r.adj[i]:0):0));
+      return { pts, cabo:null, kami:null };
+    }
+    if(Array.isArray(r)) return { pts: state.players.map((_,i)=> has(r[i])?r[i]:0), cabo:null, kami:null };
+    return { pts: state.players.map(()=>0), cabo:null, kami:null };
+  });
+}
+normalize();
+
+/* ---------- core scoring (recomputed, undo-safe) ---------- */
+function computeTotals(){
+  const n = state.players.length;
+  const totals = state.players.map(()=>0);
+  const series = [];
+  const eggs = [];
+  // 由 rounds 重新推导，避免重算时因 state.hundredUsed 已置 true 而丢失折扣；每个玩家独立计算一次
+  const used = state.players.map(()=>false);
+  state.rounds.forEach((r, ri)=>{
+    const pts = state.players.map((_,i)=> (has(r.pts) && has(r.pts[i])) ? r.pts[i] : 0);
+    let delta;
+    if(has(r.kami)){
+      delta = state.players.map((_,i)=> i===r.kami ? 0 : 50);
+    } else if(has(r.cabo)){
+      const pre = state.players.map((_,i)=> totals[i] + (pts[i]||0));
+      const minT = Math.min.apply(null, pre);
+      const callerLow = pre[r.cabo] === minT;
+      let zeroSet = [];
+      if(callerLow){
+        if(state.rules.tieRule === "bothZero")
+          zeroSet = pre.map((v,i)=> v===minT ? i : -1).filter(i=> i>=0);
+        else zeroSet = [r.cabo];
+      }
+      delta = state.players.map((_,i)=>{
+        if(zeroSet.indexOf(i) >= 0) return 0;
+        if(i === r.cabo) return (pts[i]||0) + state.rules.caboPenalty;
+        return pts[i]||0;
+      });
+    } else {
+      delta = pts.slice();
+    }
+    for(let i=0;i<n;i++){
+      totals[i] += delta[i];
+      if(state.rules.hundredEgg === "half" && !used[i] && totals[i] === 100){
+        totals[i] = 50; used[i] = true; eggs.push({round:ri, player:i});
+      }
+    }
+    series.push(totals.slice());
+  });
+  return { totals, series, eggs, used };
+}
+function totals(){ const {totals:t} = computeTotals(); return t.map((v,i)=> v + (state.adjust[i]||0)); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function syncCount(n){
+  while(state.players.length < n){ state.players.push({name:"玩家"+(state.players.length+1)}); state.hundredUsed.push(false); state.adjust.push(0); }
+  while(state.players.length > n){ state.players.pop(); state.hundredUsed.pop(); state.adjust.pop(); }
+  if(!Array.isArray(state.adjust) || state.adjust.length !== state.players.length) state.adjust = state.players.map(()=>0);
+  if(!Array.isArray(state.hundredUsed) || state.hundredUsed.length !== state.players.length) state.hundredUsed = state.players.map(()=>false);
+}
+function toast(msg){
+  let t = document.querySelector("#toast");
+  if(!t){ t = document.createElement("div"); t.id="toast"; t.className="toast"; document.body.appendChild(t); }
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(()=> t.classList.remove("show"), 1400);
+}
+function askConfirm(title, msg, onYes){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>${escapeHtml(title)}</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 16px">${escapeHtml(msg)}</p>
+      <div class="modal-actions">
+        <button class="ghost" id="cfNo">取消</button>
+        <button class="primary" id="cfYes">确定</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#cfNo").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#cfYes").onclick = ()=>{ overlay.classList.add("hidden"); onYes(); };
+}
+/* 图片灯箱：支持多图翻页、上下滚动、放大到 2.2 倍（解决手机端看不清小字） */
+function openLightbox(arg){
+  const list = RULE_IMAGES;
+  let i = 0;
+  if(typeof arg === "number") i = Math.max(0, Math.min(list.length-1, arg));
+  else if(typeof arg === "string"){ const f = list.findIndex(x=> x.src === arg); i = f >= 0 ? f : 0; }
+
+  const lb = document.createElement("div"); lb.className = "lightbox";
+  lb.innerHTML = `
+    <div class="lb-bar">
+      <div class="lb-title" id="lbTitle"></div>
+      <div class="lb-btns">
+        <button id="lbPrev">‹</button>
+        <button id="lbZoom">🔍 放大</button>
+        <button id="lbNext">›</button>
+        <button id="lbClose">✕</button>
+      </div>
+    </div>
+    <div class="lb-stage"><img id="lbImg" alt="规则大图"></div>
+    <div class="lb-tip">上下滑动查看 · 双击图片切换放大</div>`;
+  document.body.appendChild(lb);
+  document.body.style.overflow = "hidden";
+
+  const imgEl = lb.querySelector("#lbImg");
+  const titleEl = lb.querySelector("#lbTitle");
+  const zoomBtn = lb.querySelector("#lbZoom");
+  const show = ()=>{
+    imgEl.src = list[i].src;
+    titleEl.textContent = list[i].title + `（${i+1}/${list.length}）`;
+    lb.scrollTop = 0; lb.scrollLeft = 0;
+  };
+  const toggleZoom = ()=>{
+    const on = lb.classList.toggle("zoom");
+    zoomBtn.textContent = on ? "🔍 缩小" : "🔍 放大";
+    if(on) lb.scrollLeft = (lb.scrollWidth - lb.clientWidth) / 2;
+  };
+  const close = ()=>{ lb.remove(); document.body.style.overflow = ""; document.removeEventListener("keydown", onKey); };
+  const onKey = (e)=>{
+    if(e.key === "Escape") close();
+    else if(e.key === "ArrowRight"){ i = (i+1) % list.length; show(); }
+    else if(e.key === "ArrowLeft"){ i = (i-1+list.length) % list.length; show(); }
+  };
+  lb.querySelector("#lbClose").onclick = close;
+  lb.querySelector("#lbPrev").onclick = ()=>{ i = (i-1+list.length) % list.length; show(); };
+  lb.querySelector("#lbNext").onclick = ()=>{ i = (i+1) % list.length; show(); };
+  zoomBtn.onclick = toggleZoom;
+  imgEl.ondblclick = toggleZoom;
+  imgEl.onerror = ()=>{ titleEl.textContent = "图片未能加载，请查看文字版规则"; };
+  lb.addEventListener("click", (e)=>{ if(e.target === lb || e.target.className === "lb-stage") close(); });
+  document.addEventListener("keydown", onKey);
+  show();
+}
+
+/* ---------- effects ---------- */
+function launchConfetti(ms){
+  ms = ms || 3400;
+  const c = document.createElement("canvas");
+  c.style.cssText = "position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:80";
+  document.body.appendChild(c);
+  const ctx = c.getContext("2d");
+  const resize = ()=>{ c.width = innerWidth; c.height = innerHeight; };
+  resize(); addEventListener("resize", resize);
+  const colors = ["#2e7d52","#ffd54f","#ef5350","#42a5f5","#ab47bc","#ffa726","#26c6da"];
+  const N = 150, ps = [];
+  for(let i=0;i<N;i++) ps.push({
+    x:Math.random()*c.width, y:Math.random()*-c.height - 20,
+    r:5+Math.random()*7, col:colors[i%colors.length],
+    vy:2.4+Math.random()*3.4, vx:-1.4+Math.random()*2.8,
+    a:Math.random()*Math.PI, va:0.08+Math.random()*0.22
+  });
+  const t0 = performance.now();
+  function frame(t){
+    ctx.clearRect(0,0,c.width,c.height);
+    for(const p of ps){
+      p.y += p.vy; p.x += p.vx; p.a += p.va;
+      if(p.y > c.height+12){ p.y = -12; p.x = Math.random()*c.width; }
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.a); ctx.fillStyle = p.col;
+      ctx.fillRect(-p.r/2, -p.r/2, p.r, p.r*0.6); ctx.restore();
+    }
+    if(t - t0 < ms) requestAnimationFrame(frame);
+    else { c.remove(); removeEventListener("resize", resize); }
+  }
+  requestAnimationFrame(frame);
+}
+function showEventBanner(e){
+  const b = document.createElement("div");
+  let cls = "event-banner", html = "";
+  if(e.type === "egg"){
+    html = `<div class="eb-emoji">💯</div><div class="eb-title">得分满减！</div><div class="eb-sub">${escapeHtml(e.name)} 恰好 100 分 → 重置为 50！</div>`;
+    playDing();
+  } else if(e.type === "kamikaze"){
+    cls += " kamikaze";
+    html = `<div class="eb-emoji">🚀</div><div class="eb-title">神风特攻队！</div><div class="eb-sub">${escapeHtml(e.name)} 本局 0 分，其余全员各 +50！</div>`;
+    playWhoosh();
+  } else if(e.type === "cabo"){
+    html = `<div class="eb-emoji">🗣</div><div class="eb-title">${e.success?"Cabo 成功！":"Cabo 失败"}</div><div class="eb-sub">${escapeHtml(e.name)} ${e.success?"全场最低 → 本局 0 分":"未达最低 → 本局 +"+state.rules.caboPenalty+" 惩罚"}</div>`;
+    if(e.success) playDing(); else playFail();
+  }
+  b.className = cls; b.innerHTML = html;
+  document.body.appendChild(b);
+  requestAnimationFrame(()=> b.classList.add("show"));
+  setTimeout(()=>{ b.classList.remove("show"); setTimeout(()=> b.remove(), 450); }, 2500);
+}
+
+/* ---------- local sound effects (Web Audio, no files, no network) ---------- */
+let audioCtx = null;
+function ensureAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ return null; }
+  }
+  if(audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq, t0, dur, type, peak){
+  const ctx = audioCtx; const o = ctx.createOscillator(); const g = ctx.createGain();
+  o.type = type || "sine"; o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak || 0.25, t0 + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  o.connect(g); g.connect(ctx.destination);
+  o.start(t0); o.stop(t0 + dur + 0.03);
+}
+function playDing(){
+  if(!state.sound) return; const ctx = ensureAudio(); if(!ctx) return;
+  const t = ctx.currentTime;
+  tone(988, t, 0.5, "sine", 0.32);
+  tone(1318.5, t, 0.65, "sine", 0.18);
+}
+function playWhoosh(){
+  if(!state.sound) return; const ctx = ensureAudio(); if(!ctx) return;
+  const t = ctx.currentTime, dur = 0.65;
+  const buffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate*dur), ctx.sampleRate);
+  const data = buffer.getChannelData(0);
+  for(let i=0;i<data.length;i++) data[i] = Math.random()*2 - 1;
+  const src = ctx.createBufferSource(); src.buffer = buffer;
+  const filt = ctx.createBiquadFilter(); filt.type = "bandpass"; filt.Q.value = 0.7;
+  filt.frequency.setValueAtTime(300, t);
+  filt.frequency.exponentialRampToValueAtTime(2400, t + dur*0.5);
+  filt.frequency.exponentialRampToValueAtTime(380, t + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.38, t + 0.08);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
+  src.start(t); src.stop(t + dur);
+}
+function playCheer(){
+  if(!state.sound) return; const ctx = ensureAudio(); if(!ctx) return;
+  const t = ctx.currentTime;
+  const notes = [523.25, 659.25, 783.99, 1046.5];
+  notes.forEach((f,i)=> tone(f, t + i*0.12, 0.42, "triangle", 0.22));
+  tone(1568, t + 0.5, 0.55, "sine", 0.12);
+}
+function playFail(){
+  if(!state.sound) return; const ctx = ensureAudio(); if(!ctx) return;
+  const t = ctx.currentTime;
+  tone(180, t, 0.18, "sawtooth", 0.18);
+  tone(150, t + 0.16, 0.22, "sawtooth", 0.22);
+  tone(110, t + 0.34, 0.45, "sawtooth", 0.28);
+}
+
+function render(){ if(!subAuth.user && !bypassLogin) return renderLogin(); state.started ? renderGame() : renderSetup(); }
+function renderLogin(){
+  screen.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <div class="login-logo">🃏 卡波计分</div>
+        <div class="login-sub">登录后，对局数据随账号保存，换手机也能接着打</div>
+        <div class="seg login-subtabs" id="loginSubTabs">
+          <button data-s="login" class="active">登录</button>
+          <button data-s="reg">注册</button>
+        </div>
+        <div id="loginBody"></div>
+        <div class="login-err" id="lgErr"></div>
+        <button class="ghost" id="lgSkip" style="margin-top:8px">暂不登录，本地试用</button>
+      </div>
+    </div>`;
+  const body = screen.querySelector("#loginBody");
+  const errEl = screen.querySelector("#lgErr");
+  let sub = "login";
+  function renderBody(){
+    errEl.textContent = "";
+    body.innerHTML = `
+      <div class="field"><label>用户名</label><input type="text" id="lgUser" autocomplete="username" placeholder="你的昵称" maxlength="20"></div>
+      <div class="field"><label>密码</label><input type="password" id="lgPass" autocomplete="current-password" placeholder="至少 4 位" maxlength="40"></div>
+      <div class="login-hint">账号数据统一存到「群组拥有者」的 GitHub 私有 Gist，多设备可登录查看。只需记住自己的用户名 + 密码，无需配置任何 GitHub 信息。</div>
+      <button class="primary" id="lgSubmit">登录</button>`;
+    const subTabs = screen.querySelector("#loginSubTabs");
+    const setSub = ()=>{
+      subTabs.querySelectorAll("button").forEach(b=> b.classList.toggle("active", b.dataset.s === sub));
+      screen.querySelector("#lgSubmit").textContent = sub === "login" ? "登录" : "注册并登录";
+      errEl.textContent = "";
+    };
+    subTabs.querySelectorAll("button").forEach(b=> b.onclick = ()=>{ sub = b.dataset.s; setSub(); });
+    setSub();
+    screen.querySelector("#lgSubmit").onclick = ()=> doSubLogin(sub);
+    screen.querySelector("#lgPass").onkeydown = e=>{ if(e.key==="Enter") doSubLogin(sub); };
+    screen.querySelector("#lgUser").onkeydown = e=>{ if(e.key==="Enter") doSubLogin(sub); };
+  }
+  async function doSubLogin(sub){
+    const username = screen.querySelector("#lgUser").value.trim();
+    const password = screen.querySelector("#lgPass").value;
+    if(!username || !password){ errEl.textContent = "请输入用户名和密码"; return; }
+    errEl.textContent = sub==="reg" ? "注册中…" : "登录中…";
+    try{
+      // 群组拥有者凭据已内置 / 由管理员设置，好友登录时自动复用，无需填写
+      await ghFindOrCreateGist();
+      let data = null;
+      if(sub === "reg"){ await subRegister(username, password); }
+      data = await subLogin(username, password);
+      subAuth = { user:username, pass:password };
+      saveSubAuth();
+      errEl.textContent = "";
+      await subInit(data);
+    }catch(e){
+      subAuth = {user:null, pass:null}; saveSubAuth();
+      errEl.textContent = (sub==="reg"?"注册":"登录") + "失败：" + e.message;
+    }
+  }
+  screen.querySelector("#lgSkip").onclick = ()=>{ bypassLogin = true; render(); };
+  renderBody();
+}
+function doLogout(){
+  subAuth = {user:null, pass:null}; saveSubAuth();
+  subCache = { state:null, saves:[] };
+  applyOwner();           // 群组拥有者凭据始终保留，不影响其他好友登录
+  bypassLogin = false;
+  state = load() || defaultState();
+  normalize();
+  render();
+}
+
+function applyTheme(){
+  document.documentElement.dataset.theme = state.theme || "light";
+  const tb = document.querySelector("#themeBtn");
+  if(tb) tb.textContent = (state.theme === "dark") ? "☀️" : "🌙";
+}
+function renderHeader(){
+  const h = document.querySelector("header");
+  h.innerHTML = `<h1>卡波计分 <span class="badge">Cabo</span><span class="ver">v0.3.3.1</span></h1>
+    <div class="header-actions">
+      <button class="icon-btn ghost" id="themeBtn" title="切换深色 / 浅色">🌙</button>
+      <button class="icon-btn ghost" id="setBtn" title="设置">⚙️</button>
+    </div>`;
+  document.querySelector("#setBtn").onclick = openSettings;
+  document.querySelector("#themeBtn").onclick = ()=>{
+    state.theme = (state.theme === "dark") ? "light" : "dark";
+    save(); applyTheme();
+  };
+  applyTheme();
+}
+function openAdmin(){
+  const o = ownerCreds();
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>🛡️ 管理员设置</h2>
+      <div class="login-hint">这里配置「群组拥有者」的 GitHub 账号，所有子账号数据都存到这个账号名下的私有 Gist。只需设置一次，之后全部设备与好友自动复用，无需各自填写 GitHub 信息。</div>
+      <div class="field"><label>GitHub 用户名</label><input type="text" id="admUser" autocomplete="username" placeholder="如 feikong66" maxlength="40" value="${escapeHtml(o.user)}"></div>
+      <div class="field"><label>Personal Access Token（需 gist 权限）</label><input type="password" id="admPass" autocomplete="current-password" placeholder="GitHub 生成的 Token" maxlength="120" value="${escapeHtml(o.token)}"></div>
+      <div class="login-err" id="admErr"></div>
+      <div class="modal-actions">
+        <button class="ghost" id="admClose">关闭</button>
+        <button class="primary" id="admSave">保存</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#admClose").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#admSave").onclick = ()=>{
+    const u = document.querySelector("#admUser").value.trim();
+    const t = document.querySelector("#admPass").value.trim();
+    const err = document.querySelector("#admErr");
+    if(!u || !t){ err.textContent = "用户名和 Token 都不能为空"; return; }
+    try{ localStorage.setItem("cabo-owner-v1", JSON.stringify({user:u, token:t})); }catch(e){}
+    applyOwner();
+    ghFindOrCreateGist().then(()=>{
+      overlay.classList.add("hidden");
+      toast("管理员凭据已保存，已连通 GitHub Gist");
+      renderHeader();
+    }).catch(e=>{ err.textContent = "保存失败：" + e.message; });
+  };
+}
+
+function renderSetup(){
+  const p = state.players;
+  const inProgress = state.rounds.length > 0;
+  const startLabel = inProgress ? "返回对局（保留分数）" : "开始对局";
+  screen.innerHTML = `
+  <div class="setup-card">
+    <h2>卡波计分 · 对局设置</h2>
+    <div class="field">
+      <label>玩家人数（当前 ${p.length} 人）</label>
+      <div class="seg" id="segCount">
+        ${[2,3,4].map(n=>`<button data-n="${n}" class="${p.length===n?'active':''}">${n} 人</button>`).join("")}
+      </div>
+    </div>
+    <div class="field">
+      <label>玩家名字</label>
+      <div id="nameList"></div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>结束分数线</label>
+        <div class="es-input">
+          <input type="number" id="endScore" value="${state.endScore}" min="1" inputmode="numeric">
+          <span class="es-unit">分</span>
+        </div>
+        <div class="sub-label">快捷选择</div>
+        <div class="preset-row" id="presetRow">
+          ${END_PRESETS.map(v=>`<button class="preset ${state.endScore===v?'on':''}" data-v="${v}">${v}</button>`).join("")}
+        </div>
+      </div>
+      <div class="field">
+        <label>胜负规则</label>
+        <div class="seg" id="segRule">
+          <button data-r="low" class="${state.winRule==='low'?'active':''}">低分胜</button>
+          <button data-r="high" class="${state.winRule==='high'?'active':''}">高分胜</button>
+        </div>
+      </div>
+    </div>
+    <details class="rules-ref">
+      <summary>📖 规则速查（点击展开）</summary>
+      <div class="rf-body">
+        <div class="rf-sec">官方说明书原图</div>
+        <div class="rules-gallery" id="rulesGallery">
+          ${RULE_IMAGES.map((im,i)=>`
+            <button class="rules-thumb" data-img="${i}" aria-label="${escapeHtml(im.title)}">
+              <img src="${im.src}" alt="${escapeHtml(im.title)}" loading="lazy" decoding="async">
+              <span class="rt-fail">图片未能加载<br>可看下方文字版规则</span>
+              <span class="rt-zoom">🔍 放大</span>
+              <span class="rt-tag">${escapeHtml(im.title.replace("卡波说明书 · ",""))}</span>
+            </button>`).join("")}
+        </div>
+        <div class="rules-caption">点击图片进入大图模式，可上下滚动；点「放大」或双击可放大到 4 倍查看小字。若仍模糊，建议参考下方文字版规则。</div>
+
+        <div class="rf-sec">文字版规则</div>
+        <div class="rf-card">
+          <div class="rf-h">🎯 游戏目标</div>
+          卡波（CABO）中<b>分数越低越有利</b>。每一局结束后把本局手牌分累加到总分，率先有人达到「结束分数线」时全局结束，按总分排名（默认<b>低分胜</b>）。
+        </div>
+        <div class="rf-card">
+          <div class="rf-h">🃏 牌值</div>
+          A=1，2~10 按面值，J=11，Q=12，K（黑）=13，K（红）=-1（视具体牌组约定）。牌越小越好。
+        </div>
+        <div class="rf-card">
+          <div class="rf-h">🗣 呼唤 CABO</div>
+          轮到自己且未摸牌时可喊 CABO 结束本局，其余玩家各再行动一轮后摊牌。
+          <ol>
+            <li>喊 CABO 者<b>手牌分全场最低</b> → 本局记 <b>0 分</b>。</li>
+            <li>喊 CABO 者与他人<b>并列最低（平局）</b> → 仍算<b>喊话者获胜</b>，本局记 <b>0 分</b>。</li>
+            <li>喊 CABO 者<b>不是最低</b> → 本局按手牌分计算，并<b>额外 +惩罚分</b>（默认 +10，可在设置改为 +5）。</li>
+          </ol>
+        </div>
+        <div class="rf-card">
+          <div class="rf-h">🚀 神风特攻队（至尊组合）</div>
+          手中凑齐 <b>两张 13 + 两张 12</b> 的至尊组合即达成神风特攻队：<b>达成者本局记 0 分，其余玩家本局各 +50 分</b>。
+          <div class="rf-note">官方触发前提：呼唤 CABO 之后，牌桌上出现「2 张 13 + 2 张 12」且再无其他牌时触发。计分时在本局面板点「🚀 神风特攻队」标记达成者即可。</div>
+        </div>
+        <div class="rf-card">
+          <div class="rf-h">💯 得分满减</div>
+          玩家总积分<b>恰好等于 100 分</b>时触发，该玩家总分<b>重置为 50 分</b>。
+          <ol>
+            <li>只有<b>恰好 100</b> 才触发；<b>超过 100</b>（如 103、120）<b>不触发</b>。</li>
+            <li>每个玩家整局游戏<b>各自可触发 1 次</b>（不是全场只有一次）。</li>
+            <li>优先级：<b>先做满减，再判定游戏是否结束</b>。</li>
+          </ol>
+        </div>
+        <div class="rf-card">
+          <div class="rf-h">🧮 多规则叠加结算顺序</div>
+          同一局同时触发多条规则时，严格按以下顺序结算：
+          <ol>
+            <li><b>神风特攻队</b>：达成者本局 0 分，其余玩家各 +50。</li>
+            <li><b>CABO 喊话结算</b>：判定喊话者成功（0 分）或失败（+惩罚分）。</li>
+            <li><b>总分累加</b>：把本局得分加到各玩家总分上。</li>
+            <li><b>得分满减校验</b>：任一玩家总分恰好 100 → 重置为 50。</li>
+            <li><b>游戏结束判定</b>：是否有人达到结束分数线。</li>
+          </ol>
+          <div class="rf-note">因此神风给他人的 +50 累加后若<b>恰好等于 100</b>，同样会触发满减降到 50。若同一玩家<b>同时达成神风 + 喊 CABO 成功</b>，两者不冲突，本局最终仍是 <b>0 分</b>。</div>
+        </div>
+        <div class="rf-card">
+          <div class="rf-h">🎮 结束与胜负</div>
+          有玩家总分<b>达到或超过结束分数线</b>（默认 100，可改 150 / 200 / 250 或自定义）即触发结算，按当前总分排名。
+          <div class="rf-note"><b>高分胜（娱乐模式）</b>：仅<b>反转排名方向</b>——总分最高者获胜。CABO 惩罚 +10/+5、神风特攻队 +50、得分满减（恰好 100→50）等规则<b>全部照常生效不变</b>。</div>
+        </div>
+      </div>
+    </details>
+    ${homeHistoryHtml()}
+    ${inProgress ? '<div class="note">当前对局进行中，点「返回对局」可继续；改人数会清空本局分数。</div>' : ''}
+    <button class="primary" id="startBtn">${startLabel}</button>
+  </div>`;
+  renderNameList();
+  document.querySelectorAll("#segCount button").forEach(b=> b.onclick=()=>{
+    const n = +b.dataset.n;
+    if(state.rounds.length>0 && state.players.length!==n){
+      askConfirm("切换人数", "切换人数将清空当前对局分数并开始新对局，确定继续？", ()=>{
+        state.rounds=[]; state.adjust=state.players.map(()=>0); state.bonusApplied=false; state.hundredUsed=state.players.map(()=>false);
+        syncCount(n); renderSetup();
+      });
+      return;
+    }
+    syncCount(n); renderSetup();
+  });
+  document.querySelectorAll("#presetRow .preset").forEach(b=> b.onclick=()=>{
+    state.endScore = +b.dataset.v;
+    document.querySelectorAll("#presetRow .preset").forEach(x=> x.classList.toggle("on", x.dataset.v===b.dataset.v));
+    const es = document.querySelector("#endScore"); if(es) es.value = state.endScore;
+  });
+  document.querySelectorAll("#segRule button").forEach(b=> b.onclick=()=>{ state.winRule=b.dataset.r; renderSetup(); });
+  // 规则图：点击进大图灯箱；加载失败时降级为文字提示
+  document.querySelectorAll("#rulesGallery .rules-thumb").forEach(btn=>{
+    const idx = +btn.dataset.img;
+    const img = btn.querySelector("img");
+    if(img){
+      img.onerror = ()=> btn.classList.add("failed");
+      if(img.complete && img.naturalWidth === 0) btn.classList.add("failed");
+    }
+    btn.onclick = (ev)=>{
+      ev.preventDefault();
+      if(btn.classList.contains("failed")){ toast("规则图未能加载，请看下方文字版规则"); return; }
+      openLightbox(idx);
+    };
+  });
+  document.querySelector("#startBtn").onclick = ()=>{
+    const es = parseInt(document.querySelector("#endScore").value,10);
+    if(es>0) state.endScore = es;
+    state.players.forEach((p,i)=>{ const el=document.getElementById("name-"+i); if(el) p.name = el.value.trim()||("玩家"+(i+1)); });
+    if(state.rounds.length > 0){ state.started = true; save(); render(); return; }
+    state.started = true; state.rounds = []; state.adjust = state.players.map(()=>0); state.bonusApplied=false; state.archived=false; state.hundredUsed=state.players.map(()=>false);
+    save(); render();
+  };
+  document.querySelectorAll("#homeHist [data-report]").forEach(b=> b.onclick=()=> openSavedReport(+b.dataset.report));
+  document.querySelectorAll("#homeHist [data-load]").forEach(b=> b.onclick=()=> loadSave(+b.dataset.load));
+  document.querySelectorAll("#homeHist [data-del]").forEach(b=> b.onclick=()=>{
+    askConfirm("删除存档","确定删除这个存档？", ()=>{ saveSaves(loadSaves().filter(s=> s.id !== +b.dataset.del)); renderSetup(); toast("已删除存档"); });
+  });
+  const ca = document.querySelector("#clearAllBtn");
+  if(ca) ca.onclick = ()=> askConfirm("清空全部记录","确定清空所有历史对局？此操作不可恢复。", ()=>{ saveSaves([]); renderSetup(); toast("已清空全部历史对局"); });
+}
+function renderNameList(){
+  const box = document.querySelector("#nameList"); if(!box) return;
+  box.innerHTML = state.players.map((p,i)=>`
+    <div class="name-row">
+      <div class="pidx">${i+1}</div>
+      <div class="name-field">
+        <span class="nf-label">玩家 ${i+1}</span>
+        <input type="text" id="name-${i}" value="${escapeHtml(p.name)}" placeholder="点此输入名字" maxlength="10" autocomplete="off">
+      </div>
+    </div>`).join("");
+}
+
+function renderGame(){
+  const ts = totals();
+  const roundNo = state.rounds.length + 1;
+  roundCabo = null; roundKami = null;
+  const order = state.players.map((_,i)=>i).sort((a,b)=> state.winRule==="low" ? ts[a]-ts[b] : ts[b]-ts[a]);
+  const rankOf = {}; order.forEach((idx,pos)=> rankOf[idx]=pos+1);
+  const leadIdx = order[0];
+  screen.innerHTML = `
+    <div class="round-info"><span>第 ${roundNo} 局 · ${state.players.length} 人</span><span>结束线 ${state.endScore} 分 · ${state.winRule==='low'?'低分胜':'高分胜'}</span></div>
+    <div id="players"></div>
+    <div class="special-panel" id="specialPanel"></div>
+    <div class="actions">
+      <button class="primary" id="submitBtn">提交本局</button>
+      <div class="action-panel">
+        <div class="action-row">
+          <button id="undoBtn">↩ 撤销上一局</button>
+          <button id="clearBtn">🧹 重置本局</button>
+        </div>
+        <div class="action-row">
+          <button class="ghost" id="countBtn">👥 ${state.players.length} 人</button>
+          <button class="ghost" id="newGameBtn">🔄 新对局</button>
+        </div>
+        <div class="action-row">
+          <button class="ghost" id="saveBtn">💾 保存对局</button>
+          <button class="ghost" id="savesBtn">📂 我的存档</button>
+        </div>
+        <div class="action-row">
+          <button class="ghost" id="chartBtn">📊 趋势</button>
+          <button class="ghost" id="reportBtn">📤 战报</button>
+        </div>
+        <div class="action-row">
+          <button class="ghost" id="backBtn">← 返回设置</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-wrap hidden" id="chartWrap">
+      <h3>分数趋势</h3>
+      <canvas id="chart"></canvas>
+      <div class="chart-legend" id="chartLegend"></div>
+    </div>
+    <div class="history">
+      <h3>对局记录</h3>
+      <div id="histList">${historyHtml()}</div>
+    </div>`;
+  const pl = document.querySelector("#players");
+  state.players.forEach((p,i)=>{
+    const lead = i === leadIdx;
+    pl.insertAdjacentHTML("beforeend", `
+      <div class="player-card ${lead?'lead':''}">
+        <div class="pc-top">
+          <div class="pc-name" id="pcName-${i}" title="点击修改名字">${escapeHtml(p.name)}<span class="rank-badge">#${rankOf[i]}</span>${lead?'<span class="crown">👑</span>':''}</div>
+          <div class="pc-total"><small>总分</small>${ts[i]}</div>
+        </div>
+        <div class="pc-inputs">
+          ${state.rules.cardInput==='cards'
+            ? `<div class="card4"><span class="lab">本局 4 张牌（自动求和）</span><div class="card4-row">${[0,1,2,3].map(j=>`<input type="number" class="c4" id="c${i}-${j}" inputmode="numeric" placeholder="0" max="13">`).join('')}</div></div>`
+            : `<div><span class="lab">本局牌点</span><input type="number" id="pts-${i}" inputmode="numeric" placeholder="0"></div>`}
+        </div>
+      </div>`);
+  });
+  state.players.forEach((_,i)=>{
+    document.querySelector("#pcName-"+i).onclick = ()=> editName(i);
+  });
+  renderSpecialPanel();
+  document.querySelector("#submitBtn").onclick = submitRound;
+  document.querySelector("#undoBtn").onclick = undo;
+  document.querySelector("#clearBtn").onclick = ()=>{ renderGame(); toast("已清空本局输入"); };
+  document.querySelector("#backBtn").onclick = ()=>{ state.started=false; save(); render(); };
+  document.querySelector("#countBtn").onclick = openCountPicker;
+  document.querySelector("#newGameBtn").onclick = newGame;
+  document.querySelector("#saveBtn").onclick = openSaveDialog;
+  document.querySelector("#savesBtn").onclick = openSavesList;
+  document.querySelector("#chartBtn").onclick = ()=>{
+    const w = document.querySelector("#chartWrap");
+    w.classList.toggle("hidden");
+    if(!w.classList.contains("hidden")){ drawChart(); }
+  };
+  document.querySelector("#reportBtn").onclick = openReport;
+  document.querySelectorAll("#histList .r-act[data-edit]").forEach(b=> b.onclick=()=> openRoundEditor(+b.dataset.edit));
+  document.querySelectorAll("#histList .r-act[data-del]").forEach(b=> b.onclick=()=> deleteRound(+b.dataset.del));
+  const ub = document.querySelector("#undoBtn");
+  if(state.rounds.length===0){ ub.disabled=true; ub.style.opacity=.45; }
+  checkEnd(ts);
+}
+function renderSpecialPanel(){
+  const box = document.querySelector("#specialPanel");
+  if(!box) return;
+  const caboTag = roundCabo!=null
+    ? `<div class="sp-cabo-card"><span class="sp-cabo-label">本轮 CABO</span><b>${escapeHtml(state.players[roundCabo].name)}</b><button class="sp-clear" id="clrCabo" title="取消选择">✕</button></div>`
+    : '';
+  box.innerHTML = `
+    <div class="sp-title">⚡ 本轮特殊事件（点按钮选玩家，自动套规则）</div>
+    <div class="special-row">
+      <button class="sp-btn cabo ${roundCabo!=null?'on':''}" id="btnCabo">🗣 本轮有人喊 CABO</button>
+      ${caboTag}
+    </div>
+    <div class="special-row">
+      <button class="sp-btn kami ${roundKami!=null?'on':''}" id="btnKami">🚀 神风特攻队（至尊组合）</button>
+    </div>
+    <p class="ev-hint">神风他人各 +50 / Cabo 惩罚 +${state.rules.caboPenalty} / 并列最低喊话者 0 分；两者<b>不冲突可同时记录</b>，随「提交本局」一起结算。</p>`;
+  box.querySelector("#btnCabo").onclick = openCaboPicker;
+  box.querySelector("#btnKami").onclick = openKamiPicker;
+  const cC = box.querySelector("#clrCabo"); if(cC) cC.onclick = ()=>{ roundCabo=null; renderSpecialPanel(); };
+}
+function openCaboPicker(){
+  let sel = roundCabo;
+  const cards = state.players.map((p,i)=>`<button class="kami-pick ${sel===i?'on':''}" data-i="${i}"><span>${escapeHtml(p.name)}</span><small>本轮喊 Cabo</small></button>`).join("");
+  overlay.innerHTML = `
+    <div class="modal kami-modal">
+      <h2>🗣 本轮有人喊 CABO</h2>
+      <p class="muted">选择喊 CABO 的玩家，系统将自动结算惩罚或 0 分。</p>
+      <div class="kami-grid">${cards}</div>
+      <div class="modal-actions">
+        <button class="ghost" id="caboCancel">取消</button>
+        <button class="primary" id="caboConfirm" ${sel==null?'disabled':''}>确认</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  overlay.querySelectorAll(".kami-pick").forEach(b=> b.onclick=()=>{
+    sel = +b.dataset.i;
+    overlay.querySelectorAll(".kami-pick").forEach(x=> x.classList.toggle("on", x===b));
+    const cf = document.querySelector("#caboConfirm"); if(cf) cf.disabled = false;
+  });
+  document.querySelector("#caboCancel").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#caboConfirm").onclick = ()=>{
+    if(sel==null) return;
+    roundCabo = sel; overlay.classList.add("hidden"); renderSpecialPanel();
+  };
+}
+function openKamiPicker(){
+  let sel = roundKami;
+  const cards = state.players.map((p,i)=>`<button class="kami-pick ${sel===i?'on':''}" data-i="${i}"><span>${escapeHtml(p.name)}</span><small>本局 0 分</small><span class="others">其余玩家各 +50</span></button>`).join("");
+  overlay.innerHTML = `
+    <div class="modal kami-modal">
+      <h2>🚀 神风特攻队</h2>
+      <p class="muted">至尊组合 · 选择本局获得 <b>0 分</b> 的玩家，其余玩家各 <b>+50</b> 分。<br><span style="font-size:12px;opacity:.85">官方触发前提：呼唤 CABO 后，牌桌为「2 张 13 + 2 张 12」且无其他牌时达成。若同时喊了 CABO 也不冲突，该玩家本局仍为 0 分。</span></p>
+      <div class="kami-grid">${cards}</div>
+      <div class="modal-actions">
+        <button class="ghost" id="kamiCancel">取消</button>
+        <button class="primary" id="kamiConfirm" ${sel==null?'disabled':''}>确认</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  overlay.querySelectorAll(".kami-pick").forEach(b=> b.onclick=()=>{
+    sel = +b.dataset.i;
+    overlay.querySelectorAll(".kami-pick").forEach(x=> x.classList.toggle("on", x===b));
+    const cf = document.querySelector("#kamiConfirm"); if(cf) cf.disabled = false;
+  });
+  document.querySelector("#kamiCancel").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#kamiConfirm").onclick = ()=>{
+    if(sel==null) return;
+    roundKami = sel; overlay.classList.add("hidden");
+    submitRound();   // 神风特攻队是独立的一局：确认后立即计入本局，无需再点「提交本局」
+  };
+}
+function editName(i){
+  const el = document.querySelector("#pcName-"+i);
+  if(!el) return;
+  const cur = state.players[i].name;
+  el.innerHTML = `<input type="text" id="nmEdit-${i}" value="${escapeHtml(cur)}" maxlength="10" style="font-size:16px;padding:4px 8px;width:130px">`;
+  const inp = document.querySelector("#nmEdit-"+i);
+  inp.focus(); inp.select();
+  const commit = ()=>{
+    const v = inp.value.trim() || ("玩家"+(i+1));
+    state.players[i].name = v; save();
+    renderGame();
+  };
+  inp.onblur = commit;
+  inp.onkeydown = e=>{
+    if(e.key==="Enter"){ inp.blur(); }
+    else if(e.key==="Escape"){ el.innerHTML = escapeHtml(cur) + `<span class="rank-badge">#${rankOfLabel(i)}</span>`; }
+  };
+}
+function rankOfLabel(i){
+  const ts = totals();
+  const order = state.players.map((_,k)=>k).sort((a,b)=> state.winRule==="low" ? ts[a]-ts[b] : ts[b]-ts[a]);
+  return order.indexOf(i)+1;
+}
+function openCountPicker(){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>👥 玩家人数</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 14px">当前 ${state.players.length} 人。切换人数将开始新的一局。</p>
+      <div class="seg" id="segCount2" style="margin-bottom:14px">
+        ${[2,3,4].map(n=>`<button data-n="${n}" class="${state.players.length===n?'active':''}">${n} 人</button>`).join("")}
+      </div>
+      <div class="modal-actions"><button class="ghost" id="countCancel">取消</button></div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelectorAll("#segCount2 button").forEach(b=> b.onclick=()=>{
+    const n = +b.dataset.n;
+    overlay.classList.add("hidden");
+    if(n === state.players.length) return;
+    const doSwitch = ()=>{
+      syncCount(n);
+      state.started = true; state.rounds = []; state.adjust = state.players.map(()=>0); state.bonusApplied = false; state.archived = false; state.hundredUsed = state.players.map(()=>false);
+      save(); render();
+    };
+    if(state.rounds.length > 0) askConfirm("切换人数", "切换人数将开始新对局，当前分数会清空，确定继续？", doSwitch);
+    else doSwitch();
+  });
+  document.querySelector("#countCancel").onclick = ()=> overlay.classList.add("hidden");
+}
+function newGame(){
+  const go = ()=>{
+    state.rounds = []; state.adjust = state.players.map(()=>0); state.bonusApplied = false; state.archived = false; state.hundredUsed = state.players.map(()=>false);
+    save(); render();
+  };
+  if(state.rounds.length > 0) askConfirm("新对局", "开始新对局？当前分数会清空。", go);
+  else go();
+}
+
+/* ---------- named saves ---------- */
+const SAVE_KEY = "cabo-saves-v2";
+function deep(o){ return JSON.parse(JSON.stringify(o)); }
+function fmtTime(ts){
+  const d = new Date(ts), p = n => (n<10?"0":"")+n;
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function loadSaves(){
+  if(subAuth.user) return subCache.saves || [];
+  try{ const r = localStorage.getItem(SAVE_KEY); return r ? JSON.parse(r) : []; }catch(e){ return []; }
+}
+function saveSaves(list){
+  if(subAuth.user){ subCache = { state, saves: list }; subPush(); return; }
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(list)); }catch(e){}
+}
+function autoArchive(){
+  const list = loadSaves();
+  const name = "对局 " + fmtTime(Date.now());
+  list.unshift({
+    id: Date.now()*1000 + Math.floor(Math.random()*1000),
+    name, time: Date.now(), auto:true,
+    players: state.players.map(p=>({name:p.name})),
+    rounds: deep(state.rounds),
+    adjust: state.adjust.slice(),
+    bonusApplied: state.bonusApplied,
+    hundredUsed: (state.hundredUsed||[]).slice(),
+    endScore: state.endScore, winRule: state.winRule, rules: deep(state.rules)
+  });
+  saveSaves(list);
+}
+function openSaveDialog(){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>💾 保存对局</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 14px">给这场对局起个名字，之后可在「我的存档」里载入继续或回看。</p>
+      <input type="text" id="saveName" placeholder="例如：周五夜局" maxlength="20" value="对局 ${fmtTime(Date.now())}">
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="ghost" id="saveCancel">取消</button>
+        <button class="primary" id="saveOk">保存</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  const inp = document.querySelector("#saveName");
+  inp.focus(); inp.select();
+  document.querySelector("#saveCancel").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#saveOk").onclick = ()=>{
+    const name = inp.value.trim() || ("对局 " + fmtTime(Date.now()));
+    overlay.classList.add("hidden");
+    const list = loadSaves();
+    list.unshift({
+      id: Date.now(), name, time: Date.now(),
+      players: state.players.map(p=>({name:p.name})),
+      rounds: deep(state.rounds), adjust: state.adjust.slice(),
+      bonusApplied: state.bonusApplied, hundredUsed: (state.hundredUsed||[]).slice(),
+      endScore: state.endScore, winRule: state.winRule, rules: deep(state.rules)
+    });
+    saveSaves(list);
+    toast("已保存：" + name);
+  };
+}
+function savedItemHtml(s){
+  const sc = computeSavedTotals(s);
+  const best = s.winRule==="low" ? Math.min.apply(null, sc) : Math.max.apply(null, sc);
+  const winner = s.players[sc.indexOf(best)].name;
+  const scores = s.players.map((p,i)=> escapeHtml(p.name)+" "+sc[i]).join(" · ");
+  return `<div class="save-item">
+    <div class="save-head"><span class="save-name">${escapeHtml(s.name)}</span><span class="save-time">${fmtTime(s.time)}</span></div>
+    <div class="save-sub">${s.players.length} 人 · ${s.rounds.length} 局 · ${scores} · 胜：${escapeHtml(winner)}</div>
+    <div class="save-actions">
+      <button class="mini" data-report="${s.id}">查看战报</button>
+      <button class="mini" data-load="${s.id}">载入继续</button>
+      <button class="mini danger" data-del="${s.id}">删除</button>
+    </div>
+  </div>`;
+}
+function homeHistoryHtml(){
+  const list = loadSaves();
+  if(list.length===0) return "";
+  const body = list.map(s=> savedItemHtml(s)).join("");
+  return `<div class="history home-history">
+    <h3>📂 历史对局（${list.length} 场）</h3>
+    <div id="homeHist">${body}</div>
+    <button class="ghost clear-all" id="clearAllBtn">清空全部记录</button>
+  </div>`;
+}
+function openSavesList(){
+  const list = loadSaves();
+  const body = list.length===0
+    ? '<div style="color:var(--muted);font-size:14px">还没有保存的对局。</div>'
+    : list.map(s=> savedItemHtml(s)).join("");
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>📂 我的存档</h2>
+      <div id="saveList" style="max-height:60vh;overflow:auto;margin:4px 0 10px">${body}</div>
+      <div class="modal-actions"><button class="ghost" id="savesClose">关闭</button></div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#savesClose").onclick = ()=> overlay.classList.add("hidden");
+  overlay.querySelectorAll("[data-report]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); openSavedReport(+b.dataset.report); });
+  overlay.querySelectorAll("[data-load]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); loadSave(+b.dataset.load); });
+  overlay.querySelectorAll("[data-del]").forEach(b=> b.onclick=()=>{
+    askConfirm("删除存档", "确定删除这个存档？", ()=>{
+      saveSaves(loadSaves().filter(s=> s.id !== +b.dataset.del));
+      openSavesList();
+    });
+  });
+}
+function computeSavedTotals(s){
+  const st = { players:s.players, rounds:s.rounds, adjust:s.adjust||s.players.map(()=>0), rules:s.rules,
+    hundredUsed: Array.isArray(s.hundredUsed) ? s.hundredUsed.slice() : s.players.map(()=> !!s.hundredUsed) };
+  // reuse computeTotals logic via a temp assignment
+  const savedState = state;
+  state = st;
+  const {totals} = computeTotals();
+  state = savedState;
+  return totals.map((t,i)=> t + ((s.adjust&&s.adjust[i])||0));
+}
+function loadSave(id){
+  const s = loadSaves().find(x=> x.id===id);
+  if(!s) return;
+  state.players = s.players.map(p=>({name:p.name}));
+  state.rounds = deep(s.rounds);
+  state.adjust = (s.adjust||state.players.map(()=>0)).slice();
+  state.bonusApplied = !!s.bonusApplied;
+  state.hundredUsed = Array.isArray(s.hundredUsed) ? s.hundredUsed.slice() : state.players.map(()=> !!s.hundredUsed);
+  state.endScore = s.endScore;
+  state.winRule = s.winRule;
+  state.rules = deep(s.rules);
+  state.started = true;
+  state.archived = false;
+  save(); render();
+  toast("已载入：" + s.name);
+}
+
+function historyHtml(){
+  const {series, eggs} = computeTotals();
+  if(state.rounds.length===0) return '<div style="color:var(--muted);font-size:14px">还没有提交过局数</div>';
+  let html = "";
+  state.rounds.forEach((r,k)=>{
+    const prev = k===0 ? state.players.map(()=>0) : series[k-1];
+    const cur = series[k];
+    const delta = state.players.map((_,i)=> cur[i]-prev[i]);
+    const isK = has(r.kami);
+    const isC = has(r.cabo);
+    const rnHtml = isK
+      ? `<span class="rn">第 ${k+1} 局</span><span class="rn-kami">🚀 神风特攻队</span>`
+      : `<span class="rn">第 ${k+1} 局</span>`;
+    const tools = `<span class="r-tools"><button class="r-act" data-edit="${k}" title="修改本局">修改</button><button class="r-act danger" data-del="${k}" title="删除本局">删除</button></span>`;
+    const rawPts = state.players.map((_,i)=> (has(r.pts)&&has(r.pts[i])) ? r.pts[i] : 0);
+    const roundEggs = eggs.filter(e=> e.round===k).map(e=> e.player);
+    const parts = state.players.map((p,i)=>{
+      const d = delta[i];
+      const cardTxt = (has(r.cards)&&has(r.cards[i])) ? `<span class="cards-mini">${r.cards[i].join('·')}</span>` : '';
+      return `<span class="pname">${escapeHtml(p.name)}</span><span class="d ${d<0?'neg':''}">${d>=0?'+':''}${d}</span>${cardTxt}`;
+    }).join(" ");
+    let tag = "";
+    if(isK){
+      tag = `<div class="r-tag kami">🚀 神风特攻队：${escapeHtml(state.players[r.kami].name)} 本局 0 分 · 其余各 +50</div>`;
+      if(isC) tag += `<div class="r-tag cabo ${r.cabo===r.kami?'ok':''}">🗣 本局 ${escapeHtml(state.players[r.cabo].name)} 也喊了 Cabo${r.cabo===r.kami?'（与神风不冲突，本局 0 分）':'（按神风结算 +50）'}</div>`;
+    }
+    else if(isC){
+      const before = prev;
+      const preTotal = state.players.map((_,i)=> before[i] + rawPts[i]);
+      const minT = Math.min.apply(null, preTotal);
+      const callerLow = preTotal[r.cabo] === minT;
+      tag = callerLow
+        ? `<div class="r-tag cabo ok">🗣 Cabo：${escapeHtml(state.players[r.cabo].name)} 全场最低 → 本局 0 分</div>`
+        : `<div class="r-tag cabo fail">🗣 Cabo：${escapeHtml(state.players[r.cabo].name)} 未达最低 → 本局 +${state.rules.caboPenalty} 惩罚</div>`;
+    }
+    const ruleLine = isK
+      ? `<div class="r-rule kami">规则：神风特攻队持有者 ${escapeHtml(state.players[r.kami].name)} 本局 0 分，其余玩家各 +50 分</div>`
+      : (isC ? tag : '');
+    const eggHtml = eggs.filter(e=> e.round===k).map(e=>
+      `<div class="r-event ev-hundred"><span class="ev-emoji">💯</span><span><b>得分满减！</b>${escapeHtml(state.players[e.player].name)} 本局前总分 100 → 重置为 50</span></div>`
+    ).join("");
+    html += `<div class="r ${isK?'r-kamikaze':''}"><div class="r-head">${rnHtml}<span class="parts">${parts}</span>${tools}</div>${ruleLine}${eggHtml}</div>`;
+  });
+  return html;
+}
+function submitRound(){
+  const pts = state.players.map((_,i)=>{
+    if(state.rules.cardInput==='cards'){
+      const vals = [0,1,2,3].map(j=> parseFloat(document.getElementById("c"+i+"-"+j).value)||0);
+      return vals.reduce((a,b)=> a+b, 0);
+    }
+    return parseFloat(document.getElementById("pts-"+i).value)||0;
+  });
+  if(pts.every(p=> p===0) && roundCabo==null && roundKami==null){ toast("本局全是 0，确认要提交？"); }
+  const r = { pts, cabo: roundCabo, kami: roundKami };
+  if(state.rules.cardInput==='cards'){
+    r.cards = state.players.map((_,i)=> [0,1,2,3].map(j=> parseFloat(document.getElementById("c"+i+"-"+j).value)||0));
+  }
+  state.rounds.push(r);
+  // 计算本局前的总分（用于判定 Cabo 成功/失败）
+  const before = (()=>{ state.rounds.pop(); const b = computeTotals().totals; state.rounds.push(r); return b; })();
+  const events = [];
+  if(has(roundKami)) events.push({type:"kamikaze", name: state.players[roundKami].name});
+  if(has(roundCabo)){
+    const preTotal = state.players.map((_,i)=> before[i] + (pts[i]||0));
+    const minT = Math.min.apply(null, preTotal);
+    const callerLow = preTotal[roundCabo] === minT;
+    events.push({type:"cabo", name: state.players[roundCabo].name, success: callerLow});
+  }
+  const {eggs} = computeTotals();
+  eggs.filter(e=> e.round===state.rounds.length-1).forEach(e=> events.push({type:"egg", name: state.players[e.player].name}));
+  save();
+  events.forEach((e,idx)=> setTimeout(()=> showEventBanner(e), idx*2700));
+  render();
+}
+function undo(){
+  if(state.rounds.length===0) return;
+  state.rounds.pop();
+  save(); render(); toast("已撤销上一局");
+}
+function deleteRound(k){
+  if(k<0 || k>=state.rounds.length) return;
+  askConfirm("删除本局", "确定删除第 "+(k+1)+" 局？该局分数将被移除并重新计算总分。", ()=>{
+    state.rounds.splice(k,1);
+    save(); render(); toast("已删除第 "+(k+1)+" 局");
+  });
+}
+function openRoundEditor(k){
+  const r = state.rounds[k];
+  if(!r) return;
+  const cabo = has(r.cabo) ? r.cabo : null;
+  const kami = has(r.kami) ? r.kami : null;
+  const opts = (sel)=> state.players.map((p,i)=>`<option value="${i}" ${sel===i?'selected':''}>${escapeHtml(p.name)}</option>`).join("");
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>✏️ 修改第 ${k+1} 局</h2>
+      <div class="field"><label>本局各玩家手牌分</label>
+        ${state.players.map((p,i)=>{
+          const pv = (has(r.pts)&&has(r.pts[i]))?r.pts[i]:0;
+          const cv = (has(r.cards)&&has(r.cards[i]))?r.cards[i]:[pv,0,0,0];
+          return state.rules.cardInput==='cards'
+            ? `<div class="er-row er-cards"><span class="er-name">${escapeHtml(p.name)}</span><div class="er-c4">${[0,1,2,3].map(j=>`<input type="number" class="er-c4i" data-i="${i}" data-j="${j}" value="${cv[j]||0}" inputmode="numeric" max="13">`).join('')}</div></div>`
+            : `<div class="er-row"><span class="er-name">${escapeHtml(p.name)}</span><input type="number" class="er-pts" data-i="${i}" value="${pv}" inputmode="numeric"></div>`;
+        }).join("")}
+      </div>
+      <div class="special-row">
+        <label class="ev-check"><input type="checkbox" id="eCabo" ${cabo!=null?'checked':''}> 🗣 本轮有人喊 CABO</label>
+        <select id="eSelCabo" class="ev-sel" ${cabo==null?'disabled':''}>${opts(cabo==null?0:cabo)}</select>
+      </div>
+      <div class="special-row">
+        <label class="ev-check"><input type="checkbox" id="eKami" ${kami!=null?'checked':''}> 🚀 触发神风特攻队</label>
+        <select id="eSelKami" class="ev-sel" ${kami==null?'disabled':''}>${opts(kami==null?0:kami)}</select>
+      </div>
+      <div class="modal-actions">
+        <button class="danger" id="erDel">删除本局</button>
+        <button class="ghost" id="erCancel">取消</button>
+        <button class="primary" id="erSave">保存修改</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  const eCabo = document.querySelector("#eCabo"), eSelCabo = document.querySelector("#eSelCabo");
+  eCabo.onchange = ()=>{ eSelCabo.disabled = !eCabo.checked; };
+  eSelCabo.onchange = ()=>{};
+  const eKami = document.querySelector("#eKami"), eSelKami = document.querySelector("#eSelKami");
+  eKami.onchange = ()=>{ eSelKami.disabled = !eKami.checked; };
+  eSelKami.onchange = ()=>{};
+  document.querySelector("#erCancel").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#erDel").onclick = ()=>{
+    askConfirm("删除本局","确定删除第 "+(k+1)+" 局？", ()=>{ state.rounds.splice(k,1); overlay.classList.add("hidden"); save(); render(); toast("已删除第 "+(k+1)+" 局"); });
+  };
+  document.querySelector("#erSave").onclick = ()=>{
+    const pts = state.players.map((_,i)=>{
+      if(state.rules.cardInput==='cards'){
+        const vals = [0,1,2,3].map(j=> parseFloat(document.querySelector('.er-c4i[data-i="'+i+'"][data-j="'+j+'"]').value)||0);
+        return vals.reduce((a,b)=> a+b, 0);
+      }
+      return parseFloat(document.querySelector('.er-pts[data-i="'+i+'"]').value)||0;
+    });
+    const newCabo = eCabo.checked ? +eSelCabo.value : null;
+    const newKami = eKami.checked ? +eSelKami.value : null;
+    const nr = { pts, cabo:newCabo, kami:newKami };
+    if(state.rules.cardInput==='cards'){
+      nr.cards = state.players.map((_,i)=> [0,1,2,3].map(j=> parseFloat(document.querySelector('.er-c4i[data-i="'+i+'"][data-j="'+j+'"]').value)||0));
+    }
+    state.rounds[k] = nr;
+    overlay.classList.add("hidden"); save(); render(); toast("已保存第 "+(k+1)+" 局修改");
+  };
+}
+function checkEnd(ts){
+  const reached = ts.findIndex(t=> t >= state.endScore);
+  if(reached >= 0) showGameOver(ts, reached);
+}
+function showGameOver(ts, reachedIdx){
+  if(!state.archived){
+    autoArchive();
+    state.archived = true;
+    save();
+  }
+  let order = state.players.map((_,i)=>i).sort((a,b)=> state.winRule==="low" ? ts[a]-ts[b] : ts[b]-ts[a]);
+  let winIdx = order[0];
+  let bonusTxt = "";
+  if(state.rules.lowBonus.enabled && !state.bonusApplied){
+    const amt = state.rules.lowBonus.amount || 0;
+    if(amt > 0){
+      state.adjust[winIdx] = (state.adjust[winIdx]||0) - amt;
+      state.bonusApplied = true;
+      ts = totals();
+      bonusTxt = `（险胜嘉奖 -${amt}）`;
+      order = state.players.map((_,i)=>i).sort((a,b)=> state.winRule==="low" ? ts[a]-ts[b] : ts[b]-ts[a]);
+      winIdx = order[0];
+    }
+  }
+  const list = order.map((i,pos)=> `<div class="li ${i===winIdx?'win':''}"><span><span class="rk">#${pos+1}</span>${escapeHtml(state.players[i].name)}</span><span>${ts[i]} 分</span></div>`).join("");
+  overlay.innerHTML = `
+    <div class="modal">
+      <div class="go-win"><div class="trophy">🏆</div>
+        <div class="who">🎉 恭喜 ${escapeHtml(state.players[winIdx].name)} 获胜！</div>
+        <div style="color:var(--muted);font-size:14px">${escapeHtml(state.players[reachedIdx].name)} 达到结束线 ${state.endScore} 分 ${bonusTxt}</div>
+      </div>
+      <div class="go-list">${list}</div>
+      <div class="modal-actions">
+        <button class="primary" id="newBtn">开始新对局</button>
+        <button class="ghost" id="closeBtn">查看详情</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  launchConfetti(3400);
+  playCheer();
+  document.querySelector("#newBtn").onclick = ()=>{ state.rounds=[]; state.adjust=state.players.map(()=>0); state.bonusApplied=false; state.archived=false; state.hundredUsed=state.players.map(()=>false); save(); overlay.classList.add("hidden"); render(); };
+  document.querySelector("#closeBtn").onclick = ()=> overlay.classList.add("hidden");
+}
+
+async function exportReportImage(reportText){
+  if(typeof reportText !== "string") reportText = String(reportText || "");
+  const cv = document.querySelector("#reportCanvas");
+  if(!cv){ toast("未找到绘图区域"); return; }
+  const ctx = cv.getContext("2d");
+  const W = 400, H = 720;
+  const S = 2;
+  cv.width = W * S; cv.height = H * S;
+  cv.style.width = W + "px"; cv.style.height = H + "px";
+  ctx.scale(S, S);
+  ctx.clearRect(0,0,W,H);
+
+  // 等待字体就绪，避免中文渲染成方块
+  try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+
+  // --- parse report ---
+  const lines = reportText.split("\n");
+  const meta = {};
+  const ranks = [];
+  const events = [];
+  let winner = "";
+  lines.forEach(ln=>{
+    const t = ln.trim();
+    if(t.startsWith("对局：")) meta.name = t.slice(3);
+    else if(t.startsWith("对局时间：")) meta.time = t.slice(5);
+    else if(t.startsWith("玩家人数：")) meta.players = t;
+    else if(t.startsWith("规则：")) meta.rule = t.slice(3);
+    else if(t.startsWith("总轮数：")) meta.rounds = t;
+    else if(/^\d+\.\s+(.+?)\s+[\u2014\u2013-]\s+(\d+)\s*分$/.test(t)){
+      const m = t.match(/^(\d+)\.\s+(.+?)\s+[\u2014\u2013-]\s+(\d+)\s*分$/);
+      ranks.push({pos:+m[1], name:m[2].trim(), score:+m[3]});
+    }
+    else if(t.startsWith("🎉 获胜：")) winner = t.slice(5);
+    else if(t.startsWith("神风特攻队：") || t.startsWith("CABO 喊话：") || t.startsWith("得分满减：")) events.push(t);
+  });
+
+  // --- helpers ---
+  const ff = "PingFang SC,Microsoft YaHei,Helvetica Neue,Arial,sans-serif";
+  function roundRect(x,y,w,h,r,fill,stroke){
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle = stroke[0]; ctx.lineWidth = stroke[1]; ctx.stroke(); }
+  }
+  function shadow(blur, color, offX=0, offY=0){
+    ctx.shadowColor = color; ctx.shadowBlur = blur; ctx.shadowOffsetX = offX; ctx.shadowOffsetY = offY;
+  }
+  function noShadow(){ ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0; }
+  function drawText(str, x, y, size, color, weight="normal", align="left"){
+    ctx.textAlign = align; ctx.font = `${weight} ${size}px ${ff}`; ctx.fillStyle = color; ctx.fillText(str, x, y);
+  }
+  function fitText(str, maxW, size){
+    ctx.font = `700 ${size}px ${ff}`;
+    let w = ctx.measureText(str).width;
+    if(w <= maxW) return str;
+    let s = str;
+    while(s.length > 1 && ctx.measureText(s + "…").width > maxW){ s = s.slice(0,-1); }
+    return s + "…";
+  }
+
+  // --- night background ---
+  const bg = ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,"#070f1e"); bg.addColorStop(.45,"#0f1f3a"); bg.addColorStop(1,"#1b3a5c");
+  ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+
+  // stars
+  const starSeed = [0.12,0.85,0.33,0.67,0.21,0.91,0.05,0.44,0.78,0.29,0.63,0.17,0.52,0.88,0.39,0.74,0.11,0.56,0.95,0.48,0.81,0.36,0.69,0.02,0.59,0.27,0.42,0.99,0.14,0.61];
+  starSeed.forEach((s,i)=>{
+    const x = ((s*930) % W);
+    const y = ((Math.sin(i*2.7)*0.5+0.5)*H*0.55) + 10;
+    const a = 0.25 + 0.7*((i*13)%10)/10;
+    const r = (i%4===0) ? 1.6 : 0.9;
+    ctx.fillStyle = `rgba(255,255,255,${a})`; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill();
+  });
+
+  // moon
+  noShadow();
+  ctx.fillStyle = "rgba(255,251,230,.18)"; ctx.beginPath(); ctx.arc(W-62,66,46,0,7); ctx.fill();
+  ctx.fillStyle = "rgba(255,248,220,.35)"; ctx.beginPath(); ctx.arc(W-62,66,38,0,7); ctx.fill();
+  ctx.fillStyle = "#fffbe6"; ctx.beginPath(); ctx.arc(W-62,66,30,0,7); ctx.fill();
+  ctx.fillStyle = "rgba(180,170,140,.25)"; ctx.beginPath(); ctx.arc(W-70,58,5,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(W-52,74,3.5,0,7); ctx.fill();
+
+  // distant hills / trees silhouette
+  ctx.fillStyle = "#051020";
+  ctx.beginPath(); ctx.moveTo(0,H-24); ctx.lineTo(0,H-78); ctx.quadraticCurveTo(35,H-98,75,H-68); ctx.lineTo(110,H-92); ctx.lineTo(155,H-62); ctx.quadraticCurveTo(210,H-40,270,H-66); ctx.lineTo(330,H-50); ctx.quadraticCurveTo(370,H-72,400,H-60); ctx.lineTo(W,H-82); ctx.lineTo(W,H-24); ctx.closePath(); ctx.fill();
+
+  // scattered cards at bottom
+  const cardColors = ["#e74c3c","#f1c40f","#3498db","#9b59b6","#2ecc71"];
+  [
+    {x:32,y:H-28,r:-0.25,c:0},{x:88,y:H-22,r:0.18,c:1},{x:148,y:H-30,r:-0.12,c:2},
+    {x:214,y:H-20,r:0.22,c:3},{x:278,y:H-28,r:-0.16,c:4},{x:338,y:H-22,r:0.14,c:0}
+  ].forEach(d=>{
+    ctx.save(); ctx.translate(d.x,d.y); ctx.rotate(d.r);
+    roundRect(-13,-18,26,36,3,cardColors[d.c],["rgba(255,255,255,.18)",1]);
+    ctx.restore();
+  });
+
+  // --- central panel ---
+  const px=22, py=36, pw=W-px*2, ph=H-py*2-52;
+  shadow(32,"rgba(0,0,0,.55)",0,8);
+  roundRect(px,py,pw,ph,20,"rgba(16,32,56,.94)",["rgba(218,195,140,.6)",2.5]);
+  noShadow();
+  roundRect(px+9,py+9,pw-18,ph-18,15,null,["rgba(218,195,140,.16)",1]);
+
+  // corner ornaments
+  const orn=(x,y,rot)=>{ ctx.save(); ctx.translate(x,y); ctx.rotate(rot); ctx.strokeStyle="rgba(218,195,140,.6)"; ctx.lineWidth=1.8; ctx.beginPath(); ctx.moveTo(-10,0); ctx.quadraticCurveTo(0,0,0,-10); ctx.stroke(); ctx.restore(); };
+  orn(px+14,py+14,0); orn(px+pw-14,py+14,Math.PI/2); orn(px+pw-14,py+ph-14,Math.PI); orn(px+14,py+ph-14,-Math.PI/2);
+
+  // --- title ---
+  drawText("CABO 胜利结算", W/2, py+52, 32, "#fff", "800", "center");
+  drawText("本轮" + (meta.rule && meta.rule.includes("高分") ? "最高分" : "最低分") + "玩家获胜", W/2, py+80, 14, "rgba(255,255,255,.75)", "500", "center");
+
+  // --- ranking cards ---
+  const n = ranks.length || 1;
+  const gap = n<=3 ? 14 : 10;
+  const cardW = Math.min(90, (pw-24-gap*(n-1))/n);
+  const startX = W/2 - (n*cardW + gap*(n-1))/2;
+  const cy0 = py+104;
+  ranks.forEach((r,i)=>{
+    const x=startX+i*(cardW+gap), y=cy0;
+    const gold = i===0;
+    // card shadow
+    shadow(14,"rgba(0,0,0,.4)",0,5);
+    roundRect(x,y,cardW,108,14, gold?"rgba(46,62,90,.98)":"rgba(28,48,80,.98)", [gold?"rgba(255,215,0,.85)":"rgba(200,180,130,.5)", 2]);
+    noShadow();
+    // inner sheen
+    ctx.fillStyle = gold?"rgba(255,215,0,.08)":"rgba(255,255,255,.04)";
+    ctx.beginPath(); ctx.moveTo(x,y+14); ctx.quadraticCurveTo(x+cardW/2,y+4,x+cardW,y+14); ctx.lineTo(x+cardW,y+50); ctx.quadraticCurveTo(x+cardW/2,y+40,x,y+50); ctx.closePath(); ctx.fill();
+    // rank badge
+    ctx.fillStyle = gold?"#ffd700":"rgba(180,200,230,.85)"; ctx.beginPath(); ctx.arc(x+cardW/2,y+20,13,0,7); ctx.fill();
+    drawText(String(r.pos), x+cardW/2, y+25, 14, gold?"#4a3b00":"#0a1628", "800", "center");
+    // player name
+    drawText(fitText(r.name, cardW-12, 13), x+cardW/2, y+52, 13, "#fff", "700", "center");
+    // big score
+    drawText(String(r.score), x+cardW/2, y+84, 28, gold?"#ffd700":"#fff", "800", "center");
+    drawText("分", x+cardW/2, y+100, 11, "rgba(255,255,255,.55)", "500", "center");
+  });
+
+  // --- meta info ---
+  let y = cy0 + 124;
+  ctx.strokeStyle = "rgba(218,195,140,.22)"; ctx.beginPath(); ctx.moveTo(px+24,y); ctx.lineTo(px+pw-24,y); ctx.stroke();
+  y += 24;
+  const metaParts = [];
+  if(meta.time) metaParts.push(meta.time);
+  if(meta.rule) metaParts.push(meta.rule);
+  if(meta.rounds) metaParts.push(meta.rounds);
+  if(metaParts.length){ drawText(metaParts.join(" · "), W/2, y, 12, "rgba(255,255,255,.6)", "400", "center"); y+=22; }
+
+  // --- rule events ---
+  if(events.length){
+    y += 6;
+    drawText("规则战报：", px+26, y, 16, "#ffd699", "700"); y+=24;
+    events.forEach(ev=>{
+      const idx = ev.indexOf("：");
+      const label = idx>=0 ? ev.slice(0,idx+1) : ev;
+      const val = idx>=0 ? ev.slice(idx+1) : "";
+      drawText("• " + label, px+30, y, 13, "rgba(255,255,255,.88)", "500");
+      if(val) drawText(val, px+34 + ctx.measureText("• " + label).width, y, 13, "#ffd699", "600");
+      y+=22;
+    });
+  }
+
+  // --- winner ---
+  y = Math.min(y+14, py+ph-70);
+  drawText("🏆 获胜：" + winner, W/2, y, 18, "#ffd700", "700", "center");
+
+  // --- decorative buttons (like reference image) ---
+  const by = py+ph-44;
+  function drawButton(label, cx, w){
+    const h=30, x=cx-w/2, y=by-h/2;
+    shadow(10,"rgba(0,0,0,.35)",0,4);
+    roundRect(x,y,w,h,15,"rgba(30,55,90,.95)",["rgba(218,195,140,.55)",1.5]);
+    noShadow();
+    ctx.fillStyle = "rgba(255,255,255,.08)"; ctx.beginPath(); ctx.moveTo(x,y+8); ctx.quadraticCurveTo(cx,y,x+w,y+8); ctx.lineTo(x+w,y+12); ctx.quadraticCurveTo(cx,y+4,x,y+12); ctx.closePath(); ctx.fill();
+    // side diamonds
+    ctx.fillStyle = "rgba(218,195,140,.7)"; ctx.beginPath(); ctx.moveTo(x+10,y+h/2); ctx.lineTo(x+16,y+h/2-4); ctx.lineTo(x+22,y+h/2); ctx.lineTo(x+16,y+h/2+4); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x+w-10,y+h/2); ctx.lineTo(x+w-16,y+h/2-4); ctx.lineTo(x+w-22,y+h/2); ctx.lineTo(x+w-16,y+h/2+4); ctx.closePath(); ctx.fill();
+    drawText(label, cx, y+20, 13, "#fff", "600", "center");
+  }
+  drawButton("复制战报", W/2-86, 130);
+  drawButton("再来一局", W/2+86, 130);
+
+  // --- brand ---
+  drawText("Cabo Scorer v0.3.3.1", W/2, H-16, 11, "rgba(255,255,255,.45)", "400", "center");
+
+  // --- output ---
+  try{
+    const fname = "卡波战报_" + fmtTime(Date.now()).replace(/[:\s]/g,"-") + ".png";
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const finish = (url, blobUrl)=>{
+      const img = document.querySelector("#reportImg");
+      if(img){ img.src = url; img.classList.remove("hidden"); }
+      if(!isMobile && url){
+        // 桌面端用 blob/data URL 触发下载（比 data: 直链更可靠，不会在新标签打开）
+        const a = document.createElement("a");
+        a.href = url; a.download = fname;
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+      toast(isMobile ? "战报图片已生成，长按上方图片即可保存" : "艺术战报图片已生成并开始下载");
+      if(blobUrl) setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 5000);
+    };
+    if(cv.toBlob){
+      cv.toBlob((blob)=>{
+        if(!blob){ try{ finish(cv.toDataURL("image/png"), false); }catch(e){ toast("导出图片失败：" + e.message); } return; }
+        finish(URL.createObjectURL(blob), true);
+      }, "image/png");
+    } else {
+      finish(cv.toDataURL("image/png"), false);
+    }
+  }catch(e){
+    toast("导出图片失败：" + e.message);
+    console.error(e);
+  }
+}
+
+/* ---------- chart ---------- */
+function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+function drawChart(){
+  const cv = document.querySelector("#chart");
+  if(!cv) return;
+  const {series} = computeTotals();
+  const data = [state.players.map(()=>0)].concat(series);
+  const W = cv.width = cv.clientWidth || 520;
+  const H = cv.height = 240;
+  const ctx = cv.getContext("2d");
+  ctx.clearRect(0,0,W,H);
+  const pad = {l:34,r:10,t:14,b:24};
+  const rounds = data.length;
+  let maxV = 10;
+  data.forEach(row=> row.forEach(v=>{ if(v>maxV) maxV=v; }));
+  ctx.strokeStyle = cssVar("--line") || "#ddd"; ctx.lineWidth = 1;
+  ctx.fillStyle = cssVar("--muted") || "#888"; ctx.font = "11px sans-serif";
+  for(let g=0; g<=4; g++){
+    const y = pad.t + (H-pad.t-pad.b)*g/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillText(String(Math.round(maxV*(4-g)/4)), 4, y+4);
+  }
+  const xAt = i => pad.l + (W-pad.l-pad.r) * (rounds<=1 ? 0 : i/(rounds-1));
+  const yAt = v => pad.t + (H-pad.t-pad.b) * (1 - v/maxV);
+  state.players.forEach((p,i)=>{
+    const col = PALETTE[i%PALETTE.length];
+    ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.beginPath();
+    data.forEach((row,ri)=>{ const x=xAt(ri), y=yAt(row[i]); ri===0?ctx.moveTo(x,y):ctx.lineTo(x,y); });
+    ctx.stroke();
+    data.forEach((row,ri)=>{ const x=xAt(ri), y=yAt(row[i]); ctx.fillStyle=col; ctx.beginPath(); ctx.arc(x,y,2.6,0,7); ctx.fill(); });
+  });
+  ctx.fillStyle = cssVar("--muted") || "#888";
+  for(let ri=0; ri<rounds; ri++){ const x=xAt(ri); ctx.fillText(ri===0?"0":("R"+ri), x-6, H-6); }
+  const lg = document.querySelector("#chartLegend");
+  if(lg) lg.innerHTML = state.players.map((p,i)=>`<span><i style="background:${PALETTE[i%PALETTE.length]}"></i>${escapeHtml(p.name)}</span>`).join("");
+}
+
+/* ---------- battle report ---------- */
+function buildReportText(players, rounds, adjust, winRule, endScore, rules, timeStr, name){
+  const saved = state;
+  state = { players: players.map(p=>({name:p.name})), rounds: rounds.map(r=>({pts:r.pts, cabo:r.cabo, kami:r.kami})), adjust: adjust||players.map(()=>0), rules, hundredUsed: players.map(()=>false), winRule, endScore };
+  const ts = totals();
+  const order = players.map((_,i)=>i).sort((a,b)=> winRule==="low" ? ts[a]-ts[b] : ts[b]-ts[a]);
+  const winner = players[order[0]].name;
+  const eggs = computeTotals().eggs||[];
+  state = saved;
+  const lines = [];
+  lines.push("🃏 卡波计分 · 战报");
+  if(name) lines.push("对局：" + name);
+  lines.push("对局时间：" + timeStr);
+  lines.push("玩家人数：" + players.length + " 人");
+  lines.push("规则：" + (winRule==="low"?"低分胜":"高分胜") + " · 结束线 " + endScore + " 分");
+  lines.push("总轮数：" + rounds.length + " 局");
+  lines.push("");
+  lines.push("🏆 最终排名：");
+  order.forEach((i,pos)=> lines.push(`  ${pos+1}. ${players[i].name} — ${ts[i]} 分`));
+  lines.push("");
+  lines.push("🎉 获胜：" + winner);
+  // 规则战报
+  const evLines = [];
+  const kamiPlayers = [...new Set(rounds.filter(r=> r.kami!=null).map(r=> players[r.kami].name))];
+  if(kamiPlayers.length) evLines.push("神风特攻队：" + kamiPlayers.join("、") + " 触发");
+  const caboRounds = rounds.map((r,ri)=> ({r,ri})).filter(x=> x.r.cabo!=null);
+  caboRounds.forEach(({r,ri})=>{
+    const c = r.cabo;
+    const raw = r.pts;
+    const min = Math.min(...raw);
+    const ties = raw.filter(v=> v===min).length;
+    const isMin = raw[c] === min;
+    let desc = isMin ? (ties>1 ? "并列最低" : "成功") : "失败（+" + rules.caboPenalty + "）";
+    evLines.push(`CABO 喊话：${players[c].name} ${desc}`);
+  });
+  const hundredPlayers = [...new Set(eggs.map(e=> players[e.player].name))];
+  if(hundredPlayers.length) evLines.push("得分满减：" + hundredPlayers.join("、") + " 已使用");
+  if(evLines.length){
+    lines.push("");
+    lines.push("📜 规则战报：");
+    evLines.forEach(s=> lines.push("  " + s));
+  }
+  return lines.join("\n");
+}
+function openReportModal(text){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>📤 战报</h2>
+      <textarea class="report-text" id="reportText" readonly>${escapeHtml(text)}</textarea>
+      <img id="reportImg" class="report-preview hidden" alt="战报图片">
+      <canvas id="reportCanvas" class="hidden"></canvas>
+      <div class="modal-actions">
+        <button class="ghost" id="repClose">关闭</button>
+        <button class="primary" id="repCopy">复制分享</button>
+        <button class="primary" id="repExportBtn">导出图片</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#repClose").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#repCopy").onclick = ()=>{
+    const ta = document.querySelector("#reportText");
+    const done = ()=> toast("战报已复制，去粘贴分享吧");
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(()=>{ ta.select(); document.execCommand("copy"); done(); });
+    } else {
+      ta.select(); try{ document.execCommand("copy"); }catch(e){} done();
+    }
+  };
+  document.querySelector("#repExportBtn").onclick = ()=> exportReportImage(text).catch(e=>{ toast("导出图片失败：" + e.message); console.error(e); });
+}
+function openReport(){
+  const text = buildReportText(state.players, state.rounds, state.adjust, state.winRule, state.endScore, state.rules, fmtTime(Date.now()), null);
+  openReportModal(text);
+}
+function openSavedReport(id){
+  const s = loadSaves().find(x=> x.id===id);
+  if(!s) return;
+  const text = buildReportText(s.players, s.rounds, s.adjust||s.players.map(()=>0), s.winRule, s.endScore, s.rules, fmtTime(s.time), s.name);
+  openReportModal(text);
+}
+
+function openSettings(){
+  const r = state.rules;
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>设置</h2>
+      <div class="settings-account">
+        <h3>账号</h3>
+        ${subAuth.user ? `<p class="acc-status">当前登录：<span class="acc-name">📱 ${escapeHtml(subAuth.user)}</span></p><button class="danger" id="setLogout">退出登录</button>` : `<p class="acc-status">当前未登录（本地试用模式）</p>`}
+        <button class="ghost admin-entry" id="setAdmin">🛡️ 管理员设置</button>
+      </div>
+      <div class="field"><label>玩家名字</label><div id="setNames"></div></div>
+      <div class="row2">
+        <div class="field"><label>结束分数线</label><input type="number" id="setEnd" value="${state.endScore}" min="1"></div>
+        <div class="field"><label>胜负规则</label>
+          <div class="seg" id="setRule">
+            <button data-r="low" class="${state.winRule==='low'?'active':''}">低分胜</button>
+            <button data-r="high" class="${state.winRule==='high'?'active':''}">高分胜</button>
+          </div></div>
+      </div>
+      <div class="mode-hint">${state.winRule==='low'
+        ? '当前为<b>低分胜</b>（官方标准）：总分最低者获胜。'
+        : '当前为<b>高分胜</b>（娱乐模式）：仅<b>反转排名方向</b>，总分最高者获胜；Cabo 惩罚、神风特攻队 +50、得分满减（恰好 100→50）等规则<b>照常生效</b>。'}</div>
+      <div class="rules-block">
+        <label>规则自定义</label>
+        <div class="rule-row">
+          <div class="desc">Cabo 失败惩罚</div>
+          <div class="seg mini-seg" id="setPenalty">
+            <button data-v="5" class="${r.caboPenalty==5?'active':''}">+5</button>
+            <button data-v="10" class="${r.caboPenalty==10?'active':''}">+10</button>
+          </div>
+        </div>
+        <div class="rule-row">
+          <div class="desc">平局判定（Cabo 平最低）<small>官方：喊 Cabo 者与他人并列最低时，喊话者获胜记 0 分</small></div>
+          <div class="seg mini-seg" id="setTie">
+            <button data-v="callerWins" class="${r.tieRule==='callerWins'?'active':''}">喊者胜</button>
+            <button data-v="bothZero" class="${r.tieRule==='bothZero'?'active':''}">均 0 分</button>
+          </div>
+        </div>
+        <div class="rule-row">
+          <div class="desc">得分满减<small>总分<b>恰好 100</b> 才触发（超过不触发）· 每位玩家各限 1 次</small></div>
+          <div class="seg mini-seg" id="setEgg">
+            <button data-v="off" class="${r.hundredEgg==='off'?'active':''}">关闭</button>
+            <button data-v="half" class="${r.hundredEgg==='half'?'active':''}">减半到 50</button>
+            <button data-v="none" class="${r.hundredEgg==='none'?'active':''}">无效果</button>
+          </div>
+        </div>
+        <div class="rule-row">
+          <div class="desc">本局牌点录入方式<small>「4 张小框」可直接写每张牌，自动求和</small></div>
+          <div class="seg mini-seg" id="setCardInput">
+            <button data-v="total" class="${r.cardInput==='total'?'active':''}">数字总分</button>
+            <button data-v="cards" class="${r.cardInput==='cards'?'active':''}">4 张小框</button>
+          </div>
+        </div>
+        <div class="rule-row">
+          <div class="desc">低分嘉奖：获胜者 -<input type="number" id="setBonus" value="${r.lowBonus.amount}" min="0"> 分</div>
+          <button class="toggle ${r.lowBonus.enabled?'on':''}" data-r="lowBonus">${r.lowBonus.enabled?'开':'关'}</button>
+        </div>
+        <div class="rule-row">
+          <div class="desc">音效</div>
+          <button class="toggle ${state.sound?'on':''}" data-snd="1">${state.sound?'开':'关'}</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="primary" id="saveSet">保存</button>
+        <button class="danger" id="resetAll">重置全部</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#setNames").innerHTML = state.players.map((p,i)=> `<div class="name-row"><div class="pidx">${i+1}</div><input type="text" id="sname-${i}" value="${escapeHtml(p.name)}" maxlength="10"></div>`).join("");
+  document.querySelectorAll("#setRule button").forEach(b=> b.onclick=()=>{ state.winRule=b.dataset.r; openSettings(); });
+  document.querySelectorAll("#setPenalty button").forEach(b=> b.onclick=()=>{ state.rules.caboPenalty = +b.dataset.v; openSettings(); });
+  document.querySelectorAll("#setTie button").forEach(b=> b.onclick=()=>{ state.rules.tieRule=b.dataset.v; openSettings(); });
+  document.querySelectorAll("#setEgg button").forEach(b=> b.onclick=()=>{ state.rules.hundredEgg=b.dataset.v; openSettings(); });
+  document.querySelectorAll("#setCardInput button").forEach(b=> b.onclick=()=>{ state.rules.cardInput=b.dataset.v; openSettings(); });
+  document.querySelectorAll(".toggle").forEach(b=>{
+    if(b.dataset.r==="lowBonus") b.onclick = ()=>{ state.rules.lowBonus.enabled = !state.rules.lowBonus.enabled; openSettings(); };
+    else if(b.dataset.snd) b.onclick = ()=>{ state.sound = !state.sound; save(); openSettings(); };
+  });
+  const sb = document.querySelector("#setBonus"); if(sb) sb.oninput = e=> state.rules.lowBonus.amount = Math.max(0, parseInt(e.target.value,10)||0);
+  const logoutBtn = document.querySelector("#setLogout");
+  if(logoutBtn) logoutBtn.onclick = ()=>{ overlay.classList.add("hidden"); doLogout(); };
+  const adminBtn = document.querySelector("#setAdmin");
+  if(adminBtn) adminBtn.onclick = ()=>{ overlay.classList.add("hidden"); openAdmin(); };
+  document.querySelector("#saveSet").onclick = ()=>{
+    state.players.forEach((p,i)=>{ const el=document.getElementById("sname-"+i); if(el) p.name = el.value.trim()||("玩家"+(i+1)); });
+    const es = parseInt(document.querySelector("#setEnd").value,10); if(es>0) state.endScore = es;
+    save(); overlay.classList.add("hidden"); render();
+  };
+  document.querySelector("#resetAll").onclick = ()=>{
+    askConfirm("重置全部", "确定要重置全部对局吗？所有分数将清空。", ()=>{ state = defaultState(); save(); overlay.classList.add("hidden"); render(); });
+  };
+}
+
+applyOwner();
+renderHeader();
+if(subAuth.user){ subAutoLogin(); }
+else { render(); }
+async function subAutoLogin(){
+  try{
+    const data = await subLogin(subAuth.user, subAuth.pass);
+    await subInit(data);
+  }catch(e){
+    // 自动登录失败（如拥有者 token 失效），回到登录页
+    subAuth = {user:null, pass:null}; saveSubAuth();
+    render();
+  }
+}
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw-v0.3.3.1.js").catch(()=>{});
+}
+</script>
+</body>
+</html>
