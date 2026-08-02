@@ -236,6 +236,12 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .save-time{color:var(--muted);font-size:12px;flex:0 0 auto}
 .save-auto{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;flex:0 0 auto}
 .save-sub{color:var(--muted);font-size:12.5px;margin:4px 0 9px;line-height:1.5}
+.save-note{display:inline-block;background:var(--accent-soft,#eef4ff);color:var(--accent,#1a73e8);font-size:12px;border-radius:8px;padding:2px 8px;margin-bottom:6px}
+.save-toolbar{display:flex;gap:8px;margin-bottom:10px;align-items:center}
+.save-toolbar input{flex:1;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--text);font-size:14px}
+.pc-right{display:flex;align-items:center;gap:8px}
+.pc-adj{flex:0 0 auto;padding:3px 9px;border-radius:9px;font-size:13px;font-weight:700;border:1px solid var(--line);background:var(--card);color:var(--accent);cursor:pointer}
+.pc-adj:active{transform:scale(.95)}
 .save-actions{display:flex;gap:8px}
 .mini{flex:1;padding:9px;border-radius:10px;font-size:13.5px;background:#f1f4f6;color:var(--text);box-shadow:none;font-weight:600}
 .mini.danger{background:transparent;color:var(--danger);box-shadow:none}
@@ -401,6 +407,8 @@ function normalize(){
       return { pts: state.players.map(()=>0), cabo:null, kami:null };
     });
   }
+  if(!state.lock || !Array.isArray(state.lock.members)) state.lock = {locked:false, members:[]};
+  else if(typeof state.lock.locked !== "boolean") state.lock.locked = false;
   // 给每位玩家分配稳定的展示颜色（计分卡 / 历史 / 图表 / 战报统一使用）
   state.players.forEach((p,i)=>{ if(!p.color) p.color = PALETTE[i % PALETTE.length]; });
 }
@@ -850,6 +858,7 @@ function renderGame(){
         <div class="action-panel">
           <div class="action-row">
             <button id="undoBtn">↩ 撤销上一局</button>
+            <button id="undoMultiBtn">↩ 撤销多局</button>
             <button id="clearBtn">🧹 重置本局</button>
           </div>
           <div class="action-row">
@@ -898,7 +907,10 @@ function renderGame(){
       <div class="player-card ${lead?'lead':''}" style="border-left:5px solid ${p.color}">
         <div class="pc-top">
           <div class="pc-name" id="pcName-${i}" title="点击修改名字">${escapeHtml(p.name)}<span class="rank-badge">#${rankOf[i]}</span>${lead?'<span class="crown">👑</span>':''}</div>
-          <div class="pc-total"><small>总分</small>${ts[i]}</div>
+          <div class="pc-right">
+            <button class="pc-adj" id="adj-${i}" title="手动补扣分数">±${state.adjust[i]||0}</button>
+            <div class="pc-total"><small>总分</small>${ts[i]}</div>
+          </div>
         </div>
         <div class="pc-inputs">
           ${state.rules.cardInput==='cards'
@@ -909,11 +921,18 @@ function renderGame(){
   });
   state.players.forEach((_,i)=>{
     document.querySelector("#pcName-"+i).onclick = ()=> editName(i);
+    const adjBtn = document.querySelector("#adj-"+i);
+    if(adjBtn) adjBtn.onclick = ()=> openAdjust(i);
   });
   renderSpecialPanel();
   document.querySelector("#submitBtn").onclick = submitRound;
+  if(roomIsReadOnly()){
+    const sb = document.querySelector("#submitBtn");
+    if(sb){ sb.disabled = true; sb.title = "房间已锁定，您为只读"; sb.style.opacity = .5; }
+  }
   document.querySelector("#autoSaveBtn").onclick = ()=>{ setAutoSaveOn(!autoSaveOn()); refreshAutoBtn(); toast(autoSaveOn()?"自动存档：开":"自动存档：关"); };
   document.querySelector("#undoBtn").onclick = undo;
+  document.querySelector("#undoMultiBtn").onclick = openUndoMulti;
   document.querySelector("#clearBtn").onclick = ()=>{ renderGame(); toast("已清空本局输入"); };
   document.querySelector("#backBtn").onclick = ()=>{ state.started=false; save(); render(); };
   document.querySelector("#countBtn").onclick = openCountPicker;
@@ -1156,6 +1175,7 @@ function openSaveDialog(){
       <h2>💾 保存对局</h2>
       <p style="color:var(--muted);font-size:14px;margin:0 0 14px">给这场对局起个名字，之后可在「我的存档」里载入继续或回看。</p>
       <input type="text" id="saveName" placeholder="例如：周五夜局" maxlength="20" value="对局 ${fmtTime(Date.now())}">
+      <input type="text" id="saveNote" placeholder="备注/标签（可选，如：8月2日线下局）" maxlength="20" style="margin-top:10px">
       <div class="modal-actions" style="margin-top:14px">
         <button class="ghost" id="saveCancel">取消</button>
         <button class="primary" id="saveOk">保存</button>
@@ -1167,10 +1187,11 @@ function openSaveDialog(){
   document.querySelector("#saveCancel").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#saveOk").onclick = ()=>{
     const name = inp.value.trim() || ("对局 " + fmtTime(Date.now()));
+    const note = (document.querySelector("#saveNote") && document.querySelector("#saveNote").value || "").trim();
     overlay.classList.add("hidden");
     const list = loadSaves();
     list.unshift({
-      id: Date.now(), name, time: Date.now(),
+      id: Date.now(), name, note, time: Date.now(),
       players: state.players.map(p=>({name:p.name})),
       rounds: deep(state.rounds), adjust: state.adjust.slice(),
       bonusApplied: state.bonusApplied, hundredUsed: (state.hundredUsed||[]).slice(),
@@ -1188,6 +1209,7 @@ function savedItemHtml(s){
   return `<div class="save-item ${s.auto?'save-item--auto':''}">
     <div class="save-head"><span class="save-name">${escapeHtml(s.name)}</span>${s.auto?'<span class="save-auto">自动</span>':''}<span class="save-time">${fmtTime(s.time)}</span></div>
     <div class="save-sub">${s.players.length} 人 · ${s.rounds.length} 局 · ${scores} · 胜：${escapeHtml(winner)}</div>
+    ${s.note ? `<div class="save-note">🏷 ${escapeHtml(s.note)}</div>` : ''}
     <div class="save-actions">
       <button class="mini" data-report="${s.id}">查看战报</button>
       <button class="mini" data-load="${s.id}">载入继续</button>
@@ -1214,19 +1236,43 @@ function openSavesList(){
   overlay.innerHTML = `
     <div class="modal">
       <h2>📂 我的存档</h2>
-      <div id="saveList" style="max-height:60vh;overflow:auto;margin:4px 0 10px">${body}</div>
+      <div class="save-toolbar">
+        <input type="text" id="saveFilter" placeholder="🔍 按备注/名称筛选" style="flex:1">
+        <button class="ghost" id="cloudPull">☁ 云端覆盖</button>
+      </div>
+      <div id="saveList" style="max-height:55vh;overflow:auto;margin:4px 0 10px">${body}</div>
       <div class="modal-actions"><button class="ghost" id="savesClose">关闭</button></div>
     </div>`;
   overlay.classList.remove("hidden");
+  const sf = overlay.querySelector("#saveFilter");
+  if(sf) sf.oninput = ()=>{
+    const q = sf.value.trim().toLowerCase();
+    const filtered = q ? loadSaves().filter(s=> (s.name||"").toLowerCase().includes(q) || (s.note||"").toLowerCase().includes(q)) : loadSaves();
+    overlay.querySelector("#saveList").innerHTML = filtered.length===0 ? '<div style="color:var(--muted);font-size:14px">没有匹配的存档。</div>' : pinnedSaves(filtered).map(s=> savedItemHtml(s)).join("");
+    bindSavesList();
+  };
+  const cp = overlay.querySelector("#cloudPull");
+  if(cp) cp.onclick = ()=> pullCloudSaves();
   document.querySelector("#savesClose").onclick = ()=> overlay.classList.add("hidden");
+  bindSavesList();
+}
+function bindSavesList(){
   overlay.querySelectorAll("[data-report]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); openSavedReport(b.dataset.report); });
   overlay.querySelectorAll("[data-load]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); loadSave(b.dataset.load); });
   overlay.querySelectorAll("[data-del]").forEach(b=> b.onclick=()=>{
     askConfirm("删除存档", "确定删除这个存档？", ()=>{
       saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del));
-      openSavesList();
+      renderSavesListBody(loadSaves());
     });
   });
+  overlay.querySelectorAll("[data-clearauto]").forEach(b=> b.onclick=()=>{
+    askConfirm("清空自动存档", "确定清空自动存档？此操作只删除自动存档，不影响其他手动存档。", ()=>{
+      clearAutoSave(); renderSavesListBody(loadSaves());
+    });
+  });
+}
+async function pullCloudSaves(){
+  toast("本地版无云端存档。请改用在线版并登录子账号（设置里）后，再使用「云端覆盖」。");
 }
 function computeSavedTotals(s){
   const st = { players:s.players, rounds:s.rounds, adjust:s.adjust||s.players.map(()=>0), rules:s.rules,
@@ -1356,6 +1402,50 @@ function undo(){
   if(state.rounds.length===0) return;
   state.rounds.pop();
   save(); autoSaveSnapshot(); render(); toast("已撤销上一局");
+}
+function undoRounds(n){
+  n = Math.max(1, Math.min(n|0, state.rounds.length));
+  if(n<=0 || state.rounds.length===0) return;
+  state.rounds.splice(state.rounds.length - n, n);
+  save(); autoSaveSnapshot(); render(); toast("已撤销最近 " + n + " 局");
+}
+function openUndoMulti(){
+  if(state.rounds.length===0){ toast("还没有可撤销的局"); return; }
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>↩ 撤销多局</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 12px">当前共 ${state.rounds.length} 局，输入要回退的局数（1 = 撤销上一局）。</p>
+      <input type="number" id="undoN" value="1" min="1" max="${state.rounds.length}" inputmode="numeric">
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="ghost" id="uCancel">取消</button>
+        <button class="primary" id="uOk">撤销</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  const inp = overlay.querySelector("#undoN"); inp.focus(); inp.select();
+  overlay.querySelector("#uCancel").onclick = ()=> overlay.classList.add("hidden");
+  overlay.querySelector("#uOk").onclick = ()=>{ const n = parseInt(inp.value,10)||1; overlay.classList.add("hidden"); undoRounds(n); };
+}
+function openAdjust(i){
+  if(roomIsReadOnly()){ toast("房间已锁定，您为只读，无法改分"); return; }
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>✏️ 调整 ${escapeHtml(state.players[i].name)} 的分数</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 12px">当前补扣值：<b>${state.adjust[i]||0}</b>。输入正数加分、负数扣分（不影响已记各局，独立记录）。</p>
+      <input type="number" id="adjVal" value="${state.adjust[i]||0}" inputmode="numeric">
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="ghost" id="adjCancel">取消</button>
+        <button class="primary" id="adjOk">确定</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  const inp = overlay.querySelector("#adjVal"); inp.focus(); inp.select();
+  overlay.querySelector("#adjCancel").onclick = ()=> overlay.classList.add("hidden");
+  overlay.querySelector("#adjOk").onclick = ()=>{
+    const v = parseInt(inp.value,10); const val = isNaN(v)?0:v;
+    state.adjust[i] = val; overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render();
+    toast("已调整 " + state.players[i].name + "：" + (val>=0?"+":"") + val + " 分");
+  };
 }
 function deleteRound(k){
   if(k<0 || k>=state.rounds.length) return;
@@ -2095,16 +2185,18 @@ function roomMqttConnect(code){
       if(topic !== mqttTopic) return;
       try{
         var msg = JSON.parse(payloadStr);
-        if(msg && msg.by && msg.by !== DEVICE_ID && msg.state){
-          room._retainRcvd = true;
-          if((msg.rev||0) > (room._seenRev||0)) room._seenRev = msg.rev;
-          // 只接受别的设备推来、且版本更新的数据（防止用旧数据覆盖队友）
-          if((msg.rev||0) > (room.rev||0)){
-            applyingRemote = true;
-            try{ state = msg.state; normalize(); render(); room.rev = msg.rev; roomSaveLocal(); }
-            finally{ applyingRemote = false; }
-          }
+      if(msg && msg.by && msg.by !== DEVICE_ID && msg.state){
+        room._retainRcvd = true;
+        if((msg.rev||0) > (room._seenRev||0)) room._seenRev = msg.rev;
+        // 房间已锁定且对方不在成员名单 → 忽略其推送（防外人闯入改分）
+        if(state.lock && state.lock.locked && state.lock.members.indexOf(msg.by) < 0) return;
+        // 只接受别的设备推来、且版本更新的数据（防止用旧数据覆盖队友）
+        if((msg.rev||0) > (room.rev||0)){
+          applyingRemote = true;
+          try{ state = msg.state; normalize(); render(); room.rev = msg.rev; roomSaveLocal(); }
+          finally{ applyingRemote = false; }
         }
+      }
       }catch(e){}
     }
   });
@@ -2112,6 +2204,7 @@ function roomMqttConnect(code){
 }
 function roomMqttPublish(){
   if(mqttClient && mqttConnected && mqttTopic){
+    if(roomIsReadOnly()) return false;   // 只读成员不推送
     try{
       room.rev = Math.max((room.rev||0) + 1, Date.now());
       mqttClient.publish(mqttTopic, JSON.stringify({ by: DEVICE_ID, rev: room.rev, at: Date.now(), state: state }), true);
@@ -2155,9 +2248,10 @@ function genRoomCode(){
   return s;
 }
 function roomLink(code){ return location.origin + location.pathname + "#r=" + code; }
-function roomSaveLocal(){ try{ localStorage.setItem(ROOM_KEY, JSON.stringify({code:room.code, rev:room.rev})); }catch(e){} }
+function roomSaveLocal(){ try{ localStorage.setItem(ROOM_KEY, JSON.stringify({code:room.code, rev:room.rev, isCreator: !!room.isCreator})); }catch(e){} }
 async function roomPush(){
   if(!room || !room.code || room.pushing) return;
+  if(roomIsReadOnly()) return;   // 只读成员不写云端
   room.pushing = true;
   try{
     room.rev = Math.max(room.rev + 1, Date.now());
@@ -2196,18 +2290,24 @@ function roomStartPoll(){ if(room.timer) return; room.timer = setInterval(roomPu
 function roomStopPoll(){ if(room.timer){ clearInterval(room.timer); room.timer = null; } }
 async function roomCreate(){
   room.code = genRoomCode(); room.rev = 0; room.err = null; room.isCreator = true;
+  state.lock = {locked:false, members:[DEVICE_ID]};
   try{ await roomPush(); }catch(e){ room.err = e.message; } // Gist 种子尽力而为，实时靠 MQTT
   roomMqttConnect(room.code);
   roomStartFallbackPoll();
   return room.code;
 }
-async function roomJoin(code){
+async function roomJoin(code, creator){
   code = String(code||"").trim().toUpperCase();
-  room.isCreator = false;
+  room.isCreator = !!creator;
   if(!ROOM_RE.test(code)) throw new Error("房间码为 6 位，只含数字 2-9 与字母（不含 I、O）");
   let d = null;
   try{ const c = await ghReadFile(roomFile(code)); if(c){ try{ d = JSON.parse(c); }catch(e){} } }catch(e){}
-  if(d && d.state){ room.code = code; room.rev = d.rev || 0; room.err = null; state = d.state; normalize(); render(); roomSaveLocal(); }
+  if(d && d.state){
+    room.code = code; room.rev = d.rev || 0; room.err = null; state = d.state; normalize(); render();
+    // 成员维护：未锁定则把本机加入成员；锁定则非成员视为只读
+    if(state.lock && !state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0) state.lock.members.push(DEVICE_ID);
+    roomSaveLocal();
+  }
   else { room.code = code; room.rev = 0; room.err = null; }
   roomMqttConnect(code);
   roomStartFallbackPoll();
@@ -2241,19 +2341,66 @@ function roomRefreshStatus(){
   else { txt = "🟡 轮询备份中（实时未连通）"; }
   st.className = cls; st.textContent = txt;
 }
+function roomIsReadOnly(){ return !!(state.lock && state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0); }
+async function roomForceSync(){
+  if(!room || !room.code) return;
+  let applied = false;
+  try{
+    const c = await ghReadFile(roomFile(room.code));
+    if(c){
+      const d = JSON.parse(c);
+      if(d && d.state && (d.rev||0) >= room.rev){
+        state = d.state; normalize(); render();
+        if(state.lock && !state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0) state.lock.members.push(DEVICE_ID);
+        room.rev = d.rev || room.rev; roomSaveLocal(); applied = true;
+      }
+    }
+  }catch(e){}
+  // 重新订阅 MQTT，立即拉取 broker 上的最新留存(RETAIN)消息
+  if(mqttClient && mqttConnected && mqttTopic){ try{ mqttClient.subscribe(mqttTopic); }catch(e){} }
+  // 若本地其实更新（云端没新数据），则把本地推上去，抹平差异
+  if(!applied){ try{ await roomPush(); }catch(e){} }
+  roomRefreshStatus();
+  toast(applied ? "✅ 已用云端最新数据覆盖本地" : "已与云端校对，本地即最新");
+}
+async function roomReconnect(){
+  let raw = null;
+  try{ raw = JSON.parse(localStorage.getItem(ROOM_KEY) || "null"); }catch(e){}
+  if(!raw || !raw.code){ toast("没有可重连的房间（可能已退出）"); return; }
+  try{ await roomJoin(raw.code, raw.isCreator); toast("已重连房间 " + room.code); render(); }
+  catch(e){ toast("重连失败：" + roomErrMsg(e)); }
+}
+async function roomToggleLock(){
+  if(!room || !room.isCreator) return;
+  state.lock = state.lock || {locked:false, members:[]};
+  state.lock.locked = !state.lock.locked;
+  if(state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0) state.lock.members.push(DEVICE_ID);
+  save(); render(); toast(state.lock.locked ? "🔒 房间已锁定（仅成员可改分）" : "🔓 房间已解锁");
+}
 function roomPanelHtml(){
   const _offline = (location.protocol === "file:" || location.hostname.indexOf("github.io") < 0);
   const _warn = _offline ? '<div style="background:#fff4e5;color:#b26a00;border:1px solid #ffd591;padding:8px 10px;border-radius:8px;font-size:13px;margin-bottom:12px">⚠ 当前不是在线地址，联机可能被浏览器拦截。请用 <b>https://feikong66.github.io/cabo/</b> 打开本页</div>' : '';
   if(!room.code){
+    let reconnectHtml = '';
+    try{
+      const raw = JSON.parse(localStorage.getItem(ROOM_KEY) || "null");
+      if(raw && raw.code){ reconnectHtml = `<button class="ghost" id="roomReconnect" style="width:100%;margin-top:8px">🔄 重连房间 ${raw.code}</button>`; }
+    }catch(e){}
     return _warn + `
       <p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方），<b>不需要登录账号</b>。</p>
       <button class="primary" id="roomCreate" style="width:100%;margin-bottom:16px">➕ 创建房间</button>
+      ${reconnectHtml}
       <div class="room-or"><span>已有房间码？</span></div>
       <input class="room-input" id="roomInput" maxlength="6" placeholder="ABC123" autocomplete="off" spellcheck="false" inputmode="latin">
       <button class="ghost" id="roomJoinBtn" style="width:100%;margin-top:10px">🔑 加入房间</button>`;
   }
   const link = roomLink(room.code);
   const qr = (typeof CABOQR !== "undefined" && CABOQR.svg(link, 190)) || '<div class="room-hint">二维码生成失败</div>';
+  const locked = !!(state.lock && state.lock.locked);
+  const readOnly = roomIsReadOnly();
+  const lockBtn = room.isCreator
+    ? `<button class="ghost" id="roomLock">${locked ? "🔓 解锁房间" : "🔒 锁定房间"}</button>`
+    : `<div class="room-hint">${locked ? (readOnly ? "🔒 房间已锁定：您为只读" : "🔒 房间已锁定") : "🔓 房间未锁定"}</div>`;
   return `
     <div class="room-hint" style="margin:0 0 2px">把房间码告诉队友，或让对方直接扫码加入</div>
     <div class="room-code">${room.code}</div>
@@ -2261,9 +2408,14 @@ function roomPanelHtml(){
     <div style="text-align:center"><span class="room-status" id="roomStat">🟢 实时已连接（毫秒级）</span></div>
     <div class="room-link">${escapeHtml(link)}</div>
     <div class="action-row" style="margin-top:14px">
+      <button class="ghost" id="roomCopyCode">📋 复制房间码</button>
       <button class="ghost" id="roomCopy">📋 复制链接</button>
-      <button class="ghost" id="roomSyncNow">⬇ 立即拉取</button>
     </div>
+    <div class="action-row">
+      <button class="ghost" id="roomSyncNow">⬇ 强制同步</button>
+      ${lockBtn}
+    </div>
+    ${readOnly ? '<div class="room-hint" style="color:var(--danger);text-align:center">⚠ 房间已锁定，您没有改分权限（只读）。需房主解锁或先把你加入房间再锁定。</div>' : ''}
     <button class="ghost" id="roomLeave" style="width:100%;margin-top:10px;color:var(--danger)">🚪 退出房间</button>`;
 }
 function openRoom(){
@@ -2305,7 +2457,17 @@ function bindRoomPanel(){
     else prompt("复制此链接：", url);
   };
   const sn = document.querySelector("#roomSyncNow");
-  if(sn) sn.onclick = async ()=>{ sn.disabled = true; sn.textContent = "拉取中…"; await roomPull(); sn.disabled = false; sn.textContent = "⬇ 立即拉取"; toast("已检查更新"); };
+  if(sn) sn.onclick = async ()=>{ sn.disabled = true; sn.textContent = "同步中…"; await roomForceSync(); sn.disabled = false; sn.textContent = "⬇ 强制同步"; };
+  const rc = document.querySelector("#roomCopyCode");
+  if(rc) rc.onclick = ()=>{
+    const code = room.code || "";
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(()=> toast("房间码已复制：" + code)).catch(()=> prompt("复制此房间码：", code));
+    else prompt("复制此房间码：", code);
+  };
+  const rlk = document.querySelector("#roomLock");
+  if(rlk) rlk.onclick = async ()=>{ await roomToggleLock(); redraw(); };
+  const rcn = document.querySelector("#roomReconnect");
+  if(rcn) rcn.onclick = async ()=>{ rcn.disabled = true; rcn.textContent = "重连中…"; await roomReconnect(); redraw(); };
   const lv = document.querySelector("#roomLeave");
   if(lv) lv.onclick = ()=>{ roomLeave(); overlay.classList.add("hidden"); toast("已退出房间"); };
 }
