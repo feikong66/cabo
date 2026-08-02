@@ -2255,17 +2255,22 @@ function roomMqttConnect(code){
     WSClass: WSClass,
     onStatus: function(s){
       mqttConnected = (s === "connected");
-      if(mqttConnected){ roomStopPoll(); roomMqttPublish(); }
-      else { roomStartFallbackPoll(); }
+      if(mqttConnected){
+        roomStopPoll();
+        // 房主：连接即回推(哪怕还是空房间)，让房间在 broker 上"存在"，队友才能加入
+        // 加入者：先等 broker 的留存消息，绝不用自己的空房间覆盖队友
+        if(room.isCreator || (room.rev||0) > 0) roomMqttPublish();
+      } else { roomStartFallbackPoll(); }
       roomRefreshStatus();
     },
     onMessage: function(topic, payloadStr){
       if(topic !== mqttTopic) return;
       try{
         var msg = JSON.parse(payloadStr);
-        if(msg && msg.by && msg.by !== DEVICE_ID && msg.state){
+        // 只接受别的设备推来、且版本更新的数据（关键：防止新加入者用空房间覆盖队友已有对局）
+        if(msg && msg.by && msg.by !== DEVICE_ID && msg.state && (msg.rev||0) > (room.rev||0)){
           applyingRemote = true;
-          try{ state = msg.state; normalize(); render(); room.rev = Math.max(room.rev||0, Date.now()); roomSaveLocal(); }
+          try{ state = msg.state; normalize(); render(); room.rev = msg.rev; roomSaveLocal(); }
           finally{ applyingRemote = false; }
         }
       }catch(e){}
@@ -2276,7 +2281,10 @@ function roomMqttConnect(code){
 }
 function roomMqttPublish(){
   if(mqttClient && mqttConnected && mqttTopic){
-    try{ mqttClient.publish(mqttTopic, JSON.stringify({ by: DEVICE_ID, at: Date.now(), state: state }), true); }catch(e){}
+    try{
+      room.rev = Math.max((room.rev||0) + 1, Date.now());
+      mqttClient.publish(mqttTopic, JSON.stringify({ by: DEVICE_ID, rev: room.rev, at: Date.now(), state: state }), true);
+    }catch(e){}
   }
 }
 function roomStartFallbackPoll(){
@@ -2353,7 +2361,7 @@ async function roomPull(){
 function roomStartPoll(){ if(room.timer) return; room.timer = setInterval(roomPull, ROOM_POLL); }
 function roomStopPoll(){ if(room.timer){ clearInterval(room.timer); room.timer = null; } }
 async function roomCreate(){
-  room.code = genRoomCode(); room.rev = 0; room.err = null;
+  room.code = genRoomCode(); room.rev = 0; room.err = null; room.isCreator = true;
   try{ await roomPush(); }catch(e){ room.err = e.message; } // Gist 种子尽力而为，实时靠 MQTT
   roomMqttConnect(room.code);
   roomStartFallbackPoll();
@@ -2361,6 +2369,7 @@ async function roomCreate(){
 }
 async function roomJoin(code){
   code = String(code||"").trim().toUpperCase();
+  room.isCreator = false;
   if(!ROOM_RE.test(code)) throw new Error("房间码为 6 位，只含数字 2-9 与字母（不含 I、O）");
   let d = null;
   try{ const c = await ghReadFile(roomFile(code)); if(c){ try{ d = JSON.parse(c); }catch(e){} } }catch(e){}
@@ -2380,6 +2389,7 @@ async function roomJoin(code){
   }
 }
 function roomLeave(){
+  room.isCreator = false;
   roomStopPoll();
   if(mqttClient){ try{ mqttClient.close(); }catch(e){} mqttClient = null; }
   mqttConnected = false;
