@@ -331,7 +331,7 @@ const has = v => v !== null && v !== undefined;
 
 let state = load();
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
-function save(){ localStorage.setItem(KEY, JSON.stringify(state)); roomPushDebounced(); }
+function save(){ localStorage.setItem(KEY, JSON.stringify(state)); if(!applyingRemote){ roomPushDebounced(); roomMqttPublish(); } }
 function defaultState(){
   return {
     started:false,
@@ -1891,6 +1891,115 @@ var DEVICE_ID = (function(){
     return d;
   }catch(e){ return "dev" + Math.random().toString(36).slice(2,8); }
 })();
+/* ===== 实时同步通道：MQTT over WebSocket（毫秒级，公共 broker，无需账号） ===== */
+const MQTT_BROKERS = [
+  "wss://broker.emqx.io:8084/mqtt",
+  "wss://broker.hivemq.com:8884/mqtt",
+  "wss://test.mosquitto.org:8081/mqtt"
+];
+var mqttClient = null, mqttTopic = null, mqttConnected = false, applyingRemote = false;
+const ROOM_POLL_BACKUP = 12000;
+function createMqtt(brokers, opts){
+  opts = opts || {};
+  var WS = opts.WSClass || (typeof WebSocket !== "undefined" ? WebSocket : null);
+  var keepAlive = opts.keepAlive || 30;
+  var clientId = opts.clientId || ("cabo-" + Math.random().toString(36).slice(2,10));
+  var enc = new TextEncoder(), dec = new TextDecoder();
+  var ws = null, buf = new Uint8Array(0), connected = false, pid = 1, subTopic = null;
+  var curBroker = 0, reconnectTimer = null, intentionallyClosed = false, pingTimer = null, queue = [];
+  var attempt = 0;
+  function concat(a,b){ var o = new Uint8Array(a.length + b.length); o.set(a,0); o.set(b,a.length); return o; }
+  function u8(x){ return (x instanceof Uint8Array) ? x : new Uint8Array(x); }
+  function strField(s){ var b = enc.encode(String(s)); return concat(new Uint8Array([(b.length>>8)&255, b.length&255]), b); }
+  function remLen(n){ var out=[]; do{ var x=n%128; n=Math.floor(n/128); if(n>0) x|=128; out.push(x); }while(n>0); return new Uint8Array(out); }
+  function finalize(type, body){ return concat(concat(new Uint8Array([type]), remLen(body.length)), body); }
+  function buildConnect(){ var proto=new Uint8Array([0,4,77,81,84,84]); var lvl=new Uint8Array([4]); var fl=new Uint8Array([2]); var ka=new Uint8Array([(keepAlive>>8)&255, keepAlive&255]); var body=concat(concat(concat(proto,lvl),concat(fl,ka)), strField(clientId)); return finalize(0x10, body); }
+  function buildSubscribe(t){ var id=new Uint8Array([(pid>>8)&255, pid&255]); pid=(pid+1)&0xffff; if(pid===0) pid=1; var body=concat(concat(id, strField(t)), new Uint8Array([0])); return finalize(0x82, body); }
+  function buildPublish(t, payload, retain){ var typeByte = retain ? 0x31 : 0x30; var body=concat(strField(t), u8(payload)); return finalize(typeByte, body); }
+  function buildPing(){ return new Uint8Array([0xc0,0x00]); }
+  function send(d){ if(ws && ws.readyState===1) ws.send(d); }
+  function parseRemLen(view, start){ var mult=1, value=0, i=start, bytes=0; while(true){ var b=view[i]; bytes++; value += (b & 127)*mult; mult*=128; i++; if((b & 128)===0) break; if(bytes>=4) break; } return { value:value, bytes:bytes }; }
+  function process(){ while(true){ if(buf.length < 2) return; var type = buf[0] & 0xf0; var rl = parseRemLen(buf, 1); var hl = 1 + rl.bytes; if(buf.length < hl + rl.value) return; var pkt = buf.subarray(0, hl + rl.value); buf = buf.subarray(hl + rl.value); handle(type, pkt, rl.value, hl); } }
+  function handle(type, pkt, rlValue, hl){
+    if(type === 0x20){ var rc = pkt[hl+1]; if(rc === 0){ connected = true; startPing(); if(subTopic) send(buildSubscribe(subTopic)); if(opts.onStatus) opts.onStatus("connected"); flush(); } else { if(opts.onStatus) opts.onStatus("error"); } }
+    else if(type === 0x90){ /* SUBACK */ }
+    else if(type === 0x30 || type === 0x32 || type === 0x34 || type === 0x36){ var tl = (pkt[hl]<<8) | pkt[hl+1]; var off = hl+2; var topic = dec.decode(pkt.subarray(off, off+tl)); off += tl; var qos = (pkt[0]>>1)&3; if(qos>0) off += 2; var payload = dec.decode(pkt.subarray(off)); if(opts.onMessage) opts.onMessage(topic, payload); }
+    else if(type === 0xd0){ /* PINGRESP */ }
+  }
+  function startPing(){ stopPing(); pingTimer = setInterval(function(){ if(connected) send(buildPing()); }, Math.max(10, Math.floor(keepAlive/2))*1000); }
+  function stopPing(){ if(pingTimer){ clearInterval(pingTimer); pingTimer=null; } }
+  function flush(){ while(queue.length){ send(queue.shift()); } }
+  function scheduleReconnect(){ if(reconnectTimer) return; var delay = Math.min(15000, Math.floor(1000*Math.pow(1.8, Math.min(attempt,6)))); attempt++; reconnectTimer = setTimeout(function(){ reconnectTimer=null; curBroker=(curBroker+1)%brokers.length; doConnect(); }, delay); }
+  function doConnect(){
+    if(!WS){ if(opts.onStatus) opts.onStatus("error"); return; }
+    if(curBroker >= brokers.length) curBroker = 0;
+    var url = brokers[curBroker];
+    if(opts.onStatus) opts.onStatus("connecting");
+    try{ ws = new WS(url); }catch(e){ if(opts.onStatus) opts.onStatus("error"); return; }
+    try{ ws.binaryType = "arraybuffer"; }catch(e){}
+    buf = new Uint8Array(0);
+    ws.onopen = function(){ send(buildConnect()); };
+    ws.onmessage = function(ev){
+      var data;
+      if(typeof ev.data === "string") data = enc.encode(ev.data);
+      else if(ev.data instanceof ArrayBuffer) data = new Uint8Array(ev.data);
+      else if(typeof Uint8Array !== "undefined" && ev.data instanceof Uint8Array) data = ev.data;
+      else if(ev.data && typeof ev.data.arrayBuffer === "function"){ ev.data.arrayBuffer().then(function(ab){ buf=concat(buf, new Uint8Array(ab)); process(); }); return; }
+      else data = new Uint8Array(ev.data);
+      buf = concat(buf, data); process();
+    };
+    ws.onerror = function(){ if(opts.onStatus) opts.onStatus("error"); };
+    ws.onclose = function(){ connected=false; stopPing(); if(intentionallyClosed) return; if(opts.onStatus) opts.onStatus("closed"); scheduleReconnect(); };
+  }
+  return {
+    connect: function(){ intentionallyClosed=false; attempt=0; doConnect(); },
+    subscribe: function(t){ subTopic = t; if(connected) send(buildSubscribe(t)); },
+    publish: function(t, p, retain){ var pkt = buildPublish(t, enc.encode(String(p)), !!retain); if(connected) send(pkt); else queue.push(pkt); },
+    close: function(){ intentionallyClosed=true; if(reconnectTimer){ clearTimeout(reconnectTimer); reconnectTimer=null; } stopPing(); if(ws){ try{ ws.close(); }catch(e){} } ws=null; connected=false; if(opts.onStatus) opts.onStatus("closed"); },
+    get connected(){ return connected; }
+  };
+}
+function roomMqttConnect(code){
+  mqttTopic = "cabo/" + code;
+  var WSClass = (typeof WebSocket !== "undefined") ? WebSocket : null;
+  mqttClient = createMqtt(MQTT_BROKERS, {
+    clientId: "cabo-" + DEVICE_ID + "-" + Math.random().toString(36).slice(2,6),
+    keepAlive: 30,
+    WSClass: WSClass,
+    onStatus: function(s){
+      mqttConnected = (s === "connected");
+      if(mqttConnected){ roomStopPoll(); roomMqttPublish(); }
+      else { roomStartFallbackPoll(); }
+      roomRefreshStatus();
+    },
+    onMessage: function(topic, payloadStr){
+      if(topic !== mqttTopic) return;
+      try{
+        var msg = JSON.parse(payloadStr);
+        if(msg && msg.by && msg.by !== DEVICE_ID && msg.state){
+          applyingRemote = true;
+          try{ state = msg.state; normalize(); render(); room.rev = Math.max(room.rev||0, Date.now()); roomSaveLocal(); }
+          finally{ applyingRemote = false; }
+        }
+      }catch(e){}
+    }
+  });
+  mqttClient.connect();
+  mqttClient.subscribe(mqttTopic);
+}
+function roomMqttPublish(){
+  if(mqttClient && mqttConnected && mqttTopic){
+    try{ mqttClient.publish(mqttTopic, JSON.stringify({ by: DEVICE_ID, at: Date.now(), state: state }), true); }catch(e){}
+  }
+}
+function roomStartFallbackPoll(){
+  if(mqttConnected){ roomStopPoll(); return; }
+  if(room.timer) return;
+  room.timer = setInterval(function(){
+    if(mqttConnected){ roomStopPoll(); return; }
+    roomPull();
+  }, ROOM_POLL_BACKUP);
+}
 function roomFile(code){ return "cabo-room-" + code + ".json"; }
 function roomErrMsg(e){
   const m = e && e.message ? String(e.message) : (e ? String(e) : "");
@@ -1958,23 +2067,35 @@ function roomStartPoll(){ if(room.timer) return; room.timer = setInterval(roomPu
 function roomStopPoll(){ if(room.timer){ clearInterval(room.timer); room.timer = null; } }
 async function roomCreate(){
   room.code = genRoomCode(); room.rev = 0; room.err = null;
-  await roomPush();
-  if(room.err){ const m = room.err; room.code = null; throw new Error(m); }
-  roomStartPoll();
+  try{ await roomPush(); }catch(e){ room.err = e.message; } // Gist 种子尽力而为，实时靠 MQTT
+  roomMqttConnect(room.code);
+  roomStartFallbackPoll();
   return room.code;
 }
 async function roomJoin(code){
   code = String(code||"").trim().toUpperCase();
   if(!ROOM_RE.test(code)) throw new Error("房间码为 6 位，只含数字 2-9 与字母（不含 I、O）");
-  const c = await ghReadFile(roomFile(code));
-  if(!c) throw new Error("房间不存在，请核对房间码");
-  let d; try{ d = JSON.parse(c); }catch(e){ throw new Error("房间数据损坏"); }
-  if(!d || !d.state) throw new Error("房间数据异常");
-  room.code = code; room.rev = d.rev || 0; room.err = null;
-  state = d.state; normalize(); render(); roomSaveLocal(); roomStartPoll();
+  let d = null;
+  try{ const c = await ghReadFile(roomFile(code)); if(c){ try{ d = JSON.parse(c); }catch(e){} } }catch(e){}
+  if(d && d.state){ room.code = code; room.rev = d.rev || 0; room.err = null; state = d.state; normalize(); render(); roomSaveLocal(); }
+  else { room.code = code; room.rev = 0; room.err = null; }
+  roomMqttConnect(code);
+  roomStartFallbackPoll();
+  // 无 Gist 种子时，等一小段时间看 MQTT 是否推来回旋/实时数据；都没有则判定房间不存在
+  if(!d){
+    await new Promise(function(res){ setTimeout(res, 2000); });
+    if(mqttConnected && room.rev > 0){ return; }
+    roomStopPoll();
+    if(mqttClient){ try{ mqttClient.close(); }catch(e){} mqttClient = null; }
+    mqttConnected = false;
+    room.code = null; room.rev = 0;
+    throw new Error("房间不存在，请核对房间码");
+  }
 }
 function roomLeave(){
   roomStopPoll();
+  if(mqttClient){ try{ mqttClient.close(); }catch(e){} mqttClient = null; }
+  mqttConnected = false;
   room.code = null; room.rev = 0; room.err = null;
   try{ localStorage.removeItem(ROOM_KEY); }catch(e){}
   if(location.hash.indexOf("#r=") === 0){ try{ history.replaceState(null,"",location.pathname); }catch(e){} }
@@ -1983,15 +2104,18 @@ function roomLeave(){
 function roomRefreshStatus(){
   const st = document.querySelector("#roomStat");
   if(!st) return;
-  st.className = "room-status" + (room.err ? " off" : "");
-  st.textContent = room.err ? ("⚠ " + room.err) : "● 已连接，自动同步中";
+  let txt, cls = "room-status";
+  if(mqttConnected){ txt = "🟢 实时已连接（毫秒级）"; }
+  else if(room.err){ txt = "⚠ " + room.err; cls += " off"; }
+  else { txt = "🟡 轮询备份中（实时未连通）"; }
+  st.className = cls; st.textContent = txt;
 }
 function roomPanelHtml(){
   const _offline = (location.protocol === "file:" || location.hostname.indexOf("github.io") < 0);
   const _warn = _offline ? '<div style="background:#fff4e5;color:#b26a00;border:1px solid #ffd591;padding:8px 10px;border-radius:8px;font-size:13px;margin-bottom:12px">⚠ 当前不是在线地址，联机可能被浏览器拦截。请用 <b>https://feikong66.github.io/cabo/</b> 打开本页</div>' : '';
   if(!room.code){
     return _warn + `
-      <p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，之后双方的分数会自动同步（约 ${Math.round(ROOM_POLL/1000)} 秒一次），<b>不需要登录账号</b>。</p>
+      <p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方），<b>不需要登录账号</b>。</p>
       <button class="primary" id="roomCreate" style="width:100%;margin-bottom:16px">➕ 创建房间</button>
       <div class="room-or"><span>已有房间码？</span></div>
       <input class="room-input" id="roomInput" maxlength="6" placeholder="ABC123" autocomplete="off" spellcheck="false" inputmode="latin">
@@ -2003,7 +2127,7 @@ function roomPanelHtml(){
     <div class="room-hint" style="margin:0 0 2px">把房间码告诉队友，或让对方直接扫码加入</div>
     <div class="room-code">${room.code}</div>
     <div class="room-qr">${qr}</div>
-    <div style="text-align:center"><span class="room-status" id="roomStat">● 已连接，自动同步中</span></div>
+    <div style="text-align:center"><span class="room-status" id="roomStat">🟢 实时已连接（毫秒级）</span></div>
     <div class="room-link">${escapeHtml(link)}</div>
     <div class="action-row" style="margin-top:14px">
       <button class="ghost" id="roomCopy">📋 复制链接</button>
@@ -2068,7 +2192,7 @@ function roomBoot(){
   }
   try{
     const o = JSON.parse(localStorage.getItem(ROOM_KEY));
-    if(o && o.code && ROOM_RE.test(o.code)){ room.code = o.code; room.rev = o.rev || 0; roomStartPoll(); render(); }
+    if(o && o.code && ROOM_RE.test(o.code)){ room.code = o.code; room.rev = o.rev || 0; roomMqttConnect(o.code); roomStartFallbackPoll(); render(); }
   }catch(e){}
 }
 /* ===== 内嵌二维码生成器（byte mode / EC-M / 版本1-10 自动选择，无外部依赖） ===== */
