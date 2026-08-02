@@ -122,6 +122,9 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .kami-pick.on{border-color:#e53935;background:rgba(229,57,53,.12);box-shadow:0 6px 16px rgba(229,57,53,.22)}
 .muted{color:var(--muted)}
 .actions{position:sticky;bottom:0;background:linear-gradient(transparent, var(--bg) 24%);padding-top:12px;margin-top:8px}
+.action-bar{display:flex;gap:10px;align-items:stretch}
+.action-bar .primary{width:auto;flex:2;margin-bottom:0}
+.action-bar .ghost{flex:1;margin-bottom:0}
 .actions .primary{width:100%;margin-bottom:10px}
 .action-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
 .action-row{display:flex;gap:10px;margin-bottom:10px}
@@ -1105,38 +1108,47 @@ function renderGame(){
     <div id="players"></div>
     <div class="special-panel" id="specialPanel"></div>
     <div class="actions">
-      <button class="primary" id="submitBtn">提交本局</button>
-      <div class="action-panel">
-        <div class="action-row">
-          <button id="undoBtn">↩ 撤销上一局</button>
-          <button id="clearBtn">🧹 重置本局</button>
+      <div class="action-bar">
+        <button class="primary" id="submitBtn">提交本局</button>
+        <button class="ghost" id="moreBtn">更多操作 ▾</button>
+      </div>
+    </div>
+    <div class="overlay hidden" id="moreSheet">
+      <div class="modal more-modal" id="moreModal">
+        <h2>更多操作</h2>
+        <div class="action-panel">
+          <div class="action-row">
+            <button id="undoBtn">↩ 撤销上一局</button>
+            <button id="clearBtn">🧹 重置本局</button>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="countBtn">👥 ${state.players.length} 人</button>
+            <button class="ghost" id="newGameBtn">🔄 新对局</button>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="saveBtn">💾 保存对局</button>
+            <button class="ghost" id="savesBtn">📂 我的存档</button>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="chartBtn">📊 趋势</button>
+            <button class="ghost" id="reportBtn">📤 战报</button>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="statsBtn">🏅 战绩</button>
+            <button class="ghost" id="shareBtn">🔗 分享本局</button>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="expBtn">📦 导出/导入</button>
+            <button class="ghost" id="endBtn">🗣 结束本局</button>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="roomBtn">${roomBtnLabel()}</button>
+          </div>
+          <div class="action-row">
+            <button class="ghost" id="backBtn">← 返回设置</button>
+          </div>
         </div>
-        <div class="action-row">
-          <button class="ghost" id="countBtn">👥 ${state.players.length} 人</button>
-          <button class="ghost" id="newGameBtn">🔄 新对局</button>
-        </div>
-        <div class="action-row">
-          <button class="ghost" id="saveBtn">💾 保存对局</button>
-          <button class="ghost" id="savesBtn">📂 我的存档</button>
-        </div>
-        <div class="action-row">
-          <button class="ghost" id="chartBtn">📊 趋势</button>
-          <button class="ghost" id="reportBtn">📤 战报</button>
-        </div>
-        <div class="action-row">
-          <button class="ghost" id="statsBtn">🏅 战绩</button>
-          <button class="ghost" id="shareBtn">🔗 分享本局</button>
-        </div>
-        <div class="action-row">
-          <button class="ghost" id="expBtn">📦 导出/导入</button>
-          <button class="ghost" id="endBtn">🗣 结束本局</button>
-        </div>
-        <div class="action-row">
-          <button class="ghost" id="roomBtn">${roomBtnLabel()}</button>
-        </div>
-        <div class="action-row">
-          <button class="ghost" id="backBtn">← 返回设置</button>
-        </div>
+        <button class="ghost" id="moreClose" style="width:100%;margin-top:12px">收起</button>
       </div>
     </div>
     <div class="chart-wrap hidden" id="chartWrap">
@@ -1195,6 +1207,15 @@ function renderGame(){
   const ub = document.querySelector("#undoBtn");
   if(state.rounds.length===0){ ub.disabled=true; ub.style.opacity=.45; }
   checkEnd(ts);
+  const _moreSheet = document.querySelector("#moreSheet");
+  if(_moreSheet){
+    const _moreBtn = document.querySelector("#moreBtn");
+    const _moreClose = document.querySelector("#moreClose");
+    if(_moreBtn) _moreBtn.onclick = ()=> _moreSheet.classList.toggle("hidden");
+    if(_moreClose) _moreClose.onclick = ()=> _moreSheet.classList.add("hidden");
+    _moreSheet.onclick = (e)=>{ if(e.target === _moreSheet) _moreSheet.classList.add("hidden"); };
+    _moreSheet.addEventListener("click", (e)=>{ const b = e.target.closest && e.target.closest("button"); if(b && b.id !== "moreClose") _moreSheet.classList.add("hidden"); });
+  }
 }
 function renderSpecialPanel(){
   const box = document.querySelector("#specialPanel");
