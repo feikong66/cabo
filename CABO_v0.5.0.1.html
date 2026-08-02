@@ -816,7 +816,7 @@ function playFail(){
   tone(110, t + 0.34, 0.45, "sawtooth", 0.28);
 }
 
-function render(){ if(!subAuth.user && !bypassLogin) return renderLogin(); state.started ? renderGame() : renderSetup(); }
+function render(){ if(!subAuth.user && !bypassLogin) return renderLogin(); state.started ? renderGame() : renderSetup(); refreshAutoBtn(); }
 function renderLogin(){
   screen.innerHTML = `
     <div class="login-wrap">
@@ -1086,6 +1086,9 @@ function renderSetup(){
   };
   document.querySelectorAll("#homeHist [data-report]").forEach(b=> b.onclick=()=> openSavedReport(b.dataset.report));
   document.querySelectorAll("#homeHist [data-load]").forEach(b=> b.onclick=()=> loadSave(b.dataset.load));
+  document.querySelectorAll("#homeHist [data-clearauto]").forEach(b=> b.onclick=()=>{
+    askConfirm("清空自动存档","确定清空自动存档？此操作只删除自动存档，不影响其他手动存档。", ()=>{ clearAutoSave(); });
+  });
   document.querySelectorAll("#homeHist [data-del]").forEach(b=> b.onclick=()=>{
     askConfirm("删除存档","确定删除这个存档？", ()=>{ saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del)); renderSetup(); toast("已删除存档"); });
   });
@@ -1118,6 +1121,7 @@ function renderGame(){
     <div class="actions">
       <div class="action-bar">
         <button class="primary" id="submitBtn">提交本局</button>
+        <button class="ghost icon-btn" id="autoSaveBtn" title="自动存档：开">💾</button>
         <button class="ghost" id="moreBtn">更多操作 ▾</button>
       </div>
     </div>
@@ -1189,6 +1193,7 @@ function renderGame(){
   });
   renderSpecialPanel();
   document.querySelector("#submitBtn").onclick = submitRound;
+  document.querySelector("#autoSaveBtn").onclick = ()=>{ setAutoSaveOn(!autoSaveOn()); refreshAutoBtn(); toast(autoSaveOn()?"自动存档：开":"自动存档：关"); };
   document.querySelector("#undoBtn").onclick = undo;
   document.querySelector("#clearBtn").onclick = ()=>{ renderGame(); toast("已清空本局输入"); };
   document.querySelector("#backBtn").onclick = ()=>{ state.started=false; save(); render(); };
@@ -1293,7 +1298,7 @@ function openKamiPicker(){
   document.querySelector("#kamiConfirm").onclick = ()=>{
     if(sel==null) return;
     roundKami = sel; overlay.classList.add("hidden");
-    submitRound();   // 神风特攻队是独立的一局：确认后立即计入本局，无需再点「提交本局」
+    commitRound();   // 神风特攻队是独立的一局：确认后立即计入本局，无需再点「提交本局」，且不需要过 Cabo 确认
   };
 }
 function editName(i){
@@ -1389,6 +1394,20 @@ function autoArchive(){
 const AUTOSAVE_ID = "__autosave__";
 function autoSaveOn(){ try{ return localStorage.getItem("cabo-autosave-on") !== "0"; }catch(e){ return true; } }
 function setAutoSaveOn(v){ try{ localStorage.setItem("cabo-autosave-on", v?"1":"0"); }catch(e){} }
+function refreshAutoBtn(){
+  const b = document.querySelector("#autoSaveBtn");
+  if(!b) return;
+  const on = autoSaveOn();
+  b.textContent = on ? "💾" : "💤";
+  b.title = "自动存档：" + (on ? "开（点此关闭）" : "关（点此开启）");
+  b.classList.toggle("off", !on);
+}
+function clearAutoSave(){
+  saveSaves(loadSaves().filter(s=> String(s.id) !== AUTOSAVE_ID));
+  toast("已清空自动存档");
+  if(!overlay.classList.contains("hidden") && overlay.querySelector("#saveList")) openSavesList();
+  else render();
+}
 // 4 张小框：输完自动跳到下一格（设置里可关）。事件委托，覆盖动态生成的录入框
 document.addEventListener("input", function(e){
   var t = e.target;
@@ -1459,6 +1478,7 @@ function savedItemHtml(s){
     <div class="save-actions">
       <button class="mini" data-report="${s.id}">查看战报</button>
       <button class="mini" data-load="${s.id}">载入继续</button>
+      ${s.auto?'<button class="mini" data-clearauto="${s.id}">清空自动存档</button>':''}
       <button class="mini danger" data-del="${s.id}">删除</button>
     </div>
   </div>`;
@@ -1492,6 +1512,11 @@ function openSavesList(){
     askConfirm("删除存档", "确定删除这个存档？", ()=>{
       saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del));
       openSavesList();
+    });
+  });
+  overlay.querySelectorAll("[data-clearauto]").forEach(b=> b.onclick=()=>{
+    askConfirm("清空自动存档", "确定清空自动存档？此操作只删除自动存档，不影响其他手动存档。", ()=>{
+      clearAutoSave();
     });
   });
 }
