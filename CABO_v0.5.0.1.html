@@ -2155,6 +2155,11 @@ var DEVICE_ID = (function(){
   }catch(e){ return "dev" + Math.random().toString(36).slice(2,8); }
 })();
 function roomFile(code){ return "cabo-room-" + code + ".json"; }
+function roomErrMsg(e){
+  const m = e && e.message ? String(e.message) : "";
+  if(/Failed to fetch|NetworkError|network|timeout|aborted|fetch/i.test(m)) return "无法连接同步服务器，请检查网络，或换系统浏览器 / VPN 重试";
+  return m;
+}
 function roomBtnLabel(){ return room && room.code ? ("📡 房间 " + room.code) : "📡 联机房间"; }
 function genRoomCode(){
   let s = "";
@@ -2280,7 +2285,7 @@ function bindRoomPanel(){
   if(cr) cr.onclick = async ()=>{
     cr.disabled = true; cr.textContent = "创建中…";
     try{ const code = await roomCreate(); toast("房间已创建：" + code); redraw(); render(); }
-    catch(e){ toast("创建失败：" + e.message); cr.disabled = false; cr.textContent = "➕ 创建房间"; }
+    catch(e){ toast("创建失败：" + roomErrMsg(e)); cr.disabled = false; cr.textContent = "➕ 创建房间"; }
   };
   const jb = document.querySelector("#roomJoinBtn");
   if(jb) jb.onclick = async ()=>{
@@ -2309,7 +2314,7 @@ function roomBoot(){
     if(ROOM_RE.test(code)){
       askConfirm("加入联机房间", "检测到房间码 " + code + "，加入后会载入房间里的对局（覆盖当前对局）。确定加入？", async ()=>{
         try{ await roomJoin(code); toast("已加入房间 " + code); }
-        catch(e){ toast("加入失败：" + e.message); }
+        catch(e){ toast("加入失败：" + roomErrMsg(e)); }
       });
       return;
     }
