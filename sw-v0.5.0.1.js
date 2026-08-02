@@ -1,4 +1,4 @@
-const CACHE = "cabo-v37";
+const CACHE = "cabo-v38";
 const FILES = [
   "./",
   "./CABO_v0.5.0.1.html",
