@@ -129,7 +129,12 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .action-panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow)}
 .action-row{display:flex;gap:10px;margin-bottom:10px}
 .action-row:last-child{margin-bottom:0}
-.action-row button{flex:1}
+.action-row button{flex:1;min-height:48px;padding:13px 10px;font-size:15px;border-radius:12px}
+.more-modal{max-height:84vh;overflow:auto}
+.oplog-list{max-height:54vh;overflow:auto;display:flex;flex-direction:column;gap:6px}
+.oplog-item{display:flex;gap:10px;align-items:baseline;padding:8px 10px;background:var(--card);border:1px solid var(--line);border-radius:10px;font-size:14px}
+.oplog-t{color:var(--muted);font-variant-numeric:tabular-nums;flex:0 0 42px}
+.oplog-d{flex:1;color:var(--text)}
 .history{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
 .history h3{margin:0 0 10px;font-size:14px;color:var(--muted);font-weight:700;letter-spacing:.3px}
 .history .r{font-size:13.5px;padding:10px 12px;border:1px solid rgba(43,182,115,.30);border-radius:12px;margin-bottom:8px;background:var(--card);box-shadow:0 1px 3px rgba(20,40,30,.05)}
@@ -365,7 +370,7 @@ function load(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ r
 function save(){
   syncBump();
   if(!applyingRemote){
-    roomPushDebounced();   // Gist 持久化（兜底）
+    if(!mqttConnected) roomPushDebounced();   // Gist 持久化（仅 MQTT 断开兜底，避免高频写触发 429）
     var ok = roomMqttPublish();     // 实时推送
     if(!mqttConnected || !ok) room._dirty = true;   // 本地有未同步改动，等重连后回推
   }
@@ -532,6 +537,7 @@ function defaultState(){
     players:[{name:"玩家1"},{name:"玩家2"}],
     endScore:100, winRule:"low", rounds:[],
     adjust:[0,0],
+    opLog:[],
     bonusApplied:false,
     archived:false,
     hundredUsed:[false,false],
@@ -563,6 +569,7 @@ function normalize(){
   if(typeof state.rules.lowBonus.enabled !== "boolean") state.rules.lowBonus.enabled = true;
   if(typeof state.rules.lowBonus.amount !== "number") state.rules.lowBonus.amount = 10;
   if(!Array.isArray(state.adjust) || state.adjust.length !== state.players.length) state.adjust = state.players.map(()=>0);
+  if(!Array.isArray(state.opLog)) state.opLog = [];
   if(typeof state.bonusApplied !== "boolean") state.bonusApplied = false;
   if(typeof state.archived !== "boolean") state.archived = false;
   // migrate old boolean hundredUsed to per-player array
@@ -1143,6 +1150,9 @@ function renderGame(){
             <button id="clearBtn">🧹 重置本局</button>
           </div>
           <div class="action-row">
+            <button id="opLogBtn">📜 操作记录</button>
+          </div>
+          <div class="action-row">
             <button class="ghost" id="countBtn">👥 ${state.players.length} 人</button>
             <button class="ghost" id="newGameBtn">🔄 新对局</button>
           </div>
@@ -1213,6 +1223,7 @@ function renderGame(){
   }
   document.querySelector("#autoSaveBtn").onclick = ()=>{ setAutoSaveOn(!autoSaveOn()); refreshAutoBtn(); toast(autoSaveOn()?"自动存档：开":"自动存档：关"); };
   document.querySelector("#undoBtn").onclick = undo;
+  document.querySelector("#opLogBtn").onclick = openOpLog;
   document.querySelector("#undoMultiBtn").onclick = openUndoMulti;
   document.querySelector("#clearBtn").onclick = ()=>{ renderGame(); toast("已清空本局输入"); };
   document.querySelector("#backBtn").onclick = ()=>{ state.started=false; save(); render(); };
@@ -1698,16 +1709,44 @@ function commitRound(){
   render();
   toast("✅ 已自动保存");
 }
+function pushOpLog(desc){
+  try{
+    state.opLog = state.opLog || [];
+    state.opLog.unshift({ t: Date.now(), d: String(desc||"操作") });
+    if(state.opLog.length > 60) state.opLog.length = 60;
+    save();
+  }catch(e){}
+}
+function openOpLog(){
+  const items = ((state.opLog)||[]).map(o=>{
+    const dt = new Date(o.t);
+    const hh = String(dt.getHours()).padStart(2,"0"), mm = String(dt.getMinutes()).padStart(2,"0");
+    return `<div class="oplog-item"><span class="oplog-t">${hh}:${mm}</span><span class="oplog-d">${escapeHtml(o.d)}</span></div>`;
+  }).join("") || '<div style="color:var(--muted)">暂无操作记录</div>';
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>📜 操作记录</h2>
+      <p class="muted" style="margin:0 0 10px">最近 60 条改分 / 撤销 / 清人 / 锁定等操作，便于对账追溯。</p>
+      <div class="oplog-list">${items}</div>
+      <div class="modal-actions"><button class="primary" id="olClose">关闭</button></div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#olClose").onclick = ()=> overlay.classList.add("hidden");
+}
 function undo(){
   if(state.rounds.length===0) return;
-  state.rounds.pop();
-  save(); autoSaveSnapshot(); render(); toast("已撤销上一局");
+  askConfirm("撤销上一局", "确定撤销最近一局？该局分数将被移除（可随时重新提交）。", ()=>{
+    state.rounds.pop();
+    save(); autoSaveSnapshot(); render(); toast("已撤销上一局");
+    pushOpLog("撤销上一局");
+  });
 }
 function undoRounds(n){
   n = Math.max(1, Math.min(n|0, state.rounds.length));
   if(n<=0 || state.rounds.length===0) return;
   state.rounds.splice(state.rounds.length - n, n);
   save(); autoSaveSnapshot(); render(); toast("已撤销最近 " + n + " 局");
+  pushOpLog("撤销最近 " + n + " 局");
 }
 function openUndoMulti(){
   if(state.rounds.length===0){ toast("还没有可撤销的局"); return; }
@@ -1737,15 +1776,34 @@ function openAdjust(i){
         <button class="ghost" id="adjCancel">取消</button>
         <button class="primary" id="adjOk">确定</button>
       </div>
+      <button class="ghost danger-text" id="adjClear" style="width:100%;margin-top:10px">🗑 清空该玩家全部计分</button>
     </div>`;
   overlay.classList.remove("hidden");
   const inp = overlay.querySelector("#adjVal"); inp.focus(); inp.select();
   overlay.querySelector("#adjCancel").onclick = ()=> overlay.classList.add("hidden");
+  overlay.querySelector("#adjClear").onclick = ()=> clearPlayer(i);
   overlay.querySelector("#adjOk").onclick = ()=>{
     const v = parseInt(inp.value,10); const val = isNaN(v)?0:v;
     state.adjust[i] = val; overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render();
     toast("已调整 " + state.players[i].name + "：" + (val>=0?"+":"") + val + " 分");
+    pushOpLog("调整 " + state.players[i].name + "：" + (val>=0?"+":"") + val + " 分");
   };
+}
+function clearPlayer(i){
+  if(i<0 || i>=state.players.length) return;
+  if(roomIsReadOnly()){ toast("房间已锁定，您为只读，无法改分"); return; }
+  const nm = state.players[i].name;
+  askConfirm("清空该玩家", "确定清空「" + nm + "」的全部计分？将清零其所有已记局数的得分与手动补扣分（不影响其他玩家）。", ()=>{
+    state.rounds.forEach(r=>{
+      if(has(r.pts)) r.pts[i] = 0;
+      if(has(r.cards)) r.cards[i] = [0,0,0,0];
+    });
+    state.adjust[i] = 0;
+    overlay.classList.add("hidden");
+    save(); autoSaveSnapshot(); render();
+    pushOpLog("清空玩家 " + nm);
+    toast("已清空 " + nm + " 的计分");
+  });
 }
 function deleteRound(k){
   if(k<0 || k>=state.rounds.length) return;
@@ -2267,6 +2325,17 @@ function openSettings(){
           <button class="toggle ${state.rules.autoAdvance?'on':''}" data-adv="1">${state.rules.autoAdvance?'开':'关'}</button>
         </div>
       </div>
+      <div class="rules-block" style="margin-top:14px">
+        <label>本地数据清理</label>
+        <div class="rule-row">
+          <div class="desc">清空本地存档<small>删除本机「我的存档」全部条目（含云端账号同步的存档）</small></div>
+          <button class="ghost danger-text" id="clearSavesBtn">🧹 清理</button>
+        </div>
+        <div class="rule-row">
+          <div class="desc">清空自动存档<small>仅删除自动保存的那一条对局</small></div>
+          <button class="ghost danger-text" id="clearAutoBtn">🧹 清理</button>
+        </div>
+      </div>
       <div class="modal-actions">
         <button class="primary" id="saveSet">保存</button>
         <button class="danger" id="resetAll">重置全部</button>
@@ -2298,6 +2367,12 @@ function openSettings(){
   };
   document.querySelector("#resetAll").onclick = ()=>{
     askConfirm("重置全部", "确定要重置全部对局吗？所有分数将清空。", ()=>{ state = defaultState(); save(); overlay.classList.add("hidden"); render(); });
+  };
+  document.querySelector("#clearSavesBtn").onclick = ()=>{
+    askConfirm("清空本地存档", "确定删除本机全部「我的存档」？此操作不可恢复。", ()=>{ saveSaves([]); toast("已清空本地存档"); });
+  };
+  document.querySelector("#clearAutoBtn").onclick = ()=>{
+    askConfirm("清空自动存档", "确定删除自动保存的那一条对局？", ()=>{ clearAutoSave(); toast("已清空自动存档"); });
   };
 }
 
@@ -2369,7 +2444,7 @@ const ROOM_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 去掉易混淆的 0 O
 const ROOM_RE = /^[2-9A-HJ-NP-Z]{6}$/;
 const ROOM_POLL = 3500;
 const ROOM_KEY = "cabo-room-v1";
-var room = { code:null, rev:0, timer:null, busy:false, err:null, pushing:false, _dirty:false, _retainRcvd:false, _seenRev:0, _origRev:0, _reconcileTimer:null };
+var room = { code:null, rev:0, timer:null, busy:false, err:null, pushing:false, _dirty:false, _retainRcvd:false, _seenRev:0, _origRev:0, _reconcileTimer:null, backupTimer:null, _gistRev:0 };
 var _roomPushTimer = null;
 var DEVICE_ID = (function(){
   try{
@@ -2458,6 +2533,7 @@ function roomMqttConnect(code){
       if(mqttConnected){
         roomStopPoll();
         if(mqttClient && mqttClient.subscribe) mqttClient.subscribe(mqttTopic);
+        roomStartBackup();
         // 重连后【先拉后推】：先等 broker 的留存(RETAIN)消息把队友最新对局拉下来，
         // 绝不用自己（可能已过期/息屏前的）本地数据覆盖队友刚记的分。
         room._retainRcvd = false;
@@ -2553,7 +2629,7 @@ async function roomPush(){
   try{
     room.rev = Math.max(room.rev + 1, Date.now());
     await ghWriteFile(roomFile(room.code), JSON.stringify({ rev:room.rev, by:DEVICE_ID, at:Date.now(), state:state }));
-    room.err = null; roomSaveLocal();
+    room.err = null; roomSaveLocal(); room._gistRev = room.rev;
   }catch(e){ room.err = e.message; }
   room.pushing = false;
   roomRefreshStatus();
@@ -2585,7 +2661,24 @@ async function roomPull(){
 }
 function roomStartPoll(){ if(room.timer) return; room.timer = setInterval(roomPull, ROOM_POLL); }
 function roomStopPoll(){ if(room.timer){ clearInterval(room.timer); room.timer = null; } }
+/* Gist 周期备份：仅当 MQTT 在线且数据有变动时，每 60s 落盘一次，供「续局/换设备」恢复；
+   平时实时同步走 MQTT，避免每次改动都写 Gist 触发 429 限流。 */
+function roomStartBackup(){
+  roomStopBackup();
+  room.backupTimer = setInterval(function(){
+    if(room.code && mqttConnected && room.rev !== room._gistRev) roomGistBackup();
+  }, 60000);
+}
+function roomStopBackup(){ if(room.backupTimer){ clearInterval(room.backupTimer); room.backupTimer = null; } }
+async function roomGistBackup(){
+  if(!room || !room.code || roomIsReadOnly()) return;
+  try{
+    await ghWriteFile(roomFile(room.code), JSON.stringify({ rev: room.rev, by:DEVICE_ID, at:Date.now(), state:state }));
+    room._gistRev = room.rev;
+  }catch(e){}
+}
 async function roomCreate(){
+  if(room.code) roomLeave();   // 先销毁旧房间的 MQTT 监听与定时器，避免后台无效 WebSocket 泄漏
   room.code = genRoomCode(); room.rev = 0; room.err = null; room.isCreator = true;
   state.lock = {locked:false, members:[DEVICE_ID]};
   try{ await roomPush(); }catch(e){ room.err = e.message; } // Gist 种子尽力而为，实时靠 MQTT
@@ -2594,6 +2687,7 @@ async function roomCreate(){
   return room.code;
 }
 async function roomJoin(code, creator){
+  if(room.code) roomLeave();   // 先销毁旧房间监听，再连接新房间
   code = String(code||"").trim().toUpperCase();
   room.isCreator = !!creator;
   if(!ROOM_RE.test(code)) throw new Error("房间码为 6 位，只含数字 2-9 与字母（不含 I、O）");
@@ -2622,6 +2716,7 @@ async function roomJoin(code, creator){
 function roomLeave(){
   room.isCreator = false;
   roomStopPoll();
+  roomStopBackup();
   if(mqttClient){ try{ mqttClient.close(); }catch(e){} mqttClient = null; }
   mqttConnected = false;
   room.code = null; room.rev = 0; room.err = null;
@@ -2659,6 +2754,7 @@ async function roomForceSync(){
   if(!applied){ try{ await roomPush(); }catch(e){} }
   roomRefreshStatus();
   toast(applied ? "✅ 已用云端最新数据覆盖本地" : "已与云端校对，本地即最新");
+  pushOpLog("强制同步本局");
 }
 async function roomReconnect(){
   let raw = null;
@@ -2673,6 +2769,7 @@ async function roomToggleLock(){
   state.lock.locked = !state.lock.locked;
   if(state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0) state.lock.members.push(DEVICE_ID);
   save(); render(); toast(state.lock.locked ? "🔒 房间已锁定（仅成员可改分）" : "🔓 房间已解锁");
+  pushOpLog(state.lock.locked ? "🔒 锁定房间" : "🔓 解锁房间");
 }
 function roomPanelHtml(){
   const _offline = (location.protocol === "file:" || location.hostname.indexOf("github.io") < 0);
@@ -3052,7 +3149,7 @@ function openExportImport(){
   overlay.innerHTML = `
     <div class="modal">
       <h2>📦 导出 / 导入本局</h2>
-      <p class="muted">导出当前对局为 JSON 文件备份；导入可恢复。也可用「分享本局」生成链接直接发给朋友。</p>
+      <p class="muted">导出当前对局为 <b>JSON 文件</b>（含玩家、每轮得分明细、特殊事件与规则设置），用于备份或换设备恢复；导入<b>相同格式</b>的 JSON 即可还原。也可用「分享本局」生成链接直接发给朋友。</p>
       <div class="modal-actions">
         <button class="ghost" id="eiExport">⬇ 导出 JSON</button>
         <button class="ghost" id="eiShare">🔗 分享链接</button>
