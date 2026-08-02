@@ -1032,8 +1032,8 @@ function renderSpecialPanel(){
       <button class="sp-btn kami ${roundKami!=null?'on':''}" id="btnKami">🚀 神风特攻队（至尊组合）</button>
     </div>
     <p class="ev-hint">神风他人各 +50 / Cabo 惩罚 +${state.rules.caboPenalty} / 并列最低喊话者 0 分；两者<b>不冲突可同时记录</b>，随「提交本局」一起结算。</p>`;
-  box.querySelector("#btnCabo").onclick = openCaboPicker;
-  box.querySelector("#btnKami").onclick = openKamiPicker;
+  box.querySelector("#btnCabo").onclick = () => openCaboPicker();
+  box.querySelector("#btnKami").onclick = () => openKamiPicker();
   const cC = box.querySelector("#clrCabo"); if(cC) cC.onclick = ()=>{ roundCabo=null; renderSpecialPanel(); };
 }
 function openCaboPicker(onDone){
