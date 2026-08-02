@@ -329,6 +329,29 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .room-qr{display:flex;justify-content:center;padding:12px;background:#fff;border-radius:14px;margin:10px 0;box-shadow:0 2px 10px rgba(0,0,0,.08)}
 .room-qr svg{display:block}
 .room-hint{font-size:12.5px;color:var(--muted);text-align:center;line-height:1.6}
+/* 房间成员名单 */
+.mb-box{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.mb-title{font-size:13px;font-weight:800;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.mb-hint-inline{font-size:11px;font-weight:500;color:var(--muted)}
+.mb-row{display:flex;align-items:center;gap:6px;padding:7px 0;font-size:14px;border-top:1px solid var(--line)}
+.mb-row:first-of-type{border-top:0}
+.mb-row.banned{opacity:.7}
+.mb-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto}
+.mb-dot.on{background:#22c55e}
+.mb-dot.off{background:var(--muted);opacity:.45}
+.mb-name{font-weight:700;max-width:8.5em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mb-tag{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--line);color:var(--muted);flex:0 0 auto}
+.mb-tag.owner{color:#a5701a;background:rgba(245,180,60,.2)}
+.mb-tag.me{color:var(--accent-2);background:rgba(43,182,115,.16)}
+.mb-tag.guest{color:var(--danger);background:rgba(224,90,77,.14)}
+.mb-spacer{flex:1}
+.mb-kick,.mb-unban{font-size:12px;padding:6px 12px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--text);min-height:auto;flex:0 0 auto}
+.mb-kick{color:var(--danger);border-color:rgba(224,90,77,.4)}
+.mb-kick[data-sure="1"]{background:var(--danger);color:#fff;border-color:var(--danger)}
+.mb-banned-title{font-size:12px;color:var(--muted);margin:8px 0 0;border-top:1px dashed var(--line);padding-top:8px}
+.mb-nick{display:flex;gap:8px;margin-top:10px;border-top:1px dashed var(--line);padding-top:10px}
+.mb-nick input{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--text);font-size:13px}
+.mb-nick button{flex:0 0 auto;padding:8px 14px;font-size:13px;min-height:auto}
 .room-lead{font-size:13.5px;color:var(--muted);line-height:1.7;margin:0 0 16px}
 .room-lead b{color:var(--text)}
 .room-input{width:100%;text-align:center;font-size:24px;letter-spacing:7px;font-weight:800;text-transform:uppercase;padding:13px 10px;border-radius:12px;border:1px solid var(--line);background:var(--input-bg);color:var(--text);box-sizing:border-box}
@@ -593,8 +616,23 @@ function normalize(){
       return { pts: state.players.map(()=>0), cabo:null, kami:null };
     });
   }
-  if(!state.lock || !Array.isArray(state.lock.members)) state.lock = {locked:false, members:[]};
-  else if(typeof state.lock.locked !== "boolean") state.lock.locked = false;
+  /* 房间成员名单：members 由旧版「DEVICE_ID 字符串数组」升级为 [{id,name,login,at}]，向后兼容 */
+  if(!state.lock || typeof state.lock !== "object") state.lock = {locked:false, loginOnly:false, owner:"", members:[], banned:[]};
+  if(typeof state.lock.locked !== "boolean") state.lock.locked = false;
+  if(typeof state.lock.loginOnly !== "boolean") state.lock.loginOnly = false;
+  if(typeof state.lock.owner !== "string") state.lock.owner = "";
+  if(!Array.isArray(state.lock.members)) state.lock.members = [];
+  state.lock.members = state.lock.members.map(function(m){
+    if(typeof m === "string") return {id:m, name:"", login:false, at:0};
+    if(m && m.id) return {id:String(m.id), name:String(m.name||""), login:!!m.login, at:m.at||0};
+    return null;
+  }).filter(Boolean);
+  if(!Array.isArray(state.lock.banned)) state.lock.banned = [];
+  state.lock.banned = state.lock.banned.map(function(b){
+    if(typeof b === "string") return {id:b, name:""};
+    if(b && (b.id || b.name)) return {id:String(b.id||""), name:String(b.name||"")};
+    return null;
+  }).filter(Boolean);
   // 给每位玩家分配稳定的展示颜色（计分卡 / 历史 / 图表 / 战报统一使用）
   state.players.forEach((p,i)=>{ if(!p.color) p.color = PALETTE[i % PALETTE.length]; });
 }
@@ -2561,13 +2599,14 @@ function roomMqttConnect(code){
       if(msg && msg.by && msg.by !== DEVICE_ID && msg.state){
         room._retainRcvd = true;
         if((msg.rev||0) > (room._seenRev||0)) room._seenRev = msg.rev;
-        // 房间已锁定且对方不在成员名单 → 忽略其推送（防外人闯入改分）
-        if(state.lock && state.lock.locked && state.lock.members.indexOf(msg.by) < 0) return;
+        // 准入守卫：被踢设备 / 非登录用户(loginOnly) / 锁定后非成员 → 一律忽略其推送
+        if(roomMsgBlocked(msg.by, msg.who)) return;
         // 只接受别的设备推来、且版本更新的数据（防止用旧数据覆盖队友）
         if((msg.rev||0) > (room.rev||0)){
           applyingRemote = true;
           try{ state = msg.state; normalize(); render(); room.rev = msg.rev; roomSaveLocal(); }
           finally{ applyingRemote = false; }
+          roomCheckSelfKicked();
         }
       }
       }catch(e){}
@@ -2579,8 +2618,9 @@ function roomMqttPublish(){
   if(mqttClient && mqttConnected && mqttTopic){
     if(roomIsReadOnly()) return false;   // 只读成员不推送
     try{
+      memberSelfTouch();                 // 心跳：让队友看到我在线
       room.rev = Math.max((room.rev||0) + 1, Date.now());
-      mqttClient.publish(mqttTopic, JSON.stringify({ by: DEVICE_ID, rev: room.rev, at: Date.now(), state: state }), true);
+      mqttClient.publish(mqttTopic, JSON.stringify({ by: DEVICE_ID, who:{name:myDisplayName(), login:isLoggedIn()}, rev: room.rev, at: Date.now(), state: state }), true);
       room._dirty = false;
       return true;
     }catch(e){ return false; }
@@ -2627,8 +2667,9 @@ async function roomPush(){
   if(roomIsReadOnly()) return;   // 只读成员不写云端
   room.pushing = true;
   try{
+    memberSelfTouch();
     room.rev = Math.max(room.rev + 1, Date.now());
-    await ghWriteFile(roomFile(room.code), JSON.stringify({ rev:room.rev, by:DEVICE_ID, at:Date.now(), state:state }));
+    await ghWriteFile(roomFile(room.code), JSON.stringify({ rev:room.rev, by:DEVICE_ID, who:{name:myDisplayName(), login:isLoggedIn()}, at:Date.now(), state:state }));
     room.err = null; roomSaveLocal(); room._gistRev = room.rev;
   }catch(e){ room.err = e.message; }
   room.pushing = false;
@@ -2646,12 +2687,13 @@ async function roomPull(){
     const c = await ghReadFile(roomFile(room.code));
     if(c){
       const d = JSON.parse(c);
-      // 只接受别的设备推上来的、且版本更新的数据
-      if(d && d.state && d.by !== DEVICE_ID && (d.rev||0) > room.rev){
+      // 只接受别的设备推上来的、且版本更新的数据（并通过准入守卫）
+      if(d && d.state && d.by !== DEVICE_ID && (d.rev||0) > room.rev && !roomMsgBlocked(d.by, d.who)){
         room.rev = d.rev;
         state = d.state;
         normalize(); render(); roomSaveLocal();
         toast("已同步队友的最新对局");
+        roomCheckSelfKicked();
       }
     }
     room.err = null;
@@ -2673,20 +2715,24 @@ function roomStopBackup(){ if(room.backupTimer){ clearInterval(room.backupTimer)
 async function roomGistBackup(){
   if(!room || !room.code || roomIsReadOnly()) return;
   try{
-    await ghWriteFile(roomFile(room.code), JSON.stringify({ rev: room.rev, by:DEVICE_ID, at:Date.now(), state:state }));
+    await ghWriteFile(roomFile(room.code), JSON.stringify({ rev: room.rev, by:DEVICE_ID, who:{name:myDisplayName(), login:isLoggedIn()}, at:Date.now(), state:state }));
     room._gistRev = room.rev;
   }catch(e){}
 }
 async function roomCreate(){
+  if(!isLoggedIn()) throw new Error("联机需要登录：请先登录子账号，游客不能创建房间");
   if(room.code) roomLeave();   // 先销毁旧房间的 MQTT 监听与定时器，避免后台无效 WebSocket 泄漏
   room.code = genRoomCode(); room.rev = 0; room.err = null; room.isCreator = true;
-  state.lock = {locked:false, members:[DEVICE_ID]};
+  // 新房默认「仅登录用户可进」，房主为本机
+  state.lock = {locked:false, loginOnly:true, owner:DEVICE_ID, banned:[],
+                members:[{id:DEVICE_ID, name:myDisplayName(), login:isLoggedIn(), at:Date.now()}]};
   try{ await roomPush(); }catch(e){ room.err = e.message; } // Gist 种子尽力而为，实时靠 MQTT
   roomMqttConnect(room.code);
   roomStartFallbackPoll();
   return room.code;
 }
 async function roomJoin(code, creator){
+  if(!isLoggedIn()) throw new Error("联机需要登录：请先登录子账号，游客不能加入房间");
   if(room.code) roomLeave();   // 先销毁旧房间监听，再连接新房间
   code = String(code||"").trim().toUpperCase();
   room.isCreator = !!creator;
@@ -2694,14 +2740,32 @@ async function roomJoin(code, creator){
   let d = null;
   try{ const c = await ghReadFile(roomFile(code)); if(c){ try{ d = JSON.parse(c); }catch(e){} } }catch(e){}
   if(d && d.state){
+    // 准入判定要在覆盖本地对局之前做：被踢过 / 房间仅限登录用户 → 直接拒绝
+    const _lk = d.state.lock || {};
+    const _bn = Array.isArray(_lk.banned) ? _lk.banned : [];
+    for(let _i=0;_i<_bn.length;_i++){
+      const _b = _bn[_i];
+      const _bid = (typeof _b === "string") ? _b : String((_b && _b.id) || "");
+      const _bnm = (_b && _b.name) ? String(_b.name) : "";
+      if((_bid && _bid === DEVICE_ID) || (_bnm && myLoginName() && _bnm === myLoginName())){
+        room.code = null; room.rev = 0;
+        throw new Error("你已被房主移出该房间，无法再次加入");
+      }
+    }
+    if(_lk.loginOnly && !isLoggedIn()){
+      room.code = null; room.rev = 0;
+      throw new Error("该房间仅限已登录用户加入（当前为游客/无账号版）");
+    }
     room.code = code; room.rev = d.rev || 0; room.err = null; state = d.state; normalize(); render();
-    // 成员维护：未锁定则把本机加入成员；锁定则非成员视为只读
-    if(state.lock && !state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0) state.lock.members.push(DEVICE_ID);
+    // 成员维护：未锁定则把本机登记为成员；锁定则非成员视为只读
+    if(!state.lock.locked) memberSelfTouch();
     roomSaveLocal();
   }
   else { room.code = code; room.rev = 0; room.err = null; }
   roomMqttConnect(code);
   roomStartFallbackPoll();
+  // 加入成功后广播一次，让房主的成员列表立刻出现我
+  if(d && !roomIsReadOnly()){ try{ memberSelfTouch(); save(); }catch(e){} }
   // 无 Gist 种子时，等一小段时间看 MQTT 是否推来回旋/实时数据；都没有则判定房间不存在
   if(!d){
     await new Promise(function(res){ setTimeout(res, 2000); });
@@ -2733,7 +2797,91 @@ function roomRefreshStatus(){
   else { txt = "🟡 轮询备份中（实时未连通）"; }
   st.className = cls; st.textContent = txt;
 }
-function roomIsReadOnly(){ return !!(state.lock && state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0); }
+/* ===== 房间成员名单 / 准入控制 =====
+   身份：云端版用已登录的子账号名；未登录（游客）无身份，只能被拒或只读。
+   数据层三重守卫：① 被踢设备(banned) ② 仅登录用户(loginOnly) ③ 锁定后非成员(locked) */
+function myLoginName(){ try{ return (subAuth && subAuth.user) ? String(subAuth.user) : ""; }catch(e){ return ""; } }
+function isLoggedIn(){ return !!myLoginName(); }
+function myNick(){ try{ return String(localStorage.getItem("cabo-nick") || ""); }catch(e){ return ""; } }
+function myDisplayName(){ return myLoginName() || myNick() || ("设备" + String(DEVICE_ID).slice(-4)); }
+function lockObj(){
+  if(!state.lock || typeof state.lock !== "object") state.lock = {locked:false, loginOnly:false, owner:"", members:[], banned:[]};
+  if(!Array.isArray(state.lock.members)) state.lock.members = [];
+  if(!Array.isArray(state.lock.banned)) state.lock.banned = [];
+  return state.lock;
+}
+function memberFind(id){ const L = lockObj(); for(let i=0;i<L.members.length;i++){ if(L.members[i].id === id) return L.members[i]; } return null; }
+function memberHas(id){ return !!memberFind(id); }
+function memberTouch(id, name, login){
+  const L = lockObj(); const m = memberFind(id);
+  if(m){ if(name) m.name = name; m.login = !!login; m.at = Date.now(); return false; }
+  L.members.push({id:id, name:name||"", login:!!login, at:Date.now()}); return true;
+}
+function memberSelfTouch(){ return memberTouch(DEVICE_ID, myDisplayName(), isLoggedIn()); }
+function isBanned(id, name){
+  const L = lockObj();
+  for(let i=0;i<L.banned.length;i++){
+    const b = L.banned[i];
+    if(b.id && id && b.id === id) return true;
+    if(b.name && name && b.name === name) return true;   // 同账号换设备也拦住
+  }
+  return false;
+}
+function roomIsOwner(){ const L = lockObj(); if(L.owner) return L.owner === DEVICE_ID; return !!(room && room.isCreator); }
+/* 远端消息准入判定：true = 拒收（对方无权改本局数据） */
+function roomMsgBlocked(byId, who){
+  const L = lockObj(); who = who || {};
+  if(isBanned(byId, who.name)) return true;
+  if(L.loginOnly && !who.login) return true;
+  if(L.locked && !memberHas(byId)) return true;
+  return false;
+}
+/* 应用远端数据后：若发现自己已被房主移出，立即退出房间，杜绝继续改分 */
+function roomCheckSelfKicked(){
+  if(!room || !room.code) return false;
+  if(!isBanned(DEVICE_ID, myLoginName())) return false;
+  const code = room.code;
+  roomLeave();
+  try{ overlay.classList.add("hidden"); }catch(e){}
+  toast("⚠ 你已被房主移出房间 " + code + "，无法再修改本局数据");
+  return true;
+}
+function roomKick(id){
+  if(!roomIsOwner()){ toast("仅房主可以移出成员"); return; }
+  if(id === DEVICE_ID){ toast("不能移出自己"); return; }
+  const L = lockObj(); const m = memberFind(id);
+  const nm = (m && m.name) || ("设备" + String(id).slice(-4));
+  L.members = L.members.filter(function(x){ return x.id !== id; });
+  if(!isBanned(id, (m && m.name) || "")) L.banned.push({id:id, name:(m && m.name) || ""});
+  memberSelfTouch();
+  save(); render();
+  roomPush();          // 立刻落盘 Gist，避免被踢者趁备份窗口用旧数据重新进来
+  toast("已移出：" + nm + "（对方将被自动退出）");
+  pushOpLog("移出成员 " + nm);
+}
+function roomUnban(id){
+  if(!roomIsOwner()){ toast("仅房主可以操作"); return; }
+  const L = lockObj();
+  const b = L.banned.filter(function(x){ return x.id === id; })[0];
+  L.banned = L.banned.filter(function(x){ return x.id !== id; });
+  memberSelfTouch(); save(); render(); roomPush();
+  toast("已恢复：" + ((b && b.name) || ("设备" + String(id).slice(-4))) + "，对方可重新加入");
+  pushOpLog("恢复成员 " + ((b && b.name) || id));
+}
+async function roomToggleLoginOnly(){
+  if(!roomIsOwner()){ toast("仅房主可以更改准入设置"); return; }
+  const L = lockObj();
+  L.loginOnly = !L.loginOnly;
+  memberSelfTouch(); save(); render(); roomPush();
+  toast(L.loginOnly ? "🔐 已开启：仅登录用户可进房改分" : "🔓 已关闭登录限制（游客也可进房）");
+  pushOpLog(L.loginOnly ? "开启「仅登录用户」准入" : "关闭「仅登录用户」准入");
+}
+function roomIsReadOnly(){
+  if(isBanned(DEVICE_ID, myLoginName())) return true;              // 已被房主移出
+  const L = lockObj();
+  if(L.loginOnly && !isLoggedIn()) return true;                    // 房间仅限登录用户
+  return !!(L.locked && !memberHas(DEVICE_ID));                    // 锁定后非成员只读
+}
 async function roomForceSync(){
   if(!room || !room.code) return;
   let applied = false;
@@ -2743,7 +2891,8 @@ async function roomForceSync(){
       const d = JSON.parse(c);
       if(d && d.state && (d.rev||0) >= room.rev){
         state = d.state; normalize(); render();
-        if(state.lock && !state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0) state.lock.members.push(DEVICE_ID);
+        if(roomCheckSelfKicked()) return;
+        if(!state.lock.locked) memberSelfTouch();
         room.rev = d.rev || room.rev; roomSaveLocal(); applied = true;
       }
     }
@@ -2764,24 +2913,58 @@ async function roomReconnect(){
   catch(e){ toast("重连失败：" + roomErrMsg(e)); }
 }
 async function roomToggleLock(){
-  if(!room || !room.isCreator) return;
-  state.lock = state.lock || {locked:false, members:[]};
-  state.lock.locked = !state.lock.locked;
-  if(state.lock.locked && state.lock.members.indexOf(DEVICE_ID) < 0) state.lock.members.push(DEVICE_ID);
+  if(!roomIsOwner()){ toast("仅房主可以锁定/解锁房间"); return; }
+  const L = lockObj();
+  L.locked = !L.locked;
+  memberSelfTouch();
   save(); render(); toast(state.lock.locked ? "🔒 房间已锁定（仅成员可改分）" : "🔓 房间已解锁");
   pushOpLog(state.lock.locked ? "🔒 锁定房间" : "🔓 解锁房间");
+}
+function roomMembersHtml(){
+  const L = lockObj();
+  const owner = roomIsOwner();
+  const now = Date.now();
+  const list = L.members.slice().sort(function(a,b){ return (b.at||0) - (a.at||0); });
+  let rows = list.map(function(m){
+    const online = (now - (m.at||0)) < 150000;          // 2.5 分钟内有推送视为在线
+    const me = (m.id === DEVICE_ID);
+    const isOwn = L.owner ? (L.owner === m.id) : false;
+    const nm = escapeHtml(m.name || ("设备" + String(m.id).slice(-4)));
+    const tags = (isOwn ? '<span class="mb-tag owner">房主</span>' : '')
+               + (me ? '<span class="mb-tag me">我</span>' : '')
+               + (m.login ? '' : '<span class="mb-tag guest">未登录</span>');
+    const kick = (owner && !me) ? `<button class="mb-kick" data-kick="${escapeHtml(m.id)}">踢出</button>` : '';
+    return `<div class="mb-row"><span class="mb-dot ${online?'on':'off'}"></span><span class="mb-name">${nm}</span>${tags}<span class="mb-spacer"></span>${kick}</div>`;
+  }).join("");
+  if(!rows) rows = '<div class="room-hint">暂无成员记录，队友加入或改分后会自动出现</div>';
+  let banned = "";
+  if(owner && L.banned.length){
+    banned = '<div class="mb-banned-title">已移出（无法再加入本局）</div>' + L.banned.map(function(b){
+      const nm = escapeHtml(b.name || ("设备" + String(b.id).slice(-4)));
+      return `<div class="mb-row banned"><span class="mb-name">${nm}</span><span class="mb-spacer"></span><button class="mb-unban" data-unban="${escapeHtml(b.id)}">恢复</button></div>`;
+    }).join("");
+  }
+  const nick = (!isLoggedIn())
+    ? `<div class="mb-nick"><input id="mbNick" maxlength="10" placeholder="我的显示名（队友会看到）" value="${escapeHtml(myNick())}"><button class="ghost" id="mbNickSave">保存</button></div>`
+    : '';
+  return `<div class="mb-box"><div class="mb-title">👥 房间成员（${L.members.length}）${owner ? '<span class="mb-hint-inline">房主可踢人</span>' : ''}</div>${rows}${banned}${nick}</div>`;
 }
 function roomPanelHtml(){
   const _offline = (location.protocol === "file:" || location.hostname.indexOf("github.io") < 0);
   const _warn = _offline ? '<div style="background:#fff4e5;color:#b26a00;border:1px solid #ffd591;padding:8px 10px;border-radius:8px;font-size:13px;margin-bottom:12px">⚠ 当前不是在线地址，联机可能被浏览器拦截。请用 <b>https://feikong66.github.io/cabo/</b> 打开本页</div>' : '';
   if(!room.code){
+    if(!isLoggedIn()){
+      return _warn + `
+        <p class="room-lead">联机房间<b>仅限已登录用户</b>使用。游客模式不能创建或加入房间——这样陌生人就没法凭房间码进来乱改分数。</p>
+        <button class="primary" id="roomGoLogin" style="width:100%">🔑 去登录 / 注册账号</button>`;
+    }
     let reconnectHtml = '';
     try{
       const raw = JSON.parse(localStorage.getItem(ROOM_KEY) || "null");
       if(raw && raw.code){ reconnectHtml = `<button class="ghost" id="roomReconnect" style="width:100%;margin-top:8px">🔄 重连房间 ${raw.code}</button>`; }
     }catch(e){}
     return _warn + `
-      <p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方），<b>不需要登录账号</b>。</p>
+      <p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级）。新房默认<b>仅限登录用户加入</b>，房主可在房内查看成员并踢人。</p>
       <button class="primary" id="roomCreate" style="width:100%;margin-bottom:16px">➕ 创建房间</button>
       ${reconnectHtml}
       <div class="room-or"><span>已有房间码？</span></div>
@@ -2790,11 +2973,16 @@ function roomPanelHtml(){
   }
   const link = roomLink(room.code);
   const qr = (typeof CABOQR !== "undefined" && CABOQR.svg(link, 190)) || '<div class="room-hint">二维码生成失败</div>';
-  const locked = !!(state.lock && state.lock.locked);
+  const L = lockObj();
+  const locked = !!L.locked;
   const readOnly = roomIsReadOnly();
-  const lockBtn = room.isCreator
+  const owner = roomIsOwner();
+  const lockBtn = owner
     ? `<button class="ghost" id="roomLock">${locked ? "🔓 解锁房间" : "🔒 锁定房间"}</button>`
     : `<div class="room-hint">${locked ? (readOnly ? "🔒 房间已锁定：您为只读" : "🔒 房间已锁定") : "🔓 房间未锁定"}</div>`;
+  const loginBtn = owner
+    ? `<button class="ghost" id="roomLoginOnly">${L.loginOnly ? "🔐 仅登录用户：开" : "🔓 仅登录用户：关"}</button>`
+    : `<div class="room-hint">${L.loginOnly ? "🔐 本房间仅限登录用户" : "🔓 本房间允许未登录设备"}</div>`;
   return `
     <div class="room-hint" style="margin:0 0 2px">把房间码告诉队友，或让对方直接扫码加入</div>
     <div class="room-code">${room.code}</div>
@@ -2809,7 +2997,9 @@ function roomPanelHtml(){
       <button class="ghost" id="roomSyncNow">⬇ 强制同步</button>
       ${lockBtn}
     </div>
-    ${readOnly ? '<div class="room-hint" style="color:var(--danger);text-align:center">⚠ 房间已锁定，您没有改分权限（只读）。需房主解锁或先把你加入房间再锁定。</div>' : ''}
+    <div class="action-row">${loginBtn}</div>
+    ${roomMembersHtml()}
+    ${readOnly ? '<div class="room-hint" style="color:var(--danger);text-align:center">⚠ 你当前没有改分权限（只读）：可能已被房主移出、本房间仅限登录用户、或房间已锁定且你不在成员名单。</div>' : ''}
     <button class="ghost" id="roomLeave" style="width:100%;margin-top:10px;color:var(--danger)">🚪 退出房间</button>`;
 }
 function openRoom(){
@@ -2862,6 +3052,34 @@ function bindRoomPanel(){
   if(rlk) rlk.onclick = async ()=>{ await roomToggleLock(); redraw(); };
   const rcn = document.querySelector("#roomReconnect");
   if(rcn) rcn.onclick = async ()=>{ rcn.disabled = true; rcn.textContent = "重连中…"; await roomReconnect(); redraw(); };
+  const lo = document.querySelector("#roomLoginOnly");
+  if(lo) lo.onclick = async ()=>{ await roomToggleLoginOnly(); redraw(); };
+  const gl = document.querySelector("#roomGoLogin");
+  if(gl) gl.onclick = ()=>{ overlay.classList.add("hidden"); bypassLogin = false; render(); };
+  // 踢人：行内二次确认，避免误触（不用弹窗，弹窗会顶掉房间面板）
+  const kicks = document.querySelectorAll("[data-kick]");
+  for(let i=0;i<kicks.length;i++){
+    (function(btn){
+      btn.onclick = function(){
+        if(btn.getAttribute("data-sure") === "1"){ roomKick(btn.getAttribute("data-kick")); redraw(); return; }
+        btn.setAttribute("data-sure", "1"); btn.textContent = "确认踢出?";
+        setTimeout(function(){ try{ btn.setAttribute("data-sure",""); btn.textContent = "踢出"; }catch(e){} }, 3000);
+      };
+    })(kicks[i]);
+  }
+  const unbans = document.querySelectorAll("[data-unban]");
+  for(let i=0;i<unbans.length;i++){
+    (function(btn){ btn.onclick = function(){ roomUnban(btn.getAttribute("data-unban")); redraw(); }; })(unbans[i]);
+  }
+  const nkb = document.querySelector("#mbNickSave");
+  if(nkb) nkb.onclick = ()=>{
+    const el = document.querySelector("#mbNick");
+    const v = el ? String(el.value||"").trim() : "";
+    try{ localStorage.setItem("cabo-nick", v); }catch(e){}
+    if(room.code && !roomIsReadOnly()){ memberSelfTouch(); save(); }
+    toast(v ? ("显示名已设为：" + v) : "已清空显示名");
+    redraw();
+  };
   const lv = document.querySelector("#roomLeave");
   if(lv) lv.onclick = ()=>{ roomLeave(); overlay.classList.add("hidden"); toast("已退出房间"); };
 }
