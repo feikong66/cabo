@@ -1245,7 +1245,7 @@ function renderSpecialPanel(){
   box.querySelector("#btnKami").onclick = openKamiPicker;
   const cC = box.querySelector("#clrCabo"); if(cC) cC.onclick = ()=>{ roundCabo=null; renderSpecialPanel(); };
 }
-function openCaboPicker(){
+function openCaboPicker(onDone){
   let sel = roundCabo;
   const cards = state.players.map((p,i)=>`<button class="kami-pick ${sel===i?'on':''}" data-i="${i}"><span>${escapeHtml(p.name)}</span><small>本轮喊 Cabo</small></button>`).join("");
   overlay.innerHTML = `
@@ -1267,7 +1267,7 @@ function openCaboPicker(){
   document.querySelector("#caboCancel").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#caboConfirm").onclick = ()=>{
     if(sel==null) return;
-    roundCabo = sel; overlay.classList.add("hidden"); renderSpecialPanel();
+    roundCabo = sel; overlay.classList.add("hidden"); (onDone||renderSpecialPanel)();
   };
 }
 function openKamiPicker(){
@@ -1568,6 +1568,27 @@ function historyHtml(){
   return html;
 }
 function submitRound(){
+  // 提交前若还没决定是否有人喊 Cabo，先弹窗确认（避免漏选）
+  if(roundCabo == null){ openCaboGate(); return; }
+  commitRound();
+}
+function openCaboGate(){
+  overlay.innerHTML = `
+    <div class="modal">
+      <h2>🗣 本轮是否有人喊 CABO？</h2>
+      <p style="color:var(--muted);font-size:14px;margin:0 0 16px">提交前确认一下：本轮是否有人喊了 CABO？选「有人喊」可指定玩家；选「没人喊」则按普通分数结算。</p>
+      <div class="modal-actions">
+        <button class="ghost" id="cgCancel">取消</button>
+        <button class="ghost" id="cgNo">🚫 没人喊</button>
+        <button class="primary" id="cgYes">🗣 有人喊</button>
+      </div>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.querySelector("#cgCancel").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#cgNo").onclick = ()=>{ overlay.classList.add("hidden"); commitRound(); };
+  document.querySelector("#cgYes").onclick = ()=>{ overlay.classList.add("hidden"); openCaboPicker(commitRound); };
+}
+function commitRound(){
   const pts = state.players.map((_,i)=>{
     if(state.rules.cardInput==='cards'){
       const vals = [0,1,2,3].map(j=> parseFloat(document.getElementById("c"+i+"-"+j).value)||0);
