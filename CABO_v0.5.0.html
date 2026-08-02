@@ -1015,7 +1015,7 @@ function openKamiPicker(){
   document.querySelector("#kamiConfirm").onclick = ()=>{
     if(sel==null) return;
     roundKami = sel; overlay.classList.add("hidden");
-    submitRound();   // 神风特攻队是独立的一局：确认后立即计入本局，无需再点「提交本局」
+    commitRound();   // 神风特攻队是独立的一局：确认后立即计入本局，无需再点「提交本局」，且不需要过 Cabo 确认
   };
 }
 function editName(i){
