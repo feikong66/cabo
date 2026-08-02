@@ -360,7 +360,8 @@ function save(){
   syncBump();
   if(!applyingRemote){
     roomPushDebounced();   // Gist 持久化（兜底）
-    roomMqttPublish();     // 实时推送
+    var ok = roomMqttPublish();     // 实时推送
+    if(!mqttConnected || !ok) room._dirty = true;   // 本地有未同步改动，等重连后回推
   }
   try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} // 访客兜底缓存
   if(subAuth.user){ subPush(); return; }
@@ -535,6 +536,7 @@ function defaultState(){
       tieRule:"callerWins",
       hundredEgg:"half",
       cardInput:"total",
+      autoAdvance:true,
       lowBonus:{enabled:true, amount:10}
     }
   };
@@ -550,6 +552,7 @@ function normalize(){
   if(state.rules.hundredEgg === "zero") state.rules.hundredEgg = "half";
   if(!["off","half","none"].includes(state.rules.hundredEgg)) state.rules.hundredEgg = d.hundredEgg;
   if(state.rules.cardInput !== "cards" && state.rules.cardInput !== "total") state.rules.cardInput = "total";
+  if(typeof state.rules.autoAdvance !== "boolean") state.rules.autoAdvance = true;
   if(!state.rules.lowBonus) state.rules.lowBonus = {enabled:true, amount:10};
   if(typeof state.rules.lowBonus.enabled !== "boolean") state.rules.lowBonus.enabled = true;
   if(typeof state.rules.lowBonus.amount !== "number") state.rules.lowBonus.amount = 10;
@@ -1081,8 +1084,8 @@ function renderSetup(){
     state.started = true; state.rounds = []; state.adjust = state.players.map(()=>0); state.bonusApplied=false; state.archived=false; state.hundredUsed=state.players.map(()=>false);
     save(); render();
   };
-  document.querySelectorAll("#homeHist [data-report]").forEach(b=> b.onclick=()=> openSavedReport(+b.dataset.report));
-  document.querySelectorAll("#homeHist [data-load]").forEach(b=> b.onclick=()=> loadSave(+b.dataset.load));
+  document.querySelectorAll("#homeHist [data-report]").forEach(b=> b.onclick=()=> openSavedReport(b.dataset.report));
+  document.querySelectorAll("#homeHist [data-load]").forEach(b=> b.onclick=()=> loadSave(b.dataset.load));
   document.querySelectorAll("#homeHist [data-del]").forEach(b=> b.onclick=()=>{
     askConfirm("删除存档","确定删除这个存档？", ()=>{ saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del)); renderSetup(); toast("已删除存档"); });
   });
@@ -1386,6 +1389,20 @@ function autoArchive(){
 const AUTOSAVE_ID = "__autosave__";
 function autoSaveOn(){ try{ return localStorage.getItem("cabo-autosave-on") !== "0"; }catch(e){ return true; } }
 function setAutoSaveOn(v){ try{ localStorage.setItem("cabo-autosave-on", v?"1":"0"); }catch(e){} }
+// 4 张小框：输完自动跳到下一格（设置里可关）。事件委托，覆盖动态生成的录入框
+document.addEventListener("input", function(e){
+  var t = e.target;
+  if(!t || !t.classList) return;
+  if(t.classList.contains("c4") || t.classList.contains("er-c4i")){
+    if(!state.rules.autoAdvance) return;
+    var v = (t.value || "");
+    if(v.length >= 2 || (v.length === 1 && v !== "1")){
+      var all = Array.prototype.slice.call(document.querySelectorAll(".c4, .er-c4i"));
+      var idx = all.indexOf(t);
+      if(idx >= 0 && idx + 1 < all.length) all[idx + 1].focus();
+    }
+  }
+});
 function autoSaveSnapshot(){
   try{
     if(!autoSaveOn()) return;
@@ -1469,8 +1486,8 @@ function openSavesList(){
     </div>`;
   overlay.classList.remove("hidden");
   document.querySelector("#savesClose").onclick = ()=> overlay.classList.add("hidden");
-  overlay.querySelectorAll("[data-report]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); openSavedReport(+b.dataset.report); });
-  overlay.querySelectorAll("[data-load]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); loadSave(+b.dataset.load); });
+  overlay.querySelectorAll("[data-report]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); openSavedReport(b.dataset.report); });
+  overlay.querySelectorAll("[data-load]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); loadSave(b.dataset.load); });
   overlay.querySelectorAll("[data-del]").forEach(b=> b.onclick=()=>{
     askConfirm("删除存档", "确定删除这个存档？", ()=>{
       saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del));
@@ -2035,6 +2052,9 @@ function openSavedReport(id){
 
 function openSettings(){
   const r = state.rules;
+  const _wasOpen = !overlay.classList.contains("hidden");
+  const _m0 = _wasOpen ? overlay.querySelector(".modal") : null;
+  const _sc = _m0 ? _m0.scrollTop : 0;
   overlay.innerHTML = `
     <div class="modal">
       <h2>设置</h2>
@@ -2098,6 +2118,10 @@ function openSettings(){
           <div class="desc">自动存档<small>每次提交本局自动存入「我的存档」</small></div>
           <button class="toggle ${autoSaveOn()?'on':''}" data-auto="1">${autoSaveOn()?'开':'关'}</button>
         </div>
+        <div class="rule-row">
+          <div class="desc">输入后自动跳格<small>4 张小框输完自动跳到下一格</small></div>
+          <button class="toggle ${state.rules.autoAdvance?'on':''}" data-adv="1">${state.rules.autoAdvance?'开':'关'}</button>
+        </div>
       </div>
       <div class="modal-actions">
         <button class="primary" id="saveSet">保存</button>
@@ -2112,10 +2136,12 @@ function openSettings(){
   document.querySelectorAll("#setEgg button").forEach(b=> b.onclick=()=>{ state.rules.hundredEgg=b.dataset.v; openSettings(); });
   document.querySelectorAll("#setCardInput button").forEach(b=> b.onclick=()=>{ state.rules.cardInput=b.dataset.v; openSettings(); });
   document.querySelectorAll(".toggle").forEach(b=>{
-    if(b.dataset.r==="lowBonus") b.onclick = ()=>{ state.rules.lowBonus.enabled = !state.rules.lowBonus.enabled; openSettings(); };
-    else if(b.dataset.snd) b.onclick = ()=>{ state.sound = !state.sound; save(); openSettings(); };
-    else if(b.dataset.auto) b.onclick = ()=>{ setAutoSaveOn(!autoSaveOn()); openSettings(); };
+    if(b.dataset.r==="lowBonus") b.onclick = ()=>{ state.rules.lowBonus.enabled = !state.rules.lowBonus.enabled; save(); b.classList.toggle("on"); b.textContent = state.rules.lowBonus.enabled?'开':'关'; };
+    else if(b.dataset.snd) b.onclick = ()=>{ state.sound = !state.sound; save(); b.classList.toggle("on"); b.textContent = state.sound?'开':'关'; };
+    else if(b.dataset.auto) b.onclick = ()=>{ setAutoSaveOn(!autoSaveOn()); b.classList.toggle("on"); b.textContent = autoSaveOn()?'开':'关'; };
+    else if(b.dataset.adv) b.onclick = ()=>{ state.rules.autoAdvance = !state.rules.autoAdvance; save(); b.classList.toggle("on"); b.textContent = state.rules.autoAdvance?'开':'关'; };
   });
+  const _m1 = overlay.querySelector(".modal"); if(_m1 && _wasOpen) _m1.scrollTop = _sc;
   const sb = document.querySelector("#setBonus"); if(sb) sb.oninput = e=> state.rules.lowBonus.amount = Math.max(0, parseInt(e.target.value,10)||0);
   const logoutBtn = document.querySelector("#setLogout");
   if(logoutBtn) logoutBtn.onclick = ()=>{ overlay.classList.add("hidden"); doLogout(); };
@@ -2199,7 +2225,7 @@ const ROOM_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 去掉易混淆的 0 O
 const ROOM_RE = /^[2-9A-HJ-NP-Z]{6}$/;
 const ROOM_POLL = 3500;
 const ROOM_KEY = "cabo-room-v1";
-var room = { code:null, rev:0, timer:null, busy:false, err:null, pushing:false };
+var room = { code:null, rev:0, timer:null, busy:false, err:null, pushing:false, _dirty:false, _retainRcvd:false, _seenRev:0, _origRev:0, _reconcileTimer:null };
 var _roomPushTimer = null;
 var DEVICE_ID = (function(){
   try{
@@ -2287,9 +2313,24 @@ function roomMqttConnect(code){
       mqttConnected = (s === "connected");
       if(mqttConnected){
         roomStopPoll();
-        // 房主：连接即回推(哪怕还是空房间)，让房间在 broker 上"存在"，队友才能加入
-        // 加入者：先等 broker 的留存消息，绝不用自己的空房间覆盖队友
-        if(room.isCreator || (room.rev||0) > 0) roomMqttPublish();
+        if(mqttClient && mqttClient.subscribe) mqttClient.subscribe(mqttTopic);
+        // 重连后【先拉后推】：先等 broker 的留存(RETAIN)消息把队友最新对局拉下来，
+        // 绝不用自己（可能已过期/息屏前的）本地数据覆盖队友刚记的分。
+        room._retainRcvd = false;
+        room._seenRev = room.rev;          // 目前从服务端见过的最高版本
+        room._origRev = room.rev;          // 重连前本地版本
+        clearTimeout(room._reconcileTimer);
+        room._reconcileTimer = setTimeout(function(){
+          room._reconcileTimer = null;
+          if(room._retainRcvd){
+            // 服务端有数据：更新已被应用则无需再推；仅当本地确有未同步改动时才回推
+            if(room._dirty && room._seenRev <= room._origRev) roomMqttPublish();
+            else room._dirty = false;
+          } else {
+            // 服务端为空（全新/无人）：房主或有本地数据者种子化，让队友能加入
+            if(room.isCreator || room._dirty || (state && (state.started || (state.rounds && state.rounds.length)))) roomMqttPublish();
+          }
+        }, 1200);
       } else { roomStartFallbackPoll(); }
       roomRefreshStatus();
     },
@@ -2297,25 +2338,31 @@ function roomMqttConnect(code){
       if(topic !== mqttTopic) return;
       try{
         var msg = JSON.parse(payloadStr);
-        // 只接受别的设备推来、且版本更新的数据（关键：防止新加入者用空房间覆盖队友已有对局）
-        if(msg && msg.by && msg.by !== DEVICE_ID && msg.state && (msg.rev||0) > (room.rev||0)){
-          applyingRemote = true;
-          try{ state = msg.state; normalize(); render(); room.rev = msg.rev; roomSaveLocal(); }
-          finally{ applyingRemote = false; }
+        if(msg && msg.by && msg.by !== DEVICE_ID && msg.state){
+          room._retainRcvd = true;
+          if((msg.rev||0) > (room._seenRev||0)) room._seenRev = msg.rev;
+          // 只接受别的设备推来、且版本更新的数据（防止用旧数据覆盖队友）
+          if((msg.rev||0) > (room.rev||0)){
+            applyingRemote = true;
+            try{ state = msg.state; normalize(); render(); room.rev = msg.rev; roomSaveLocal(); }
+            finally{ applyingRemote = false; }
+          }
         }
       }catch(e){}
     }
   });
   mqttClient.connect();
-  mqttClient.subscribe(mqttTopic);
 }
 function roomMqttPublish(){
   if(mqttClient && mqttConnected && mqttTopic){
     try{
       room.rev = Math.max((room.rev||0) + 1, Date.now());
       mqttClient.publish(mqttTopic, JSON.stringify({ by: DEVICE_ID, rev: room.rev, at: Date.now(), state: state }), true);
-    }catch(e){}
+      room._dirty = false;
+      return true;
+    }catch(e){ return false; }
   }
+  return false;
 }
 function roomStartFallbackPoll(){
   if(mqttConnected){ roomStopPoll(); return; }
