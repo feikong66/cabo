@@ -243,6 +243,7 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .name-row .name-field .nf-label{position:absolute;top:-8px;left:11px;background:var(--card);padding:0 6px;font-size:10.5px;color:var(--muted);font-weight:700;letter-spacing:.3px;border-radius:4px}
 .name-row .name-field input{padding:13px 14px 11px}
 .save-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;background:var(--card)}
+.save-item--auto{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 22%,transparent);background:color-mix(in srgb,var(--accent) 8%,var(--card))}
 .save-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .save-name{font-weight:700;font-size:15px}
 .save-time{color:var(--muted);font-size:12px;flex:0 0 auto}
@@ -1364,6 +1365,8 @@ function saveSaves(list){
   if(subAuth.user){ subCache = { state, saves: list }; subPush(); return; }
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify(list)); }catch(e){}
 }
+/* 自动存档置顶：始终排在最前，其余按时间倒序 */
+function pinnedSaves(list){ return list.filter(s=> s.auto).concat(list.filter(s=> !s.auto)); }
 function autoArchive(){
   const list = loadSaves();
   const name = "对局 " + fmtTime(Date.now());
@@ -1381,8 +1384,11 @@ function autoArchive(){
 }
 /* 自动存档：每次提交/修改后把当前对局写进「我的存档」的固定槽位，可随时载入继续 */
 const AUTOSAVE_ID = "__autosave__";
+function autoSaveOn(){ try{ return localStorage.getItem("cabo-autosave-on") !== "0"; }catch(e){ return true; } }
+function setAutoSaveOn(v){ try{ localStorage.setItem("cabo-autosave-on", v?"1":"0"); }catch(e){} }
 function autoSaveSnapshot(){
   try{
+    if(!autoSaveOn()) return;
     if(!(state.started || state.rounds.length > 0)) return;
     const list = loadSaves().filter(s=> String(s.id) !== AUTOSAVE_ID);
     list.unshift({
@@ -1430,7 +1436,7 @@ function savedItemHtml(s){
   const best = s.winRule==="low" ? Math.min.apply(null, sc) : Math.max.apply(null, sc);
   const winner = s.players[sc.indexOf(best)].name;
   const scores = s.players.map((p,i)=> escapeHtml(p.name)+" "+sc[i]).join(" · ");
-  return `<div class="save-item">
+  return `<div class="save-item ${s.auto?'save-item--auto':''}">
     <div class="save-head"><span class="save-name">${escapeHtml(s.name)}</span>${s.auto?'<span class="save-auto">自动</span>':''}<span class="save-time">${fmtTime(s.time)}</span></div>
     <div class="save-sub">${s.players.length} 人 · ${s.rounds.length} 局 · ${scores} · 胜：${escapeHtml(winner)}</div>
     <div class="save-actions">
@@ -1443,7 +1449,7 @@ function savedItemHtml(s){
 function homeHistoryHtml(){
   const list = loadSaves();
   if(list.length===0) return "";
-  const body = list.map(s=> savedItemHtml(s)).join("");
+  const body = pinnedSaves(list).map(s=> savedItemHtml(s)).join("");
   return `<div class="history home-history">
     <h3>📂 历史对局（${list.length} 场）</h3>
     <div id="homeHist">${body}</div>
@@ -1454,7 +1460,7 @@ function openSavesList(){
   const list = loadSaves();
   const body = list.length===0
     ? '<div style="color:var(--muted);font-size:14px">还没有保存的对局。</div>'
-    : list.map(s=> savedItemHtml(s)).join("");
+    : pinnedSaves(list).map(s=> savedItemHtml(s)).join("");
   overlay.innerHTML = `
     <div class="modal">
       <h2>📂 我的存档</h2>
@@ -2088,6 +2094,10 @@ function openSettings(){
           <div class="desc">音效</div>
           <button class="toggle ${state.sound?'on':''}" data-snd="1">${state.sound?'开':'关'}</button>
         </div>
+        <div class="rule-row">
+          <div class="desc">自动存档<small>每次提交本局自动存入「我的存档」</small></div>
+          <button class="toggle ${autoSaveOn()?'on':''}" data-auto="1">${autoSaveOn()?'开':'关'}</button>
+        </div>
       </div>
       <div class="modal-actions">
         <button class="primary" id="saveSet">保存</button>
@@ -2104,6 +2114,7 @@ function openSettings(){
   document.querySelectorAll(".toggle").forEach(b=>{
     if(b.dataset.r==="lowBonus") b.onclick = ()=>{ state.rules.lowBonus.enabled = !state.rules.lowBonus.enabled; openSettings(); };
     else if(b.dataset.snd) b.onclick = ()=>{ state.sound = !state.sound; save(); openSettings(); };
+    else if(b.dataset.auto) b.onclick = ()=>{ setAutoSaveOn(!autoSaveOn()); openSettings(); };
   });
   const sb = document.querySelector("#setBonus"); if(sb) sb.oninput = e=> state.rules.lowBonus.amount = Math.max(0, parseInt(e.target.value,10)||0);
   const logoutBtn = document.querySelector("#setLogout");
