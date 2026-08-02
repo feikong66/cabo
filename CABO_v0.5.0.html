@@ -1872,8 +1872,16 @@ var DEVICE_ID = (function(){
 })();
 function roomFile(code){ return "cabo-room-" + code + ".json"; }
 function roomErrMsg(e){
-  const m = e && e.message ? String(e.message) : "";
-  if(/Failed to fetch|NetworkError|network|timeout|aborted|fetch/i.test(m)) return "无法连接同步服务器，请检查网络，或换系统浏览器 / VPN 重试";
+  const m = e && e.message ? String(e.message) : (e ? String(e) : "");
+  if(location.protocol === "file:"){
+    return "你正用本地文件(file://)打开，浏览器会拦截联网请求。请改用在线地址 https://feikong66.github.io/cabo/ 打开本页";
+  }
+  if(/Failed to fetch|NetworkError|network|timeout|aborted|fetch|TypeError/i.test(m)){
+    if(location.hostname.indexOf("github.io") < 0){
+      return "无法连接同步服务器（当前页不是在线地址）。请改用 https://feikong66.github.io/cabo/ 打开本页再试";
+    }
+    return "无法连接同步服务器。Edge 请：① 地址栏左侧关掉「跟踪防护」；② 改用 InPrivate 窗口(Ctrl+Shift+N)；③ 确认本机能访问 api.github.com";
+  }
   return m;
 }
 function roomBtnLabel(){ return room && room.code ? ("📡 房间 " + room.code) : "📡 联机房间"; }
@@ -1958,8 +1966,10 @@ function roomRefreshStatus(){
   st.textContent = room.err ? ("⚠ " + room.err) : "● 已连接，自动同步中";
 }
 function roomPanelHtml(){
+  const _offline = (location.protocol === "file:" || location.hostname.indexOf("github.io") < 0);
+  const _warn = _offline ? '<div style="background:#fff4e5;color:#b26a00;border:1px solid #ffd591;padding:8px 10px;border-radius:8px;font-size:13px;margin-bottom:12px">⚠ 当前不是在线地址，联机可能被浏览器拦截。请用 <b>https://feikong66.github.io/cabo/</b> 打开本页</div>' : '';
   if(!room.code){
-    return `
+    return _warn + `
       <p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，之后双方的分数会自动同步（约 ${Math.round(ROOM_POLL/1000)} 秒一次），<b>不需要登录账号</b>。</p>
       <button class="primary" id="roomCreate" style="width:100%;margin-bottom:16px">➕ 创建房间</button>
       <div class="room-or"><span>已有房间码？</span></div>
