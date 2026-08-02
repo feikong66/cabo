@@ -233,6 +233,7 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .save-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .save-name{font-weight:700;font-size:15px}
 .save-time{color:var(--muted);font-size:12px;flex:0 0 auto}
+.save-auto{background:var(--accent);color:#fff;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;flex:0 0 auto}
 .save-sub{color:var(--muted);font-size:12.5px;margin:4px 0 9px;line-height:1.5}
 .save-actions{display:flex;gap:8px}
 .mini{flex:1;padding:9px;border-radius:10px;font-size:13.5px;background:#f1f4f6;color:var(--text);box-shadow:none;font-weight:600}
@@ -798,7 +799,7 @@ function renderSetup(){
   document.querySelectorAll("#homeHist [data-report]").forEach(b=> b.onclick=()=> openSavedReport(+b.dataset.report));
   document.querySelectorAll("#homeHist [data-load]").forEach(b=> b.onclick=()=> loadSave(+b.dataset.load));
   document.querySelectorAll("#homeHist [data-del]").forEach(b=> b.onclick=()=>{
-    askConfirm("删除存档","确定删除这个存档？", ()=>{ saveSaves(loadSaves().filter(s=> s.id !== +b.dataset.del)); renderSetup(); toast("已删除存档"); });
+    askConfirm("删除存档","确定删除这个存档？", ()=>{ saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del)); renderSetup(); toast("已删除存档"); });
   });
   const ca = document.querySelector("#clearAllBtn");
   if(ca) ca.onclick = ()=> askConfirm("清空全部记录","确定清空所有历史对局？此操作不可恢复。", ()=>{ saveSaves([]); renderSetup(); toast("已清空全部历史对局"); });
@@ -1088,6 +1089,22 @@ function autoArchive(){
   });
   saveSaves(list);
 }
+/* 自动存档：每次提交/修改后把当前对局写进「我的存档」的固定槽位，可随时载入继续 */
+const AUTOSAVE_ID = "__autosave__";
+function autoSaveSnapshot(){
+  try{
+    if(!(state.started || state.rounds.length > 0)) return;
+    const list = loadSaves().filter(s=> String(s.id) !== AUTOSAVE_ID);
+    list.unshift({
+      id: AUTOSAVE_ID, name: "自动存档（最新一场）", time: Date.now(), auto: true,
+      players: state.players.map(p=>({name:p.name})),
+      rounds: deep(state.rounds), adjust: state.adjust.slice(),
+      bonusApplied: state.bonusApplied, hundredUsed: (state.hundredUsed||[]).slice(),
+      endScore: state.endScore, winRule: state.winRule, rules: deep(state.rules)
+    });
+    saveSaves(list);
+  }catch(e){}
+}
 function openSaveDialog(){
   overlay.innerHTML = `
     <div class="modal">
@@ -1124,7 +1141,7 @@ function savedItemHtml(s){
   const winner = s.players[sc.indexOf(best)].name;
   const scores = s.players.map((p,i)=> escapeHtml(p.name)+" "+sc[i]).join(" · ");
   return `<div class="save-item">
-    <div class="save-head"><span class="save-name">${escapeHtml(s.name)}</span><span class="save-time">${fmtTime(s.time)}</span></div>
+    <div class="save-head"><span class="save-name">${escapeHtml(s.name)}</span>${s.auto?'<span class="save-auto">自动</span>':''}<span class="save-time">${fmtTime(s.time)}</span></div>
     <div class="save-sub">${s.players.length} 人 · ${s.rounds.length} 局 · ${scores} · 胜：${escapeHtml(winner)}</div>
     <div class="save-actions">
       <button class="mini" data-report="${s.id}">查看战报</button>
@@ -1160,7 +1177,7 @@ function openSavesList(){
   overlay.querySelectorAll("[data-load]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); loadSave(+b.dataset.load); });
   overlay.querySelectorAll("[data-del]").forEach(b=> b.onclick=()=>{
     askConfirm("删除存档", "确定删除这个存档？", ()=>{
-      saveSaves(loadSaves().filter(s=> s.id !== +b.dataset.del));
+      saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del));
       openSavesList();
     });
   });
@@ -1176,7 +1193,7 @@ function computeSavedTotals(s){
   return totals.map((t,i)=> t + ((s.adjust&&s.adjust[i])||0));
 }
 function loadSave(id){
-  const s = loadSaves().find(x=> x.id===id);
+  const s = loadSaves().find(x=> String(x.id) === String(id));
   if(!s) return;
   state.players = s.players.map(p=>({name:p.name}));
   state.rounds = deep(s.rounds);
@@ -1263,19 +1280,21 @@ function submitRound(){
   const {eggs} = computeTotals();
   eggs.filter(e=> e.round===state.rounds.length-1).forEach(e=> events.push({type:"egg", name: state.players[e.player].name}));
   save();
+  autoSaveSnapshot();
   events.forEach((e,idx)=> setTimeout(()=> showEventBanner(e), idx*2700));
   render();
+  toast("✅ 已自动保存");
 }
 function undo(){
   if(state.rounds.length===0) return;
   state.rounds.pop();
-  save(); render(); toast("已撤销上一局");
+  save(); autoSaveSnapshot(); render(); toast("已撤销上一局");
 }
 function deleteRound(k){
   if(k<0 || k>=state.rounds.length) return;
   askConfirm("删除本局", "确定删除第 "+(k+1)+" 局？该局分数将被移除并重新计算总分。", ()=>{
     state.rounds.splice(k,1);
-    save(); render(); toast("已删除第 "+(k+1)+" 局");
+    save(); autoSaveSnapshot(); render(); toast("已删除第 "+(k+1)+" 局");
   });
 }
 function openRoundEditor(k){
@@ -1319,7 +1338,7 @@ function openRoundEditor(k){
   eSelKami.onchange = ()=>{};
   document.querySelector("#erCancel").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#erDel").onclick = ()=>{
-    askConfirm("删除本局","确定删除第 "+(k+1)+" 局？", ()=>{ state.rounds.splice(k,1); overlay.classList.add("hidden"); save(); render(); toast("已删除第 "+(k+1)+" 局"); });
+    askConfirm("删除本局","确定删除第 "+(k+1)+" 局？", ()=>{ state.rounds.splice(k,1); overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render(); toast("已删除第 "+(k+1)+" 局"); });
   };
   document.querySelector("#erSave").onclick = ()=>{
     const pts = state.players.map((_,i)=>{
@@ -1336,7 +1355,7 @@ function openRoundEditor(k){
       nr.cards = state.players.map((_,i)=> [0,1,2,3].map(j=> parseFloat(document.querySelector('.er-c4i[data-i="'+i+'"][data-j="'+j+'"]').value)||0));
     }
     state.rounds[k] = nr;
-    overlay.classList.add("hidden"); save(); render(); toast("已保存第 "+(k+1)+" 局修改");
+    overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render(); toast("已保存第 "+(k+1)+" 局修改");
   };
 }
 function checkEnd(ts){
@@ -1686,7 +1705,7 @@ function openReport(){
   openReportModal(text);
 }
 function openSavedReport(id){
-  const s = loadSaves().find(x=> x.id===id);
+  const s = loadSaves().find(x=> String(x.id) === String(id));
   if(!s) return;
   const text = buildReportText(s.players, s.rounds, s.adjust||s.players.map(()=>0), s.winRule, s.endScore, s.rules, fmtTime(s.time), s.name);
   openReportModal(text);
