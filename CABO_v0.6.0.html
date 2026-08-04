@@ -342,6 +342,7 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .lang-toggle{display:inline-flex;align-items:center;gap:6px}
 .voice-row{display:flex;align-items:center;gap:10px;margin:4px 0}
 .voice-row input[type=range]{flex:1;accent-color:var(--accent)}
+.voice-select{flex:1;padding:7px 9px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;max-width:100%}
 .seg.mini-seg button{padding:6px 14px;font-size:13px}
 .cl-scroll{max-height:58vh;overflow:auto;margin:8px 0 12px}
 .cl-block{border-bottom:1px solid var(--line);padding:11px 0}
@@ -373,7 +374,7 @@ const I18N = {
     lowWin:"低分胜", highWin:"高分胜", ruleCustom:"规则自定义",
     callerWins:"喊者胜", bothZero:"均 0 分",
     clearLocal:"清空本地存档", clearAuto:"清空自动存档",
-    darkMode:"深色模式", language:"语言", voiceAnnounce:"语音播报", volume:"音量",
+    darkMode:"深色模式", language:"语言", voiceAnnounce:"语音播报", volume:"音量", voiceName:"嗓音", voiceDefault:"系统默认（自动优选高品质）",
     changelog:"更新日志", changelogTitle:"更新日志",
     exportTitle:"📦 导出 / 导入本局", exportJson:"⬇ 导出 JSON", exportExcel:"⬇ 导出 Excel", exportPdf:"🖨 导出 PDF / 打印", importJson:"⬆ 导入 JSON", shareLink:"🔗 分享链接",
     login:"登录", register:"注册", skipLogin:"暂不登录，本地试用", username:"用户名", password:"密码",
@@ -388,7 +389,7 @@ const I18N = {
     lowWin:"Lowest wins", highWin:"Highest wins", ruleCustom:"Custom rules",
     callerWins:"Caller wins", bothZero:"Both 0",
     clearLocal:"Clear local saves", clearAuto:"Clear auto-save",
-    darkMode:"Dark mode", language:"Language", voiceAnnounce:"Voice announce", volume:"Volume",
+    darkMode:"Dark mode", language:"Language", voiceAnnounce:"Voice announce", volume:"Volume", voiceName:"Voice", voiceDefault:"System default (auto-pick quality)",
     changelog:"Changelog", changelogTitle:"Changelog",
     exportTitle:"📦 Export / Import game", exportJson:"⬇ Export JSON", exportExcel:"⬇ Export Excel", exportPdf:"🖨 Export PDF / Print", importJson:"⬆ Import JSON", shareLink:"🔗 Share link",
     login:"Log in", register:"Register", skipLogin:"Skip, use locally", username:"Username", password:"Password",
@@ -720,6 +721,27 @@ function initVoice(){
   const v = (state && state.voice) || (state.voice = {on:false, volume:1, lang:null});
   voiceOn = !!v.on; voiceVol = (typeof v.volume==='number') ? v.volume : 1;
 }
+let _voicesCache = [];
+function loadVoices(){ try{ _voicesCache = (window.speechSynthesis && window.speechSynthesis.getVoices()) || []; }catch(e){ _voicesCache = []; } return _voicesCache; }
+function pickVoice(lang){
+  const vs = loadVoices(); if(!vs.length) return null;
+  const want = (lang==='en') ? 'en' : 'zh';
+  let pool = vs.filter(v=> v.lang && v.lang.toLowerCase().startsWith(want));
+  if(!pool.length) pool = vs.slice();
+  const pref = ['xiaoxiao','yunxi','aria','samantha','yaoyao','xiaoyi','huihui','google','zira','kangkang','tian','ting','meijia','nan','female','online','natural','neural'];
+  function score(v){ let s=0; const n=(v.name||'').toLowerCase(); if(/online|natural|neural/.test(n)) s+=20; for(let i=0;i<pref.length;i++){ if(n.indexOf(pref[i])>=0) s+=(pref.length-i)*0.5; } return s; }
+  pool = pool.slice().sort((a,b)=> score(b)-score(a));
+  return pool[0] || vs[0];
+}
+function populateVoiceSelect(){
+  const sel = document.querySelector('#setVoice'); if(!sel) return;
+  loadVoices();
+  const cur = (state.voice && state.voice.voiceName) || '';
+  let html = '<option value="">'+escapeHtml(t('voiceDefault'))+'</option>';
+  _voicesCache.forEach(v=>{ const nm=v.name||''; html += '<option value="'+escapeHtml(nm)+'"'+(nm===cur?' selected':'')+'>'+escapeHtml(nm)+' · '+(v.lang||'')+(v.default?' ★':'')+'</option>'; });
+  sel.innerHTML = html;
+  if(typeof window!=='undefined' && window.speechSynthesis){ try{ window.speechSynthesis.onvoiceschanged = ()=>{ const s=document.querySelector('#setVoice'); if(s) populateVoiceSelect(); }; }catch(e){} }
+}
 function speak(text){
   if(!voiceOn) return;
   if(typeof window === "undefined" || !('speechSynthesis' in window)) return;
@@ -727,6 +749,10 @@ function speak(text){
     const u = new SpeechSynthesisUtterance(text);
     u.lang = (state.voice && state.voice.lang) || (state.lang==='en' ? 'en-US' : 'zh-CN');
     u.volume = voiceVol; u.rate = 1; u.pitch = 1;
+    let v = null;
+    if(state.voice && state.voice.voiceName){ v = loadVoices().find(x=> x.name===state.voice.voiceName) || null; }
+    if(!v) v = pickVoice(state.lang);
+    if(v) u.voice = v;
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(u);
   }catch(e){}
@@ -875,7 +901,7 @@ function defaultState(){
     sound:true,
     theme:"light",
     lang:(typeof navigator!=='undefined' && (navigator.language||'').toLowerCase().startsWith('en'))?'en':'zh',
-    voice:{on:false, volume:1, lang:null},
+    voice:{on:false, volume:1, lang:null, voiceName:null},
     rules:{
       caboPenalty:10,
       tieRule:"callerWins",
@@ -914,6 +940,7 @@ function normalize(){
   if(!state.voice || typeof state.voice!=="object") state.voice = {on:false, volume:1, lang:null};
   if(typeof state.voice.on !== "boolean") state.voice.on = false;
   if(typeof state.voice.volume !== "number") state.voice.volume = 1;
+  if(typeof state.voice.voiceName !== "string") state.voice.voiceName = null;
   if(!Array.isArray(state.rounds)) state.rounds = [];
   else {
     // 玩家索引合法性校验：人数变动时防止越界残留
@@ -2232,6 +2259,10 @@ function openSettings(){
           <div class="desc">${t("volume")}</div>
           <input type="range" id="setVol" min="0" max="1" step="0.1" value="${(state.voice&&typeof state.voice.volume==='number')?state.voice.volume:1}">
         </div>
+        <div class="rule-row voice-row">
+          <div class="desc">${t("voiceName")}</div>
+          <select id="setVoice" class="voice-select"></select>
+        </div>
       </div>
       <div class="rules-block" style="margin-top:14px">
         <label>${t("clearLocal")}</label>
@@ -2260,6 +2291,9 @@ function openSettings(){
     else if(b.dataset.voice) b.onclick = ()=>{ state.voice = state.voice||{on:false,volume:1,lang:null}; state.voice.on = !state.voice.on; initVoice(); save(); b.classList.toggle("on"); b.textContent = state.voice.on?'开':'关'; };
   });
   const vol = document.querySelector("#setVol"); if(vol) vol.oninput = e=>{ state.voice = state.voice||{on:false,volume:1,lang:null}; state.voice.volume = parseFloat(e.target.value)||0; voiceVol = state.voice.volume; save(); };
+  populateVoiceSelect();
+  const vsSel = document.querySelector("#setVoice");
+  if(vsSel) vsSel.onchange = e=>{ state.voice = state.voice||{on:false,volume:1,lang:null}; state.voice.voiceName = e.target.value || null; save(); if(state.voice.on) speak(state.lang==='en'?'Voice test':'嗓音测试'); };
   const clBtn = document.querySelector("#setChangelog"); if(clBtn) clBtn.onclick = ()=>{ overlay.classList.add("hidden"); openChangelog(); };
   const _m1 = overlay.querySelector(".modal"); if(_m1 && _wasOpen) _m1.scrollTop = _sc;
   const sb = document.querySelector("#setBonus"); if(sb) sb.oninput = e=> state.rules.lowBonus.amount = Math.max(0, parseInt(e.target.value,10)||0);
