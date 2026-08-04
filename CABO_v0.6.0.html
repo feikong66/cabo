@@ -395,7 +395,321 @@ const I18N = {
     loginSub:"After login your game syncs with your account — pick up on any device",
     roomMembers:"Room members", online:"online", offline:"offline", owner:"host", me:"(me)", guest:"guest", kick:"Kick", confirmKick:"Kick?", bannedTitle:"Kicked list", unban:"Restore", youAreKicked:"You were removed by the host and can no longer score",
     loginOnly:"Members only", roundSaved:"Saved", gameOver:"Game over", congrats:"Congrats", caboCalled:"calls Cabo"
-  }
+  ,
+    "分": "pts",
+    "，": ",",
+    "喊 CABO": "calls Cabo",
+    "恭喜": "Congrats",
+    "获胜": "wins",
+    "新增：数据导出 Excel / PDF（在「导出 / 导入本局」中）": "New: Data export to Excel / PDF (in 'Export / Import game')",
+    "新增：多语言切换（中文 / 英文），设置里一键切换并记忆": "New: Language switch (Chinese / English), toggle in Settings and remembered",
+    "新增：语音播报（分数变化、回合结算、胜利时刻），可开关与调音量": "New: Voice announce (score changes, round settlement, victory) — toggle and volume",
+    "新增：更新日志（本弹窗）": "New: Changelog (this popup)",
+    "增强：深色模式此前已支持，本版补充系统主题跟随说明": "Enhanced: Dark mode already supported; this version adds system-theme-follow note",
+    "房间成员名单 + 房主踢人（被踢者立即退场且不可重进）": "Room member list + host kick (kicked players leave immediately and can't rejoin)",
+    "仅已登录玩家可创建 / 加入房间，游客不行": "Only logged-in players can create / join rooms; guests cannot",
+    "多人实时同步（MQTT + Gist 兜底）": "Multiplayer real-time sync (MQTT + Gist fallback)",
+    "撤销确认、操作记录、清人、房间锁定等联机增强": "Undo confirm, operation log, remove players, room lock and other multiplayer enhancements",
+    " 人": " players",
+    "卡波说明书": "Cabo manual",
+    "玩家1": "Player 1",
+    "玩家2": "Player 2",
+    "玩家": "Player",
+    "</p> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"cfNo\">取消</button> <button class=\"primary\" id=\"cfYes\">确定</button> </div> </div>": "</p> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"cfNo\">Cancel</button> <button class=\"primary\" id=\"cfYes\">OK</button> </div> </div>",
+    "<div class=\"lb-bar\"> <div class=\"lb-title\" id=\"lbTitle\"></div> <div class=\"lb-btns\"> <button id=\"lbPrev\">‹</button> <button id=\"lbZoom\">🔍 放大</button> <button id=\"lbNext\">›</button> <button id=\"lbClose\">✕</button> </div> </div> <div class=\"lb-stage\"><img id=\"lbImg\" alt=\"规则大图\"></div> <div class=\"lb-tip\">上下滑动查看 · 双击图片切换放大</div>": "<div class=\"lb-bar\"> <div class=\"lb-title\" id=\"lbTitle\"></div> <div class=\"lb-btns\"> <button id=\"lbPrev\">‹</button> <button id=\"lbZoom\">🔍 Zoom</button> <button id=\"lbNext\">›</button> <button id=\"lbClose\">✕</button> </div> </div> <div class=\"lb-stage\"><img id=\"lbImg\" alt=\"Rule image\"></div> <div class=\"lb-tip\">Swipe up / down to view · double-tap image to toggle zoom</div>",
+    "（": "(",
+    "）": ")",
+    "图片未能加载，请查看文字版规则": "Image failed to load, see the text version of the rules",
+    "<div class=\"eb-emoji\">💯</div><div class=\"eb-title\">得分满减！</div><div class=\"eb-sub\">": "<div class=\"eb-emoji\">💯</div><div class=\"eb-title\">Score bonus!</div><div class=\"eb-sub\">",
+    "恰好 100 分 → 重置为 50！</div>": "Exactly 100 points → reset to 50!</div>",
+    "<div class=\"eb-emoji\">🚀</div><div class=\"eb-title\">神风特攻队！</div><div class=\"eb-sub\">": "<div class=\"eb-emoji\">🚀</div><div class=\"eb-title\">Kamikaze squad!</div><div class=\"eb-sub\">",
+    "本局 0 分，其余全员各 +50！</div>": "This round 0 points, everyone else +50 each!</div>",
+    "未达最低 → 本局 +": "Below minimum → this round +",
+    " 惩罚": " penalty",
+    "<div class=\"setup-card\"> <h2>卡波计分 · 对局设置</h2> <div class=\"field\"> <label>玩家人数（当前": "<div class=\"setup-card\"> <h2>Cabo Scorer · Game setup</h2> <div class=\"field\"> <label>Number of players (current",
+    "人）</label> <div class=\"seg\" id=\"segCount\">": " players)</label> <div class=\"seg\" id=\"segCount\">",
+    "人</button>": " players</button>",
+    "</div> </div> <div class=\"field\"> <label>玩家名字</label> <div id=\"nameList\"></div> </div> <div class=\"row2\"> <div class=\"field\"> <label>结束分数线</label> <div class=\"es-input\"> <input type=\"number\" id=\"endScore\" value=\"": "</div> </div> <div class=\"field\"> <label>Player names</label> <div id=\"nameList\"></div> </div> <div class=\"row2\"> <div class=\"field\"> <label>End score</label> <div class=\"es-input\"> <input type=\"number\" id=\"endScore\" value=\"",
+    "\" min=\"1\" inputmode=\"numeric\"> <span class=\"es-unit\">分</span> </div> <div class=\"sub-label\">快捷选择</div> <div class=\"preset-row\" id=\"presetRow\">": "\" min=\"1\" inputmode=\"numeric\"> <span class=\"es-unit\">pts</span> </div> <div class=\"sub-label\">Quick pick</div> <div class=\"preset-row\" id=\"presetRow\">",
+    "</div> </div> <div class=\"field\"> <label>胜负规则</label> <div class=\"seg\" id=\"segRule\"> <button data-r=\"low\" class=\"": "</div> </div> <div class=\"field\"> <label>Win rule</label> <div class=\"seg\" id=\"segRule\"> <button data-r=\"low\" class=\"",
+    "\">低分胜</button> <button data-r=\"high\" class=\"": "\">Lowest wins</button> <button data-r=\"high\" class=\"",
+    "\">高分胜</button> </div> </div> </div> <details class=\"rules-ref\"> <summary>📖 规则速查（点击展开）</summary> <div class=\"rf-body\"> <div class=\"rf-sec\">官方说明书原图</div> <div class=\"rules-gallery\" id=\"rulesGallery\">": "\">Highest wins</button> </div> </div> </div> <details class=\"rules-ref\"> <summary>📖 Rules quick reference (click to expand)</summary> <div class=\"rf-body\"> <div class=\"rf-sec\">Official manual original image</div> <div class=\"rules-gallery\" id=\"rulesGallery\">",
+    "\" loading=\"lazy\" decoding=\"async\"> <span class=\"rt-fail\">图片未能加载<br>可看下方文字版规则</span> <span class=\"rt-zoom\">🔍 放大</span> <span class=\"rt-tag\">": "\" loading=\"lazy\" decoding=\"async\"> <span class=\"rt-fail\">Image failed to load<br>see text rules below</span> <span class=\"rt-zoom\">🔍 Zoom</span> <span class=\"rt-tag\">",
+    "卡波说明书 · ": "Cabo manual · ",
+    "</div> <div class=\"rules-caption\">点击图片进入大图模式，可上下滚动；点「放大」或双击可放大到 4 倍查看小字。若仍模糊，建议参考下方文字版规则。</div> <div class=\"rf-sec\">文字版规则</div> <div class=\"rf-card\"> <div class=\"rf-h\">🎯 游戏目标</div> 卡波（CABO）中<b>分数越低越有利</b>。每一局结束后把本局手牌分累加到总分，率先有人达到「结束分数线」时全局结束，按总分排名（默认<b>低分胜</b>）。 </div> <div class=\"rf-card\"> <div class=\"rf-h\">🃏 牌值</div> A=1，2~10 按面值，J=11，Q=12，K（黑）=13，K（红）=-1（视具体牌组约定）。牌越小越好。 </div> <div class=\"rf-card\"> <div class=\"rf-h\">🗣 呼唤 CABO</div> 轮到自己且未摸牌时可喊 CABO 结束本局，其余玩家各再行动一轮后摊牌。 <ol> <li>喊 CABO 者<b>手牌分全场最低</b> → 本局记 <b>0 分</b>。</li> <li>喊 CABO 者与他人<b>并列最低（平局）</b> → 仍算<b>喊话者获胜</b>，本局记 <b>0 分</b>。</li> <li>喊 CABO 者<b>不是最低</b> → 本局按手牌分计算，并<b>额外 +惩罚分</b>（默认 +10，可在设置改为 +5）。</li> </ol> </div> <div class=\"rf-card\"> <div class=\"rf-h\">🚀 神风特攻队（至尊组合）</div> 手中凑齐 <b>两张 13 + 两张 12</b> 的至尊组合即达成神风特攻队：<b>达成者本局记 0 分，其余玩家本局各 +50 分</b>。 <div class=\"rf-note\">官方触发前提：呼唤 CABO 之后，牌桌上出现「2 张 13 + 2 张 12」且再无其他牌时触发。计分时在本局面板点「🚀 神风特攻队」标记达成者即可。</div> </div> <div class=\"rf-card\"> <div class=\"rf-h\">💯 得分满减</div> 玩家总积分<b>恰好等于 100 分</b>时触发，该玩家总分<b>重置为 50 分</b>。 <ol> <li>只有<b>恰好 100</b> 才触发；<b>超过 100</b>（如 103、120）<b>不触发</b>。</li> <li>每个玩家整局游戏<b>各自可触发 1 次</b>（不是全场只有一次）。</li> <li>优先级：<b>先做满减，再判定游戏是否结束</b>。</li> </ol> </div> <div class=\"rf-card\"> <div class=\"rf-h\">🧮 多规则叠加结算顺序</div> 同一局同时触发多条规则时，严格按以下顺序结算： <ol> <li><b>神风特攻队</b>：达成者本局 0 分，其余玩家各 +50。</li> <li><b>CABO 喊话结算</b>：判定喊话者成功（0 分）或失败（+惩罚分）。</li> <li><b>总分累加</b>：把本局得分加到各玩家总分上。</li> <li><b>得分满减校验</b>：任一玩家总分恰好 100 → 重置为 50。</li> <li><b>游戏结束判定</b>：是否有人达到结束分数线。</li> </ol> <div class=\"rf-note\">因此神风给他人的 +50 累加后若<b>恰好等于 100</b>，同样会触发满减降到 50。若同一玩家<b>同时达成神风 + 喊 CABO 成功</b>，两者不冲突，本局最终仍是 <b>0 分</b>。</div> </div> <div class=\"rf-card\"> <div class=\"rf-h\">🎮 结束与胜负</div> 有玩家总分<b>达到或超过结束分数线</b>（默认 100，可改 150 / 200 / 250 或自定义）即触发结算，按当前总分排名。 <div class=\"rf-note\"><b>高分胜（娱乐模式）</b>：仅<b>反转排名方向</b>——总分最高者获胜。CABO 惩罚 +10/+5、神风特攻队 +50、得分满减（恰好 100→50）等规则<b>全部照常生效不变</b>。</div> </div> </div> </details>": "</div> <div class=\"rules-caption\">Tap the image to enter fullscreen, scroll up / down; tap \"Zoom\" or double-tap to enlarge up to 4x for small text. If still blurry, refer to the text rules below.</div> <div class=\"rf-sec\">Text rules</div> <div class=\"rf-card\"> <div class=\"rf-h\">🎯 Goal</div> In Cabo, <b>lower score is better</b>. After each round, add that round's hand score to the total. When someone first reaches the \"end score\", the game ends and ranks by total (default <b>lowest wins</b>). </div> <div class=\"rf-card\"> <div class=\"rf-h\">🃏 Card values</div> A=1, 2~10 face value, J=11, Q=12, K (black)=13, K (red)=-1 (per deck convention). Lower is better. </div> <div class=\"rf-card\"> <div class=\"rf-h\">🗣 Calling CABO</div> On your turn before drawing, you may call CABO to end the round; other players each take one more turn, then reveal. <ol> <li>CABO caller has <b>lowest hand</b> → scores <b>0 this round</b>.</li> <li>CABO caller ties for lowest → still counts as <b>caller wins</b>, scores <b>0</b>.</li> <li>CABO caller is <b>not lowest</b> → scored by hand value, plus <b>penalty</b> (default +10, changeable to +5 in settings).</li> </ol> </div> <div class=\"rf-card\"> <div class=\"rf-h\">🚀 Kamikaze squad (ultimate combo)</div> Holding the ultimate combo <b>two 13s + two 12s</b> triggers Kamikaze: <b>holder scores 0 this round, everyone else +50 each</b>. <div class=\"rf-note\">Official trigger: after calling CABO, when the table shows \"2×13 + 2×12\" and nothing else. Mark the holder with \"🚀 Kamikaze\" in the round panel.</div> </div> <div class=\"rf-card\"> <div class=\"rf-h\">💯 Score bonus</div> When a player's total is <b>exactly 100</b>, it triggers and that total <b>resets to 50</b>. <ol> <li>Only <b>exactly 100</b> triggers; <b>over 100</b> (e.g. 103, 120) does <b>not</b>.</li> <li>Each player may trigger <b>once per game</b> (not once total).</li> <li>Priority: <b>apply bonus first, then check game end</b>.</li> </ol> </div> <div class=\"rf-card\"> <div class=\"rf-h\">🧮 Multi-rule settlement order</div> When several rules trigger same round, settle strictly in this order: <ol> <li><b>Kamikaze</b>: holder 0, others +50 each.</li> <li><b>CABO settlement</b>: caller success (0) or fail (+penalty).</li> <li><b>Total accumulation</b>: add round score to each player's total.</li> <li><b>Score-bonus check</b>: any total exactly 100 → reset to 50.</li> <li><b>Game-end check</b>: anyone reached end score?</li> </ol> <div class=\"rf-note\">So if Kamikaze's +50 to others lands on <b>exactly 100</b>, the bonus also triggers down to 50. If one player <b>achieves both Kamikaze + CABO success</b>, they don't conflict — still <b>0</b> this round.</div> </div> <div class=\"rf-card\"> <div class=\"rf-h\">🎮 End & win</div> When a player's total <b>reaches or exceeds the end score</b> (default 100, or 150 / 200 / 250 / custom), settlement triggers, ranked by current total. <div class=\"rf-note\"><b>Highest wins (fun mode)</b>: only <b>reverses ranking direction</b> — highest total wins. CABO penalty +10/+5, Kamikaze +50, score bonus (exactly 100→50) all <b>still apply unchanged</b>.</div> </div> </div> </details>",
+    "切换人数": "Switch player count",
+    "切换人数将清空当前对局分数并开始新对局，确定继续？": "Switching player count clears the current game scores and starts a new game. Continue?",
+    "规则图未能加载，请看下方文字版规则": "Rule image failed to load — see text rules below",
+    "删除存档": "Delete save",
+    "确定删除这个存档？": "Delete this save?",
+    "已删除存档": "Save deleted",
+    "清空全部记录": "Clear all records",
+    "确定清空所有历史对局？此操作不可恢复。": "Clear all game history? This cannot be undone.",
+    "已清空全部历史对局": "All history cleared",
+    "</div> <div class=\"name-field\"> <span class=\"nf-label\">玩家": "</div> <div class=\"name-field\"> <span class=\"nf-label\">Player",
+    "\" placeholder=\"点此输入名字\" maxlength=\"10\" autocomplete=\"off\"> </div> </div>": "\" placeholder=\"Tap to enter name\" maxlength=\"10\" autocomplete=\"off\"> </div> </div>",
+    "局 ·": " rounds ·",
+    "已清空本局输入": "Round input cleared",
+    "</span><small>本轮喊 Cabo</small></button>": "</span><small>called Cabo this round</small></button>",
+    "<div class=\"modal\"> <h2>👥 玩家人数</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 14px\">当前": "<div class=\"modal\"> <h2>👥 Player count</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 14px\">Current",
+    "人。切换人数将开始新的一局。</p> <div class=\"seg\" id=\"segCount2\" style=\"margin-bottom:14px\">": " players. Switching count starts a new round.</p> <div class=\"seg\" id=\"segCount2\" style=\"margin-bottom:14px\">",
+    "</div> <div class=\"modal-actions\"><button class=\"ghost\" id=\"countCancel\">取消</button></div> </div>": "</div> <div class=\"modal-actions\"><button class=\"ghost\" id=\"countCancel\">Cancel</button></div> </div>",
+    "切换人数将开始新对局，当前分数会清空，确定继续？": "Switching player count starts a new game; current scores will be cleared. Continue?",
+    "新对局": "New game",
+    "开始新对局？当前分数会清空。": "Start a new game? Current scores will be cleared.",
+    "对局 ": "Game ",
+    "自动存档：": "Auto-save: ",
+    "已清空自动存档": "Auto-save cleared",
+    "自动存档（最新一场）": "Auto-save (latest game)",
+    "<div class=\"modal\"> <h2>💾 保存对局</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 14px\">给这场对局起个名字，之后可在「我的存档」里载入继续或回看。</p> <input type=\"text\" id=\"saveName\" placeholder=\"例如：周五夜局\" maxlength=\"20\" value=\"对局": "<div class=\"modal\"> <h2>💾 Save game</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 14px\">Name this game; later you can load it from \"My saves\" to continue or review.</p> <input type=\"text\" id=\"saveName\" placeholder=\"e.g. Friday night game\" maxlength=\"20\" value=\"Game",
+    "\"> <input type=\"text\" id=\"saveNote\" placeholder=\"备注/标签（可选，如：8月2日线下局）\" maxlength=\"20\" style=\"margin-top:10px\"> <div class=\"modal-actions\" style=\"margin-top:14px\"> <button class=\"ghost\" id=\"saveCancel\">取消</button> <button class=\"primary\" id=\"saveOk\">保存</button> </div> </div>": "\"> <input type=\"text\" id=\"saveNote\" placeholder=\"Note/tag (optional, e.g. Aug 2 offline game)\" maxlength=\"20\" style=\"margin-top:10px\"> <div class=\"modal-actions\" style=\"margin-top:14px\"> <button class=\"ghost\" id=\"saveCancel\">Cancel</button> <button class=\"primary\" id=\"saveOk\">Save</button> </div> </div>",
+    "已保存：": "Saved: ",
+    "人 ·": " players ·",
+    "· 胜：": " · Wins: ",
+    "\">查看战报</button> <button class=\"mini\" data-load=\"": "\">View report</button> <button class=\"mini\" data-load=\"",
+    "\">载入继续</button>": "\">Load to continue</button>",
+    "\">删除</button> </div> </div>": "\">Delete</button> </div> </div>",
+    "<div class=\"history home-history\"> <h3>📂 历史对局（": "<div class=\"history home-history\"> <h3>📂 Game history (",
+    "场）</h3> <div id=\"homeHist\">": " games)</h3> <div id=\"homeHist\">",
+    "</div> <button class=\"ghost clear-all\" id=\"clearAllBtn\">清空全部记录</button> </div>": "</div> <button class=\"ghost clear-all\" id=\"clearAllBtn\">Clear all records</button> </div>",
+    "<div class=\"modal\"> <h2>📂 我的存档</h2> <div class=\"save-toolbar\"> <input type=\"text\" id=\"saveFilter\" placeholder=\"🔍 按备注/名称筛选\" style=\"flex:1\"> <button class=\"ghost\" id=\"cloudPull\">☁ 云端覆盖</button> </div> <div id=\"saveList\" style=\"max-height:55vh;overflow:auto;margin:4px 0 10px\">": "<div class=\"modal\"> <h2>📂 My saves</h2> <div class=\"save-toolbar\"> <input type=\"text\" id=\"saveFilter\" placeholder=\"🔍 Filter by note/name\" style=\"flex:1\"> <button class=\"ghost\" id=\"cloudPull\">☁ Cloud overwrite</button> </div> <div id=\"saveList\" style=\"max-height:55vh;overflow:auto;margin:4px 0 10px\">",
+    "</div> <div class=\"modal-actions\"><button class=\"ghost\" id=\"savesClose\">关闭</button></div> </div>": "</div> <div class=\"modal-actions\"><button class=\"ghost\" id=\"savesClose\">Close</button></div> </div>",
+    "清空自动存档": "Clear auto-save",
+    "确定清空自动存档？此操作只删除自动存档，不影响其他手动存档。": "Clear auto-save? This only deletes the auto-save, other manual saves are unaffected.",
+    "已载入：": "Loaded: ",
+    "<div style=\"color:var(--muted);font-size:14px\">还没有提交过局数</div>": "<div style=\"color:var(--muted);font-size:14px\">No rounds submitted yet</div>",
+    "<span class=\"rn\">第": "<span class=\"rn\">Round ",
+    "局</span><span class=\"rn-kami\">🚀 神风特攻队</span>": "</span><span class=\"rn-kami\">🚀 Kamikaze squad</span>",
+    "局</span>": "</span>",
+    "\" title=\"修改本局\">修改</button><button class=\"r-act danger\" data-del=\"": "\" title=\"Edit this round\">Edit</button><button class=\"r-act danger\" data-del=\"",
+    "\" title=\"删除本局\">删除</button></span>": "\" title=\"Delete this round\">Delete</button></span>",
+    "<div class=\"r-tag kami\">🚀 神风特攻队：": "<div class=\"r-tag kami\">🚀 Kamikaze squad:",
+    "本局 0 分 · 其余各 +50</div>": "0 this round · others +50</div>",
+    "\">🗣 本局": "\">🗣 This round",
+    "也喊了 Cabo": "also called Cabo",
+    "<div class=\"r-tag cabo ok\">🗣 Cabo：": "<div class=\"r-tag cabo ok\">🗣 Cabo:",
+    "全场最低 → 本局 0 分</div>": "Lowest overall → 0 this round</div>",
+    "<div class=\"r-tag cabo fail\">🗣 Cabo：": "<div class=\"r-tag cabo fail\">🗣 Cabo:",
+    "惩罚</div>": "penalty</div>",
+    "<div class=\"r-rule kami\">规则：神风特攻队持有者": "<div class=\"r-rule kami\">Rule: Kamikaze holder",
+    "本局 0 分，其余玩家各 +50 分</div>": "0 this round, others +50 each</div>",
+    "<div class=\"r-event ev-hundred\"><span class=\"ev-emoji\">💯</span><span><b>得分满减！</b>": "<div class=\"r-event ev-hundred\"><span class=\"ev-emoji\">💯</span><span><b>Score bonus!</b>",
+    "本局前总分 100 → 重置为 50</span></div>": "Total before round 100 → reset to 50</span></div>",
+    "<div class=\"modal\"> <h2>🗣 本轮是否有人喊 CABO？</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 16px\">提交前确认一下：本轮是否有人喊了 CABO？选「有人喊」可指定玩家；选「没人喊」则按普通分数结算。</p> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"cgCancel\">取消</button> <button class=\"ghost\" id=\"cgNo\">🚫 没人喊</button> <button class=\"primary\" id=\"cgYes\">🗣 有人喊</button> </div> </div>": "<div class=\"modal\"> <h2>🗣 Did anyone call CABO this round?</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 16px\">Confirm before submitting: did anyone call CABO this round? \"Someone called\" lets you pick players; \"Nobody\" settles as normal scores.</p> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"cgCancel\">Cancel</button> <button class=\"ghost\" id=\"cgNo\">🚫 Nobody</button> <button class=\"primary\" id=\"cgYes\">🗣 Someone</button> </div> </div>",
+    "本局全是 0，确认要提交？": "All scores are 0 this round — confirm submit?",
+    "✅ 已自动保存": "✅ Auto-saved",
+    "操作": "Action",
+    "<div style=\"color:var(--muted)\">暂无操作记录</div>": "<div style=\"color:var(--muted)\">No operation records yet</div>",
+    "<div class=\"modal\"> <h2>📜 操作记录</h2> <p class=\"muted\" style=\"margin:0 0 10px\">最近 60 条改分 / 撤销 / 清人 / 锁定等操作，便于对账追溯。</p> <div class=\"oplog-list\">": "<div class=\"modal\"> <h2>📜 Operation log</h2> <p class=\"muted\" style=\"margin:0 0 10px\">Last 60 score-change / undo / remove / lock actions, for reconciliation.</p> <div class=\"oplog-list\">",
+    "</div> <div class=\"modal-actions\"><button class=\"primary\" id=\"olClose\">关闭</button></div> </div>": "</div> <div class=\"modal-actions\"><button class=\"primary\" id=\"olClose\">Close</button></div> </div>",
+    "撤销上一局": "Undo last round",
+    "确定撤销最近一局？该局分数将被移除（可随时重新提交）。": "Undo the most recent round? Its scores will be removed (you can re-submit anytime).",
+    "已撤销上一局": "Last round undone",
+    "已撤销最近 ": "Undid last ",
+    " 局": " rounds",
+    "撤销最近 ": "Undo last ",
+    "还没有可撤销的局": "No round to undo yet",
+    "<div class=\"modal\"> <h2>↩ 撤销多局</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 12px\">当前共": "<div class=\"modal\"> <h2>↩ Undo multiple rounds</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 12px\">Current total",
+    "局，输入要回退的局数（1 = 撤销上一局）。</p> <input type=\"number\" id=\"undoN\" value=\"1\" min=\"1\" max=\"": " rounds. Enter how many rounds to roll back (1 = undo last round).</p> <input type=\"number\" id=\"undoN\" value=\"1\" min=\"1\" max=\"",
+    "\" inputmode=\"numeric\"> <div class=\"modal-actions\" style=\"margin-top:14px\"> <button class=\"ghost\" id=\"uCancel\">取消</button> <button class=\"primary\" id=\"uOk\">撤销</button> </div> </div>": "\" inputmode=\"numeric\"> <div class=\"modal-actions\" style=\"margin-top:14px\"> <button class=\"ghost\" id=\"uCancel\">Cancel</button> <button class=\"primary\" id=\"uOk\">Undo</button> </div> </div>",
+    "房间已锁定，您为只读，无法改分": "Room locked — you are read-only, can't score",
+    "<div class=\"modal\"> <h2>✏️ 调整": "<div class=\"modal\"> <h2>✏️ Adjust",
+    "的分数</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 12px\">当前补扣值：<b>": "'s score</h2> <p style=\"color:var(--muted);font-size:14px;margin:0 0 12px\">Current adjust value: <b>",
+    "</b>。输入正数加分、负数扣分（不影响已记各局，独立记录）。</p> <input type=\"number\" id=\"adjVal\" value=\"": "</b>. Enter a positive number to add, negative to subtract (doesn't affect recorded rounds, recorded independently).</p> <input type=\"number\" id=\"adjVal\" value=\"",
+    "\" inputmode=\"numeric\"> <div class=\"modal-actions\" style=\"margin-top:14px\"> <button class=\"ghost\" id=\"adjCancel\">取消</button> <button class=\"primary\" id=\"adjOk\">确定</button> </div> <button class=\"ghost danger-text\" id=\"adjClear\" style=\"width:100%;margin-top:10px\">🗑 清空该玩家全部计分</button> </div>": "\" inputmode=\"numeric\"> <div class=\"modal-actions\" style=\"margin-top:14px\"> <button class=\"ghost\" id=\"adjCancel\">Cancel</button> <button class=\"primary\" id=\"adjOk\">Confirm</button> </div> <button class=\"ghost danger-text\" id=\"adjClear\" style=\"width:100%;margin-top:10px\">🗑 Clear all of this player's scores</button> </div>",
+    "已调整 ": "Adjusted ",
+    "：": ":",
+    " 分": " pts",
+    "调整 ": "Adjust ",
+    "清空该玩家": "Clear this player",
+    "确定清空「": "Clear all of \"",
+    "」的全部计分？将清零其所有已记局数的得分与手动补扣分（不影响其他玩家）。": "\"'s scores? This zeroes all their recorded round scores and manual adjustments (other players unaffected).",
+    "清空玩家 ": "Cleared player ",
+    "已清空 ": "Cleared ",
+    " 的计分": "'s scores",
+    "删除本局": "Delete round",
+    "确定删除第 ": "Delete round ",
+    " 局？该局分数将被移除并重新计算总分。": "? Its scores will be removed and totals recalculated.",
+    "已删除第 ": "Deleted round ",
+    "<div class=\"modal\"> <h2>✏️ 修改第": "<div class=\"modal\"> <h2>✏️ Edit round",
+    "局</h2> <div class=\"field\"><label>本局各玩家手牌分</label>": "</h2> <div class=\"field\"><label>This round's hand scores per player</label>",
+    "> 🗣 本轮有人喊 CABO</label> <select id=\"eSelCabo\" class=\"ev-sel\"": "> 🗣 Someone called CABO this round</label> <select id=\"eSelCabo\" class=\"ev-sel\"",
+    "> 🚀 触发神风特攻队</label> <select id=\"eSelKami\" class=\"ev-sel\"": "> 🚀 Trigger Kamikaze squad</label> <select id=\"eSelKami\" class=\"ev-sel\"",
+    "</select> </div> <div class=\"modal-actions\"> <button class=\"danger\" id=\"erDel\">删除本局</button> <button class=\"ghost\" id=\"erCancel\">取消</button> <button class=\"primary\" id=\"erSave\">保存修改</button> </div> </div>": "</select> </div> <div class=\"modal-actions\"> <button class=\"danger\" id=\"erDel\">Delete round</button> <button class=\"ghost\" id=\"erCancel\">Cancel</button> <button class=\"primary\" id=\"erSave\">Save changes</button> </div> </div>",
+    " 局？": " round?",
+    "已保存第 ": "Saved round ",
+    " 局修改": " round changes",
+    "（险胜嘉奖 -": "(Close-win bonus -",
+    "分</span></div>": " pts</span></div>",
+    "<div class=\"modal\"> <div class=\"go-win\"><div class=\"trophy\">🏆</div> <div class=\"who\">🎉 恭喜": "<div class=\"modal\"> <div class=\"go-win\"><div class=\"trophy\">🏆</div> <div class=\"who\">🎉 Congrats",
+    "获胜！</div> <div style=\"color:var(--muted);font-size:14px\">": " wins!</div> <div style=\"color:var(--muted);font-size:14px\">",
+    " 达到结束线 ": " reached the end line ",
+    "</div> <div class=\"modal-actions\"> <button class=\"primary\" id=\"newBtn\">开始新对局</button> <button class=\"ghost\" id=\"closeBtn\">查看详情</button> </div> </div>": "</div> <div class=\"modal-actions\"> <button class=\"primary\" id=\"newBtn\">Start new game</button> <button class=\"ghost\" id=\"closeBtn\">View details</button> </div> </div>",
+    "未找到绘图区域": "Drawing area not found",
+    "对局：": "Game: ",
+    "对局时间：": "Game time:",
+    "玩家人数：": "Player count:",
+    "规则：": "Rule: ",
+    "总轮数：": "Total rounds:",
+    "🎉 获胜：": "🎉 Winner: ",
+    "神风特攻队：": "Kamikaze squad:",
+    "CABO 喊话：": "CABO call:",
+    "得分满减：": "Score bonus:",
+    "CABO 胜利结算": "CABO win settlement",
+    "本轮": "This round",
+    "高分": "High score",
+    "玩家获胜": "Player wins",
+    "规则战报：": "Rule report:",
+    "🏆 获胜：": "🏆 Winner: ",
+    "复制战报": "Copy report",
+    "再来一局": "Play again",
+    "卡波战报_": "Cabo report_",
+    "导出图片失败：": "Export image failed:",
+    "🃏 卡波计分 · 战报": "🃏 Cabo Scorer · Report",
+    " · 结束线 ": " · end line ",
+    "🏆 最终排名：": "🏆 Final ranking:",
+    "、": ", ",
+    " 触发": " triggered",
+    "失败（+": "Fail (+",
+    " 已使用": " used",
+    "📜 规则战报：": "📜 Rule report:",
+    "<div class=\"modal\"> <h2>📤 战报</h2> <textarea class=\"report-text\" id=\"reportText\" readonly>": "<div class=\"modal\"> <h2>📤 Report</h2> <textarea class=\"report-text\" id=\"reportText\" readonly>",
+    "</textarea> <img id=\"reportImg\" class=\"report-preview hidden\" alt=\"战报图片\"> <canvas id=\"reportCanvas\" class=\"hidden\"></canvas> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"repClose\">关闭</button> <button class=\"primary\" id=\"repCopy\">复制分享</button> <button class=\"primary\" id=\"repExportBtn\">导出图片</button> </div> </div>": "</textarea> <img id=\"reportImg\" class=\"report-preview hidden\" alt=\"Report image\"> <canvas id=\"reportCanvas\" class=\"hidden\"></canvas> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"repClose\">Close</button> <button class=\"primary\" id=\"repCopy\">Copy share</button> <button class=\"primary\" id=\"repExportBtn\">Export image</button> </div> </div>",
+    "战报已复制，去粘贴分享吧": "Battle report copied — go paste and share",
+    "</label> <div class=\"rule-row\"> <div class=\"desc\">Cabo 失败惩罚</div> <div class=\"seg mini-seg\" id=\"setPenalty\"> <button data-v=\"5\" class=\"": "</label> <div class=\"rule-row\"> <div class=\"desc\">Cabo fail penalty</div> <div class=\"seg mini-seg\" id=\"setPenalty\"> <button data-v=\"5\" class=\"",
+    "\">+10</button> </div> </div> <div class=\"rule-row\"> <div class=\"desc\">平局判定（Cabo 平最低）<small>官方：喊 Cabo 者与他人并列最低时，喊话者获胜记 0 分</small></div> <div class=\"seg mini-seg\" id=\"setTie\"> <button data-v=\"callerWins\" class=\"": "\">+10</button> </div> </div> <div class=\"rule-row\"> <div class=\"desc\">Tie rule (Cabo tie-low)<small>Official: when caller ties for lowest, caller wins and scores 0</small></div> <div class=\"seg mini-seg\" id=\"setTie\"> <button data-v=\"callerWins\" class=\"",
+    "</button> </div> </div> <div class=\"rule-row\"> <div class=\"desc\">得分满减<small>总分<b>恰好 100</b> 才触发（超过不触发）· 每位玩家各限 1 次</small></div> <div class=\"seg mini-seg\" id=\"setEgg\"> <button data-v=\"off\" class=\"": "</button> </div> </div> <div class=\"rule-row\"> <div class=\"desc\">Score bonus<small>Total must be <b>exactly 100</b> to trigger (over doesn't); each player once</small></div> <div class=\"seg mini-seg\" id=\"setEgg\"> <button data-v=\"off\" class=\"",
+    "\">关闭</button> <button data-v=\"half\" class=\"": "\">Off</button> <button data-v=\"half\" class=\"",
+    "\">减半到 50</button> <button data-v=\"none\" class=\"": "\">Halve to 50</button> <button data-v=\"none\" class=\"",
+    "\">无效果</button> </div> </div> <div class=\"rule-row\"> <div class=\"desc\">本局牌点录入方式<small>「4 张小框」可直接写每张牌，自动求和</small></div> <div class=\"seg mini-seg\" id=\"setCardInput\"> <button data-v=\"total\" class=\"": "\">No effect</button> </div> </div> <div class=\"rule-row\"> <div class=\"desc\">Round card input mode<small>\"4 small boxes\" lets you enter each card, auto-sum</small></div> <div class=\"seg mini-seg\" id=\"setCardInput\"> <button data-v=\"total\" class=\"",
+    "\">数字总分</button> <button data-v=\"cards\" class=\"": "\">Numeric total</button> <button data-v=\"cards\" class=\"",
+    "\">4 张小框</button> </div> </div> <div class=\"rule-row\"> <div class=\"desc\">低分嘉奖：获胜者 -<input type=\"number\" id=\"setBonus\" value=\"": "\">4 small boxes</button> </div> </div> <div class=\"rule-row\"> <div class=\"desc\">Low-score bonus: winner -<input type=\"number\" id=\"setBonus\" value=\"",
+    "\" min=\"0\"> 分</div> <button class=\"toggle": "\" min=\"0\"> pts</div> <button class=\"toggle",
+    "</button> </div> <div class=\"rule-row\"> <div class=\"desc\">音效</div> <button class=\"toggle": "</button> </div> <div class=\"rule-row\"> <div class=\"desc\">Sound</div> <button class=\"toggle",
+    "</button> </div> <div class=\"rule-row\"> <div class=\"desc\">自动存档<small>每次提交本局自动存入「我的存档」</small></div> <button class=\"toggle": "</button> </div> <div class=\"rule-row\"> <div class=\"desc\">Auto-save<small>Auto-stores to \"My saves\" each round submitted</small></div> <button class=\"toggle",
+    "</button> </div> <div class=\"rule-row\"> <div class=\"desc\">输入后自动跳格<small>4 张小框输完自动跳到下一格</small></div> <button class=\"toggle": "</button> </div> <div class=\"rule-row\"> <div class=\"desc\">Auto-advance after input<small>After filling 4 boxes, auto-jump to next</small></div> <button class=\"toggle",
+    "\">中文</button> <button data-v=\"en\" class=\"": "\">Chinese</button> <button data-v=\"en\" class=\"",
+    "<small>仅删除自动保存的那一条对局</small></div> <button class=\"ghost danger-text\" id=\"clearAutoBtn\">🧹 清理</button> </div> </div> <div class=\"modal-actions\"> <button class=\"primary\" id=\"saveSet\">": "<small>Only deletes the auto-saved game</small></div> <button class=\"ghost danger-text\" id=\"clearAutoBtn\">🧹 Clean</button> </div> </div> <div class=\"modal-actions\"> <button class=\"primary\" id=\"saveSet\">",
+    "确定要重置全部对局吗？所有分数将清空。": "Reset all games? All scores will be cleared.",
+    "确定删除本机全部「我的存档」？此操作不可恢复。": "Delete all \"My saves\" on this device? This cannot be undone.",
+    "已清空本地存档": "Local saves cleared",
+    "确定删除自动保存的那一条对局？": "Delete the auto-saved game?",
+    "</div> <div class=\"stat-grid\"> <span>总分</span><b>": "</div> <div class=\"stat-grid\"> <span>Total</span><b>",
+    "</b> <span>当前排名</span><b>#": "</b> <span>Current rank</span><b>#",
+    "</b> <span>平均 / 局</span><b>": "</b> <span>Avg / round</span><b>",
+    "</b> <span>最佳单局</span><b>": "</b> <span>Best round</span><b>",
+    "</b> <span>喊 Cabo</span><b>": "</b> <span>Called Cabo</span><b>",
+    "次（成功": " times (success ",
+    "）</b> <span>神风特攻队</span><b>": ")</b> <span>Kamikaze squad</span><b>",
+    "次</b> </div> </div>": " times</b> </div> </div>",
+    "<div class=\"modal\"> <h2>🏅 玩家战绩</h2> <div class=\"stat-list\">": "<div class=\"modal\"> <h2>🏅 Player stats</h2> <div class=\"stat-list\">",
+    "<div style=\"color:var(--muted)\">还没有提交过局数</div>": "<div style=\"color:var(--muted)\">No rounds submitted yet</div>",
+    "</div> <div class=\"modal-actions\"><button class=\"primary\" id=\"stClose\">关闭</button></div> </div>": "</div> <div class=\"modal-actions\"><button class=\"primary\" id=\"stClose\">Close</button></div> </div>",
+    "卡波对局_": "Cabo game_",
+    "已导出本局 JSON": "Game JSON exported",
+    "已导入对局": "Game imported",
+    "导入失败：": "Import failed:",
+    "你正用本地文件(file://)打开，浏览器会拦截联网请求。请改用在线地址 https://feikong66.github.io/cabo/ 打开本页": "You are opening via a local file (file://); the browser blocks network requests. Please use the online address https://feikong66.github.io/cabo/",
+    "无法连接同步服务器（当前页不是在线地址）。请改用 https://feikong66.github.io/cabo/ 打开本页再试": "Cannot connect to sync server (this page is not online). Please open https://feikong66.github.io/cabo/ and retry",
+    "无法连接同步服务器。Edge 请：① 地址栏左侧关掉「跟踪防护」；② 改用 InPrivate 窗口(Ctrl+Shift+N)；③ 确认本机能访问 api.github.com": "Cannot connect to sync server. Edge: ① turn off \"Tracking prevention\" at left of address bar; ② use InPrivate window (Ctrl+Shift+N); ③ ensure this device can reach api.github.com",
+    "已同步队友的最新对局": "Synced latest game from teammates",
+    "房间码为 6 位，只含数字 2-9 与字母（不含 I、O）": "Room code is 6 digits, only numbers 2-9 and letters (no I, O)",
+    "你已被房主移出该房间，无法再次加入": "You were removed by the host and cannot rejoin",
+    "房间不存在，请核对房间码": "Room does not exist, please check the code",
+    "🟢 实时已连接（毫秒级）": "🟢 Real-time connected (ms)",
+    "🟡 轮询备份中（实时未连通）": "🟡 Polling backup (real-time not connected)",
+    "设备": "Device",
+    "⚠ 你已被房主移出房间 ": "⚠ You were removed from the room ",
+    "，无法再修改本局数据": ", can no longer modify this round's data",
+    "仅房主可以移出成员": "Host only can remove members",
+    "不能移出自己": "Can't remove yourself",
+    "已移出：": "Removed: ",
+    "（对方将被自动退出）": "(the other side will auto-leave)",
+    "移出成员 ": "Remove member ",
+    "仅房主可以操作": "Host only",
+    "已恢复：": "Restored: ",
+    "，对方可重新加入": ", the other side can rejoin",
+    "恢复成员 ": "Restore member ",
+    "仅房主可以更改准入设置": "Host only can change access",
+    "强制同步本局": "Force sync this round",
+    "没有可重连的房间（可能已退出）": "No room to reconnect (maybe you left)",
+    "已重连房间 ": "Reconnected to room ",
+    "重连失败：": "Reconnect failed: ",
+    "仅房主可以锁定/解锁房间": "Host only can lock/unlock",
+    "<div class=\"room-hint\">暂无成员记录，队友加入或改分后会自动出现</div>": "<div class=\"room-hint\">No member records yet; teammates appear automatically when they join or score</div>",
+    "\"><button class=\"ghost\" id=\"mbNickSave\">保存</button></div>": "\"><button class=\"ghost\" id=\"mbNickSave\">Save</button></div>",
+    "<button class=\"ghost\" id=\"roomReconnect\" style=\"width:100%;margin-top:8px\">🔄 重连房间": "<button class=\"ghost\" id=\"roomReconnect\" style=\"width:100%;margin-top:8px\">🔄 Reconnect room</button>",
+    "<div class=\"room-or\"><span>已有房间码？</span></div> <input class=\"room-input\" id=\"roomInput\" maxlength=\"6\" placeholder=\"ABC123\" autocomplete=\"off\" spellcheck=\"false\" inputmode=\"latin\"> <button class=\"ghost\" id=\"roomJoinBtn\" style=\"width:100%;margin-top:10px\">🔑 加入房间</button>": "<div class=\"room-or\"><span>Have a room code?</span></div> <input class=\"room-input\" id=\"roomInput\" maxlength=\"6\" placeholder=\"ABC123\" autocomplete=\"off\" spellcheck=\"false\" inputmode=\"latin\"> <button class=\"ghost\" id=\"roomJoinBtn\" style=\"width:100%;margin-top:10px\">🔑 Join room</button>",
+    "<div class=\"room-hint\">二维码生成失败</div>": "<div class=\"room-hint\">QR generation failed</div>",
+    "<div class=\"room-hint\" style=\"margin:0 0 2px\">把房间码告诉队友，或让对方直接扫码加入</div> <div class=\"room-code\">": "<div class=\"room-hint\" style=\"margin:0 0 2px\">Give the room code to teammates, or let them scan to join</div> <div class=\"room-code\">",
+    "</div> <div style=\"text-align:center\"><span class=\"room-status\" id=\"roomStat\">🟢 实时已连接（毫秒级）</span></div> <div class=\"room-link\">": "</div> <div style=\"text-align:center\"><span class=\"room-status\" id=\"roomStat\">🟢 Real-time connected (ms)</span></div> <div class=\"room-link\">",
+    "</div> <div class=\"action-row\" style=\"margin-top:14px\"> <button class=\"ghost\" id=\"roomCopyCode\">📋 复制房间码</button> <button class=\"ghost\" id=\"roomCopy\">📋 复制链接</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"roomSyncNow\">⬇ 强制同步</button>": "</div> <div class=\"action-row\" style=\"margin-top:14px\"> <button class=\"ghost\" id=\"roomCopyCode\">📋 Copy code</button> <button class=\"ghost\" id=\"roomCopy\">📋 Copy link</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"roomSyncNow\">⬇ Force sync</button>",
+    "<button class=\"ghost\" id=\"roomLeave\" style=\"width:100%;margin-top:10px;color:var(--danger)\">🚪 退出房间</button>": "<button class=\"ghost\" id=\"roomLeave\" style=\"width:100%;margin-top:10px;color:var(--danger)\">🚪 Leave room</button>",
+    "<div class=\"modal\"> <h2>📡 联机房间</h2> <div id=\"roomBody\">": "<div class=\"modal\"> <h2>📡 Online room</h2> <div id=\"roomBody\">",
+    "</div> <div class=\"modal-actions\"><button class=\"primary\" id=\"roomClose\">关闭</button></div> </div>": "</div> <div class=\"modal-actions\"><button class=\"primary\" id=\"roomClose\">Close</button></div> </div>",
+    "创建中…": "Creating…",
+    "房间已创建：": "Room created: ",
+    "创建失败：": "Create failed: ",
+    "➕ 创建房间": "➕ Create room",
+    "加入中…": "Joining…",
+    "已加入房间 ": "Joined room ",
+    "🔑 加入房间": "🔑 Join room",
+    "邀请链接已复制": "Invite link copied",
+    "复制此链接：": "Copy this link: ",
+    "同步中…": "Syncing…",
+    "⬇ 强制同步": "⬇ Force sync",
+    "房间码已复制：": "Room code copied: ",
+    "复制此房间码：": "Copy this room code: ",
+    "重连中…": "Reconnecting…",
+    "确认踢出?": "Confirm kick?",
+    "踢出": "Kick",
+    "显示名已设为：": "Display name set to: ",
+    "已退出房间": "Left room",
+    "加入联机房间": "Join online room",
+    "检测到房间码 ": "Detected room code ",
+    "，加入后会载入房间里的对局（覆盖当前对局）。确定加入？": ", joining will load the room's game (overwriting current). Join?",
+    "加入失败：": "Join failed: ",
+    "\" shape-rendering=\"crispEdges\" role=\"img\" aria-label=\"二维码\">": "\" shape-rendering=\"crispEdges\" role=\"img\" aria-label=\"QR code\">",
+    "分享链接已复制，发给朋友即可同步本局": "Share link copied — send to friends to sync this game",
+    "复制此链接分享：": "Copy this link to share: ",
+    "生成分享链接失败：": "Generate share link failed: ",
+    "载入分享的对局": "Load shared game",
+    "检测到分享链接中的对局，是否载入？（会覆盖当前对局）": "Detected a shared game in the link, load it? (overwrites current game)"
+,
+    "<div class=\"round-info\"><span>第": "<div class=\"round-info\"><span>Round ",
+    "人</span><span>结束线": " player</span><span>End line ",
+    "分 ·": " pts ·",
+    "</span></div> <div id=\"players\"></div> <div class=\"special-panel\" id=\"specialPanel\"></div> <div class=\"actions\"> <div class=\"action-bar\"> <button class=\"primary\" id=\"submitBtn\">提交本局</button> <button class=\"ghost icon-btn\" id=\"autoSaveBtn\" title=\"自动存档：开\">💾</button> <button class=\"ghost\" id=\"moreBtn\">更多操作 ▾</button> </div> </div> <div class=\"overlay hidden\" id=\"moreSheet\"> <div class=\"modal more-modal\" id=\"moreModal\"> <h2>更多操作</h2> <div class=\"action-panel\"> <div class=\"action-row\"> <button id=\"undoBtn\">↩ 撤销上一局</button> <button id=\"undoMultiBtn\">↩ 撤销多局</button> <button id=\"clearBtn\">🧹 重置本局</button> </div> <div class=\"action-row\"> <button id=\"opLogBtn\">📜 操作记录</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"countBtn\">👥": "</span></div> <div id=\"players\"></div> <div class=\"special-panel\" id=\"specialPanel\"></div> <div class=\"actions\"> <div class=\"action-bar\"> <button class=\"primary\" id=\"submitBtn\">Submit round</button> <button class=\"ghost icon-btn\" id=\"autoSaveBtn\" title=\"Auto-save: on\">💾</button> <button class=\"ghost\" id=\"moreBtn\">More actions ▾</button> </div> </div> <div class=\"overlay hidden\" id=\"moreSheet\"> <div class=\"modal more-modal\" id=\"moreModal\"> <h2>More actions</h2> <div class=\"action-panel\"> <div class=\"action-row\"> <button id=\"undoBtn\">↩ Undo last round</button> <button id=\"undoMultiBtn\">↩ Undo multiple rounds</button> <button id=\"clearBtn\">🧹 Reset round</button> </div> <div class=\"action-row\"> <button id=\"opLogBtn\">📜 Action log</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"countBtn\">👥",
+    "人</button> <button class=\"ghost\" id=\"newGameBtn\">🔄 新对局</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"saveBtn\">💾 保存对局</button> <button class=\"ghost\" id=\"savesBtn\">📂 我的存档</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"chartBtn\">📊 趋势</button> <button class=\"ghost\" id=\"reportBtn\">📤 战报</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"statsBtn\">🏅 战绩</button> <button class=\"ghost\" id=\"shareBtn\">🔗 分享本局</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"expBtn\">📦 导出/导入</button> <button class=\"ghost\" id=\"endBtn\">🗣 结束本局</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"roomBtn\">": " players</button> <button class=\"ghost\" id=\"newGameBtn\">🔄 New game</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"saveBtn\">💾 Save game</button> <button class=\"ghost\" id=\"savesBtn\">📂 My saves</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"chartBtn\">📊 Trend</button> <button class=\"ghost\" id=\"reportBtn\">📤 Battle report</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"statsBtn\">🏅 Achievements</button> <button class=\"ghost\" id=\"shareBtn\">🔗 Share round</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"expBtn\">📦 Export/Import</button> <button class=\"ghost\" id=\"endBtn\">🗣 End round</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"roomBtn\">",
+    "</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"backBtn\">← 返回设置</button> </div> </div> <button class=\"ghost\" id=\"moreClose\" style=\"width:100%;margin-top:12px\">收起</button> </div> </div> <div class=\"chart-wrap hidden\" id=\"chartWrap\"> <h3>分数趋势</h3> <canvas id=\"chart\"></canvas> <div class=\"chart-legend\" id=\"chartLegend\"></div> </div> <div class=\"history\"> <h3>对局记录</h3> <div id=\"histList\">": "</button> </div> <div class=\"action-row\"> <button class=\"ghost\" id=\"backBtn\">← Back to settings</button> </div> </div> <button class=\"ghost\" id=\"moreClose\" style=\"width:100%;margin-top:12px\">Collapse</button> </div> </div> <div class=\"chart-wrap hidden\" id=\"chartWrap\"> <h3>Score trend</h3> <canvas id=\"chart\"></canvas> <div class=\"chart-legend\" id=\"chartLegend\"></div> </div> <div class=\"history\"> <h3>Game record</h3> <div id=\"histList\">",
+    "\" title=\"点击修改名字\">": "\" title=\"Click to edit name\">",
+    "\" title=\"手动补扣分数\">±": "\" title=\"Manual score deduction\">±",
+    "</button> <div class=\"pc-total\"><small>总分</small>": "</button> <div class=\"pc-total\"><small>Total</small>",
+    "<div class=\"card4\"><span class=\"lab\">本局 4 张牌（自动求和）</span><div class=\"card4-row\">": "<div class=\"card4\"><span class=\"lab\">This round's 4 cards (auto-sum)</span><div class=\"card4-row\">",
+    "<div><span class=\"lab\">本局牌点</span><input type=\"number\" id=\"pts-": "<div><span class=\"lab\">Round card points</span><input type=\"number\" id=\"pts-",
+    "房间已锁定，您为只读": "Room locked, you are read-only",
+    "<div class=\"sp-cabo-card\"><span class=\"sp-cabo-label\">本轮 CABO</span><b>": "<div class=\"sp-cabo-card\"><span class=\"sp-cabo-label\">Round CABO</span><b>",
+    "</b><button class=\"sp-clear\" id=\"clrCabo\" title=\"取消选择\">✕</button></div>": "</b><button class=\"sp-clear\" id=\"clrCabo\" title=\"Clear selection\">✕</button></div>",
+    "<div class=\"sp-title\">⚡ 本轮特殊事件（点按钮选玩家，自动套规则）</div> <div class=\"special-row\"> <button class=\"sp-btn cabo": "<div class=\"sp-title\">⚡ Special events this round (tap a button to pick players; rules auto-applied)</div> <div class=\"special-row\"> <button class=\"sp-btn cabo",
+    "\" id=\"btnCabo\">🗣 本轮有人喊 CABO</button>": "\" id=\"btnCabo\">🗣 Someone called CABO this round</button>",
+    "\" id=\"btnKami\">🚀 神风特攻队（至尊组合）</button> </div> <p class=\"ev-hint\">神风他人各 +50 / Cabo 惩罚 +": "\" id=\"btnKami\">🚀 Kamikaze (supreme combo)</button> </div> <p class=\"ev-hint\">Kamikaze: others +50 each / Cabo penalty +",
+    "/ 并列最低喊话者 0 分；两者<b>不冲突可同时记录</b>，随「提交本局」一起结算。</p>": "/ Tied lowest caller: 0 pts; the two<b>don't conflict and can be recorded together</b>, settled with <b>Submit round</b>.</p>",
+    "<div class=\"modal kami-modal\"> <h2>🗣 本轮有人喊 CABO</h2> <p class=\"muted\">选择喊 CABO 的玩家，系统将自动结算惩罚或 0 分。</p> <div class=\"kami-grid\">": "<div class=\"modal kami-modal\"> <h2>🗣 Someone called CABO this round</h2> <p class=\"muted\">Select the player who called CABO; the system auto-settles the penalty or 0 pts.</p> <div class=\"kami-grid\">",
+    "</div> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"caboCancel\">取消</button> <button class=\"primary\" id=\"caboConfirm\"": "</div> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"caboCancel\">Cancel</button> <button class=\"primary\" id=\"caboConfirm\"",
+    ">确认</button> </div> </div>": ">Confirm</button> </div> </div>",
+    "</span><small>本局 0 分</small><span class=\"others\">其余玩家各 +50</span></button>": "</span><small>0 pts this round</small><span class=\"others\">Others each +50</span></button>",
+    "<div class=\"modal kami-modal\"> <h2>🚀 神风特攻队</h2> <p class=\"muted\">至尊组合 · 选择本局获得 <b>0 分</b> 的玩家，其余玩家各 <b>+50</b> 分。<br><span style=\"font-size:12px;opacity:.85\">官方触发前提：呼唤 CABO 后，牌桌为「2 张 13 + 2 张 12」且无其他牌时达成。若同时喊了 CABO 也不冲突，该玩家本局仍为 0 分。</span></p> <div class=\"kami-grid\">": "<div class=\"modal kami-modal\"> <h2>🚀 Kamikaze</h2> <p class=\"muted\">Supreme combo · Select the player who gets <b>0 pts</b> this round; others each <b>+50</b> pts.<br><span style=\"font-size:12px;opacity:.85\">Official trigger: after calling CABO, the table shows '2 cards of 13 + 2 cards of 12' with no other cards. Calling CABO at the same time doesn't conflict; that player stays 0 pts this round.</span></p> <div class=\"kami-grid\">",
+    "</div> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"kamiCancel\">取消</button> <button class=\"primary\" id=\"kamiConfirm\"": "</div> <div class=\"modal-actions\"> <button class=\"ghost\" id=\"kamiCancel\">Cancel</button> <button class=\"primary\" id=\"kamiConfirm\"",
+    "本地版无云端存档。请改用在线版并登录子账号（设置里）后，再使用「云端覆盖」。": "Local version has no cloud save. Switch to the online version and log in to a sub-account (in Settings), then use 'Cloud overwrite'.",
+    "<small>删除本机「我的存档」全部条目（不联网，不影响云端版账号）</small></div> <button class=\"ghost danger-text\" id=\"clearSavesBtn\">🧹 清理</button> </div> <div class=\"rule-row\"> <div class=\"desc\">": "<small>Delete all entries in this device's 'My saves' (no network; doesn't affect the cloud account)</small></div> <button class=\"ghost danger-text\" id=\"clearSavesBtn\">🧹 Clear</button> </div> <div class=\"rule-row\"> <div class=\"desc\">",
+    "网络或凭据异常 ": "Network or credential error ",
+    "创建存储失败 ": "Create storage failed ",
+    "读取失败 ": "Read failed ",
+    "保存失败 ": "Save failed ",
+    "📡 房间 ": "📡 Room ",
+    "该房间仅限已登录用户加入。本地版没有账号，请改用在线版并登录后再加入": "This room is for logged-in users only. The local version has no account — switch to the online version, log in, then join.",
+    "<p class=\"room-lead\">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方）。本地版<b>无账号</b>，因此无法加入在线版开启了「仅登录用户」的房间——需要那种防护请用在线版登录后联机。</p> <button class=\"primary\" id=\"roomCreate\" style=\"width:100%;margin-bottom:16px\">➕ 创建房间</button>": "<p class=\"room-lead\">Want two phones to score together? <b>Create a room</b>, share the room code or QR with teammates, and scores <b>sync in real time</b> (millisecond-level — any change pushes to the other side instantly). The local version <b>has no account</b>, so it can't join an online room with 'logged-in users only' enabled — for that protection, use the online version and log in to play online.</p> <button class=\"primary\" id=\"roomCreate\" style=\"width:100%;margin-bottom:16px\">➕ Create room</button>"
+}
 };
 function t(k, fb){ const d = (state && state.lang && I18N[state.lang]) ? I18N[state.lang] : I18N.zh; if(d && d[k]!=null) return d[k]; if(fb!=null) return fb; if(I18N.zh[k]!=null) return I18N.zh[k]; return k; }
 function applyLang(){ try{ document.documentElement.lang = (state && state.lang==='en') ? 'en' : 'zh-CN'; }catch(e){} }
@@ -421,29 +735,29 @@ function voiceRound(pts){
   if(!voiceOn) return;
   const parts = state.players.map((p,i)=>{
     const v = pts[i]||0;
-    return (state.lang==='en') ? `${p.name} ${v>=0?'plus':'minus'} ${Math.abs(v)}` : `${p.name} ${v>=0?'加':'减'}${Math.abs(v)}分`;
+    return (state.lang==='en') ? `${p.name} ${v>=0?'plus':'minus'} ${Math.abs(v)}` : `${p.name} ${v>=0?'加':'减'}${Math.abs(v)}${t(`分`)}`;
   });
-  speak(parts.join('，'));
+  speak(parts.join(t('，')));
 }
-function voiceCabo(name){ if(!voiceOn) return; speak((state.lang==='en' ? `${name} calls Cabo` : `${name} 喊 CABO`)); }
-function voiceWinner(name){ if(!voiceOn) return; speak((state.lang==='en' ? `Congratulations ${name} wins` : `恭喜 ${name} 获胜`)); }
+function voiceCabo(name){ if(!voiceOn) return; speak((state.lang==='en' ? `${name} calls Cabo` : `${name}${t(`喊 CABO`)}`)); }
+function voiceWinner(name){ if(!voiceOn) return; speak((state.lang==='en' ? `Congratulations ${name} wins` : `${t(`恭喜`)}${name}${t(`获胜`)}`)); }
 
 /* ===== 更新日志 Changelog (v0.6.0.1) ===== */
 const CHANGELOG = [
   { v:"0.6.0.1", date:"2026-08-04", items:[
-    "新增：数据导出 Excel / PDF（在「导出 / 导入本局」中）",
-    "新增：多语言切换（中文 / 英文），设置里一键切换并记忆",
-    "新增：语音播报（分数变化、回合结算、胜利时刻），可开关与调音量",
-    "新增：更新日志（本弹窗）",
-    "增强：深色模式此前已支持，本版补充系统主题跟随说明"
+    t("新增：数据导出 Excel / PDF（在「导出 / 导入本局」中）"),
+    t("新增：多语言切换（中文 / 英文），设置里一键切换并记忆"),
+    t("新增：语音播报（分数变化、回合结算、胜利时刻），可开关与调音量"),
+    t("新增：更新日志（本弹窗）"),
+    t("增强：深色模式此前已支持，本版补充系统主题跟随说明")
   ]},
   { v:"0.5.0.1", date:"2026-08-02", items:[
-    "房间成员名单 + 房主踢人（被踢者立即退场且不可重进）",
-    "仅已登录玩家可创建 / 加入房间，游客不行"
+    t("房间成员名单 + 房主踢人（被踢者立即退场且不可重进）"),
+    t("仅已登录玩家可创建 / 加入房间，游客不行")
   ]},
   { v:"0.5.0", date:"2026-07-30", items:[
-    "多人实时同步（MQTT + Gist 兜底）",
-    "撤销确认、操作记录、清人、房间锁定等联机增强"
+    t("多人实时同步（MQTT + Gist 兜底）"),
+    t("撤销确认、操作记录、清人、房间锁定等联机增强")
   ]}
 ];
 function openChangelog(){
@@ -506,7 +820,7 @@ function buildPrintHtml(){
     .cl{margin-top:24px;font-size:12px;color:#999}
   </style></head><body>
   <h1>CABO ${state.lang==='en'?'Score Sheet':'计分表'}</h1>
-  <p class="sub">${new Date().toLocaleString()}${state.lang==='en'?' · '+state.players.length+' players':' · '+state.players.length+' 人'}</p>
+  <p class="sub">${new Date().toLocaleString()}${state.lang==='en'?' · '+state.players.length+' players':' · '+state.players.length+t(' 人')}</p>
   <table><thead><tr><th>${state.lang==='en'?'Player':'玩家'}</th><th>${state.lang==='en'?'Total':'总分'}</th><th>${state.lang==='en'?'Rank':'排名'}</th></tr></thead><tbody>${rows}</tbody></table>
   <h2 style="font-size:17px">${state.lang==='en'?'Round details':'每局明细'}</h2>
   <table><thead><tr><th>${state.lang==='en'?'Round':'局'}</th>${th}</tr></thead><tbody>${rrows}</tbody></table>
@@ -526,7 +840,7 @@ const PALETTE = ["#2bb673","#e05a4d","#3b82f6","#f5b50a","#9b59b6","#1abc9c","#e
 const END_PRESETS = Array.from(new Set([100,150,200,250])).sort((a,b)=> a-b);
 // 官方说明书图（点开可放大查看）
 const RULE_IMAGES = [
-  {src:"assets/rules-4.jpg", title:"卡波说明书"}
+  {src:"assets/rules-4.jpg", title:t("卡波说明书")}
 ];
 let roundCabo = null;   // 当前这局谁喊了 Cabo（玩家索引或 null）
 let roundKami = null;   // 当前这局谁达成神风特攻队（玩家索引或 null）
@@ -551,7 +865,7 @@ function save(){
 function defaultState(){
   return {
     started:false,
-    players:[{name:"玩家1"},{name:"玩家2"}],
+    players:[{name:t("玩家1")},{name:t("玩家2")}],
     endScore:100, winRule:"low", rounds:[],
     adjust:[0,0],
     opLog:[],
@@ -683,7 +997,7 @@ function computeTotals(){
 function totals(){ const {totals:t} = computeTotals(); return t.map((v,i)=> v + (state.adjust[i]||0)); }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function syncCount(n){
-  while(state.players.length < n){ state.players.push({name:"玩家"+(state.players.length+1), color: PALETTE[state.players.length % PALETTE.length]}); state.hundredUsed.push(false); state.adjust.push(0); }
+  while(state.players.length < n){ state.players.push({name:t("玩家")+(state.players.length+1), color: PALETTE[state.players.length % PALETTE.length]}); state.hundredUsed.push(false); state.adjust.push(0); }
   while(state.players.length > n){ state.players.pop(); state.hundredUsed.pop(); state.adjust.pop(); }
   if(!Array.isArray(state.adjust) || state.adjust.length !== state.players.length) state.adjust = state.players.map(()=>0);
   if(!Array.isArray(state.hundredUsed) || state.hundredUsed.length !== state.players.length) state.hundredUsed = state.players.map(()=>false);
@@ -698,12 +1012,7 @@ function askConfirm(title, msg, onYes){
   overlay.innerHTML = `
     <div class="modal">
       <h2>${escapeHtml(title)}</h2>
-      <p style="color:var(--muted);font-size:14px;margin:0 0 16px">${escapeHtml(msg)}</p>
-      <div class="modal-actions">
-        <button class="ghost" id="cfNo">取消</button>
-        <button class="primary" id="cfYes">确定</button>
-      </div>
-    </div>`;
+      <p style="color:var(--muted);font-size:14px;margin:0 0 16px">${escapeHtml(msg)}${t(`</p> <div class="modal-actions"> <button class="ghost" id="cfNo">取消</button> <button class="primary" id="cfYes">确定</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
   document.querySelector("#cfNo").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#cfYes").onclick = ()=>{ overlay.classList.add("hidden"); onYes(); };
@@ -716,18 +1025,7 @@ function openLightbox(arg){
   else if(typeof arg === "string"){ const f = list.findIndex(x=> x.src === arg); i = f >= 0 ? f : 0; }
 
   const lb = document.createElement("div"); lb.className = "lightbox";
-  lb.innerHTML = `
-    <div class="lb-bar">
-      <div class="lb-title" id="lbTitle"></div>
-      <div class="lb-btns">
-        <button id="lbPrev">‹</button>
-        <button id="lbZoom">🔍 放大</button>
-        <button id="lbNext">›</button>
-        <button id="lbClose">✕</button>
-      </div>
-    </div>
-    <div class="lb-stage"><img id="lbImg" alt="规则大图"></div>
-    <div class="lb-tip">上下滑动查看 · 双击图片切换放大</div>`;
+  lb.innerHTML = t(`<div class="lb-bar"> <div class="lb-title" id="lbTitle"></div> <div class="lb-btns"> <button id="lbPrev">‹</button> <button id="lbZoom">🔍 放大</button> <button id="lbNext">›</button> <button id="lbClose">✕</button> </div> </div> <div class="lb-stage"><img id="lbImg" alt="规则大图"></div> <div class="lb-tip">上下滑动查看 · 双击图片切换放大</div>`);
   document.body.appendChild(lb);
   document.body.style.overflow = "hidden";
 
@@ -736,7 +1034,7 @@ function openLightbox(arg){
   const zoomBtn = lb.querySelector("#lbZoom");
   const show = ()=>{
     imgEl.src = list[i].src;
-    titleEl.textContent = list[i].title + `（${i+1}/${list.length}）`;
+    titleEl.textContent = list[i].title + `${t(`（`)}${i+1}/${list.length}${t(`）`)}`;
     lb.scrollTop = 0; lb.scrollLeft = 0;
   };
   const toggleZoom = ()=>{
@@ -755,7 +1053,7 @@ function openLightbox(arg){
   lb.querySelector("#lbNext").onclick = ()=>{ i = (i+1) % list.length; show(); };
   zoomBtn.onclick = toggleZoom;
   imgEl.ondblclick = toggleZoom;
-  imgEl.onerror = ()=>{ titleEl.textContent = "图片未能加载，请查看文字版规则"; };
+  imgEl.onerror = ()=>{ titleEl.textContent = t("图片未能加载，请查看文字版规则"); };
   lb.addEventListener("click", (e)=>{ if(e.target === lb || e.target.className === "lb-stage") close(); });
   document.addEventListener("keydown", onKey);
   show();
@@ -796,14 +1094,14 @@ function showEventBanner(e){
   const b = document.createElement("div");
   let cls = "event-banner", html = "";
   if(e.type === "egg"){
-    html = `<div class="eb-emoji">💯</div><div class="eb-title">得分满减！</div><div class="eb-sub">${escapeHtml(e.name)} 恰好 100 分 → 重置为 50！</div>`;
+    html = `${t(`<div class="eb-emoji">💯</div><div class="eb-title">得分满减！</div><div class="eb-sub">`)}${escapeHtml(e.name)}${t(`恰好 100 分 → 重置为 50！</div>`)}`;
     playDing();
   } else if(e.type === "kamikaze"){
     cls += " kamikaze";
-    html = `<div class="eb-emoji">🚀</div><div class="eb-title">神风特攻队！</div><div class="eb-sub">${escapeHtml(e.name)} 本局 0 分，其余全员各 +50！</div>`;
+    html = `${t(`<div class="eb-emoji">🚀</div><div class="eb-title">神风特攻队！</div><div class="eb-sub">`)}${escapeHtml(e.name)}${t(`本局 0 分，其余全员各 +50！</div>`)}`;
     playWhoosh();
   } else if(e.type === "cabo"){
-    html = `<div class="eb-emoji">🗣</div><div class="eb-title">${e.success?"Cabo 成功！":"Cabo 失败"}</div><div class="eb-sub">${escapeHtml(e.name)} ${e.success?"全场最低 → 本局 0 分":"未达最低 → 本局 +"+state.rules.caboPenalty+" 惩罚"}</div>`;
+    html = `<div class="eb-emoji">🗣</div><div class="eb-title">${e.success?"Cabo 成功！":"Cabo 失败"}</div><div class="eb-sub">${escapeHtml(e.name)} ${e.success?"全场最低 → 本局 0 分":t("未达最低 → 本局 +")+state.rules.caboPenalty+t(" 惩罚")}</div>`;
     if(e.success) playDing(); else playFail();
   }
   b.className = cls; b.innerHTML = html;
@@ -898,106 +1196,10 @@ function renderSetup(){
   const p = state.players;
   const inProgress = state.rounds.length > 0;
   const startLabel = inProgress ? "返回对局（保留分数）" : "开始对局";
-  screen.innerHTML = `
-  <div class="setup-card">
-    <h2>卡波计分 · 对局设置</h2>
-    <div class="field">
-      <label>玩家人数（当前 ${p.length} 人）</label>
-      <div class="seg" id="segCount">
-        ${[2,3,4].map(n=>`<button data-n="${n}" class="${p.length===n?'active':''}">${n} 人</button>`).join("")}
-      </div>
-    </div>
-    <div class="field">
-      <label>玩家名字</label>
-      <div id="nameList"></div>
-    </div>
-    <div class="row2">
-      <div class="field">
-        <label>结束分数线</label>
-        <div class="es-input">
-          <input type="number" id="endScore" value="${state.endScore}" min="1" inputmode="numeric">
-          <span class="es-unit">分</span>
-        </div>
-        <div class="sub-label">快捷选择</div>
-        <div class="preset-row" id="presetRow">
-          ${END_PRESETS.map(v=>`<button class="preset ${state.endScore===v?'on':''}" data-v="${v}">${v}</button>`).join("")}
-        </div>
-      </div>
-      <div class="field">
-        <label>胜负规则</label>
-        <div class="seg" id="segRule">
-          <button data-r="low" class="${state.winRule==='low'?'active':''}">低分胜</button>
-          <button data-r="high" class="${state.winRule==='high'?'active':''}">高分胜</button>
-        </div>
-      </div>
-    </div>
-    <details class="rules-ref">
-      <summary>📖 规则速查（点击展开）</summary>
-      <div class="rf-body">
-        <div class="rf-sec">官方说明书原图</div>
-        <div class="rules-gallery" id="rulesGallery">
-          ${RULE_IMAGES.map((im,i)=>`
+  screen.innerHTML = `${t(`<div class="setup-card"> <h2>卡波计分 · 对局设置</h2> <div class="field"> <label>玩家人数（当前`)}${p.length}${t(`人）</label> <div class="seg" id="segCount">`)}${[2,3,4].map(n=>`<button data-n="${n}" class="${p.length===n?'active':''}">${n}${t(`人</button>`)}`).join("")}${t(`</div> </div> <div class="field"> <label>玩家名字</label> <div id="nameList"></div> </div> <div class="row2"> <div class="field"> <label>结束分数线</label> <div class="es-input"> <input type="number" id="endScore" value="`)}${state.endScore}${t(`" min="1" inputmode="numeric"> <span class="es-unit">分</span> </div> <div class="sub-label">快捷选择</div> <div class="preset-row" id="presetRow">`)}${END_PRESETS.map(v=>`<button class="preset ${state.endScore===v?'on':''}" data-v="${v}">${v}</button>`).join("")}${t(`</div> </div> <div class="field"> <label>胜负规则</label> <div class="seg" id="segRule"> <button data-r="low" class="`)}${state.winRule==='low'?'active':''}${t(`">低分胜</button> <button data-r="high" class="`)}${state.winRule==='high'?'active':''}${t(`">高分胜</button> </div> </div> </div> <details class="rules-ref"> <summary>📖 规则速查（点击展开）</summary> <div class="rf-body"> <div class="rf-sec">官方说明书原图</div> <div class="rules-gallery" id="rulesGallery">`)}${RULE_IMAGES.map((im,i)=>`
             <button class="rules-thumb" data-img="${i}" aria-label="${escapeHtml(im.title)}">
-              <img src="${im.src}" alt="${escapeHtml(im.title)}" loading="lazy" decoding="async">
-              <span class="rt-fail">图片未能加载<br>可看下方文字版规则</span>
-              <span class="rt-zoom">🔍 放大</span>
-              <span class="rt-tag">${escapeHtml(im.title.replace("卡波说明书 · ",""))}</span>
-            </button>`).join("")}
-        </div>
-        <div class="rules-caption">点击图片进入大图模式，可上下滚动；点「放大」或双击可放大到 4 倍查看小字。若仍模糊，建议参考下方文字版规则。</div>
-
-        <div class="rf-sec">文字版规则</div>
-        <div class="rf-card">
-          <div class="rf-h">🎯 游戏目标</div>
-          卡波（CABO）中<b>分数越低越有利</b>。每一局结束后把本局手牌分累加到总分，率先有人达到「结束分数线」时全局结束，按总分排名（默认<b>低分胜</b>）。
-        </div>
-        <div class="rf-card">
-          <div class="rf-h">🃏 牌值</div>
-          A=1，2~10 按面值，J=11，Q=12，K（黑）=13，K（红）=-1（视具体牌组约定）。牌越小越好。
-        </div>
-        <div class="rf-card">
-          <div class="rf-h">🗣 呼唤 CABO</div>
-          轮到自己且未摸牌时可喊 CABO 结束本局，其余玩家各再行动一轮后摊牌。
-          <ol>
-            <li>喊 CABO 者<b>手牌分全场最低</b> → 本局记 <b>0 分</b>。</li>
-            <li>喊 CABO 者与他人<b>并列最低（平局）</b> → 仍算<b>喊话者获胜</b>，本局记 <b>0 分</b>。</li>
-            <li>喊 CABO 者<b>不是最低</b> → 本局按手牌分计算，并<b>额外 +惩罚分</b>（默认 +10，可在设置改为 +5）。</li>
-          </ol>
-        </div>
-        <div class="rf-card">
-          <div class="rf-h">🚀 神风特攻队（至尊组合）</div>
-          手中凑齐 <b>两张 13 + 两张 12</b> 的至尊组合即达成神风特攻队：<b>达成者本局记 0 分，其余玩家本局各 +50 分</b>。
-          <div class="rf-note">官方触发前提：呼唤 CABO 之后，牌桌上出现「2 张 13 + 2 张 12」且再无其他牌时触发。计分时在本局面板点「🚀 神风特攻队」标记达成者即可。</div>
-        </div>
-        <div class="rf-card">
-          <div class="rf-h">💯 得分满减</div>
-          玩家总积分<b>恰好等于 100 分</b>时触发，该玩家总分<b>重置为 50 分</b>。
-          <ol>
-            <li>只有<b>恰好 100</b> 才触发；<b>超过 100</b>（如 103、120）<b>不触发</b>。</li>
-            <li>每个玩家整局游戏<b>各自可触发 1 次</b>（不是全场只有一次）。</li>
-            <li>优先级：<b>先做满减，再判定游戏是否结束</b>。</li>
-          </ol>
-        </div>
-        <div class="rf-card">
-          <div class="rf-h">🧮 多规则叠加结算顺序</div>
-          同一局同时触发多条规则时，严格按以下顺序结算：
-          <ol>
-            <li><b>神风特攻队</b>：达成者本局 0 分，其余玩家各 +50。</li>
-            <li><b>CABO 喊话结算</b>：判定喊话者成功（0 分）或失败（+惩罚分）。</li>
-            <li><b>总分累加</b>：把本局得分加到各玩家总分上。</li>
-            <li><b>得分满减校验</b>：任一玩家总分恰好 100 → 重置为 50。</li>
-            <li><b>游戏结束判定</b>：是否有人达到结束分数线。</li>
-          </ol>
-          <div class="rf-note">因此神风给他人的 +50 累加后若<b>恰好等于 100</b>，同样会触发满减降到 50。若同一玩家<b>同时达成神风 + 喊 CABO 成功</b>，两者不冲突，本局最终仍是 <b>0 分</b>。</div>
-        </div>
-        <div class="rf-card">
-          <div class="rf-h">🎮 结束与胜负</div>
-          有玩家总分<b>达到或超过结束分数线</b>（默认 100，可改 150 / 200 / 250 或自定义）即触发结算，按当前总分排名。
-          <div class="rf-note"><b>高分胜（娱乐模式）</b>：仅<b>反转排名方向</b>——总分最高者获胜。CABO 惩罚 +10/+5、神风特攻队 +50、得分满减（恰好 100→50）等规则<b>全部照常生效不变</b>。</div>
-        </div>
-      </div>
-    </details>
-    ${homeHistoryHtml()}
+              <img src="${im.src}" alt="${escapeHtml(im.title)}${t(`" loading="lazy" decoding="async"> <span class="rt-fail">图片未能加载<br>可看下方文字版规则</span> <span class="rt-zoom">🔍 放大</span> <span class="rt-tag">`)}${escapeHtml(im.title.replace(t("卡波说明书 · "),""))}</span>
+            </button>`).join("")}${t(`</div> <div class="rules-caption">点击图片进入大图模式，可上下滚动；点「放大」或双击可放大到 4 倍查看小字。若仍模糊，建议参考下方文字版规则。</div> <div class="rf-sec">文字版规则</div> <div class="rf-card"> <div class="rf-h">🎯 游戏目标</div> 卡波（CABO）中<b>分数越低越有利</b>。每一局结束后把本局手牌分累加到总分，率先有人达到「结束分数线」时全局结束，按总分排名（默认<b>低分胜</b>）。 </div> <div class="rf-card"> <div class="rf-h">🃏 牌值</div> A=1，2~10 按面值，J=11，Q=12，K（黑）=13，K（红）=-1（视具体牌组约定）。牌越小越好。 </div> <div class="rf-card"> <div class="rf-h">🗣 呼唤 CABO</div> 轮到自己且未摸牌时可喊 CABO 结束本局，其余玩家各再行动一轮后摊牌。 <ol> <li>喊 CABO 者<b>手牌分全场最低</b> → 本局记 <b>0 分</b>。</li> <li>喊 CABO 者与他人<b>并列最低（平局）</b> → 仍算<b>喊话者获胜</b>，本局记 <b>0 分</b>。</li> <li>喊 CABO 者<b>不是最低</b> → 本局按手牌分计算，并<b>额外 +惩罚分</b>（默认 +10，可在设置改为 +5）。</li> </ol> </div> <div class="rf-card"> <div class="rf-h">🚀 神风特攻队（至尊组合）</div> 手中凑齐 <b>两张 13 + 两张 12</b> 的至尊组合即达成神风特攻队：<b>达成者本局记 0 分，其余玩家本局各 +50 分</b>。 <div class="rf-note">官方触发前提：呼唤 CABO 之后，牌桌上出现「2 张 13 + 2 张 12」且再无其他牌时触发。计分时在本局面板点「🚀 神风特攻队」标记达成者即可。</div> </div> <div class="rf-card"> <div class="rf-h">💯 得分满减</div> 玩家总积分<b>恰好等于 100 分</b>时触发，该玩家总分<b>重置为 50 分</b>。 <ol> <li>只有<b>恰好 100</b> 才触发；<b>超过 100</b>（如 103、120）<b>不触发</b>。</li> <li>每个玩家整局游戏<b>各自可触发 1 次</b>（不是全场只有一次）。</li> <li>优先级：<b>先做满减，再判定游戏是否结束</b>。</li> </ol> </div> <div class="rf-card"> <div class="rf-h">🧮 多规则叠加结算顺序</div> 同一局同时触发多条规则时，严格按以下顺序结算： <ol> <li><b>神风特攻队</b>：达成者本局 0 分，其余玩家各 +50。</li> <li><b>CABO 喊话结算</b>：判定喊话者成功（0 分）或失败（+惩罚分）。</li> <li><b>总分累加</b>：把本局得分加到各玩家总分上。</li> <li><b>得分满减校验</b>：任一玩家总分恰好 100 → 重置为 50。</li> <li><b>游戏结束判定</b>：是否有人达到结束分数线。</li> </ol> <div class="rf-note">因此神风给他人的 +50 累加后若<b>恰好等于 100</b>，同样会触发满减降到 50。若同一玩家<b>同时达成神风 + 喊 CABO 成功</b>，两者不冲突，本局最终仍是 <b>0 分</b>。</div> </div> <div class="rf-card"> <div class="rf-h">🎮 结束与胜负</div> 有玩家总分<b>达到或超过结束分数线</b>（默认 100，可改 150 / 200 / 250 或自定义）即触发结算，按当前总分排名。 <div class="rf-note"><b>高分胜（娱乐模式）</b>：仅<b>反转排名方向</b>——总分最高者获胜。CABO 惩罚 +10/+5、神风特攻队 +50、得分满减（恰好 100→50）等规则<b>全部照常生效不变</b>。</div> </div> </div> </details>`)}${homeHistoryHtml()}
     ${inProgress ? '<div class="note">当前对局进行中，点「返回对局」可继续；改人数会清空本局分数。</div>' : ''}
     <button class="primary" id="startBtn">${startLabel}</button>
   </div>`;
@@ -1005,7 +1207,7 @@ function renderSetup(){
   document.querySelectorAll("#segCount button").forEach(b=> b.onclick=()=>{
     const n = +b.dataset.n;
     if(state.rounds.length>0 && state.players.length!==n){
-      askConfirm("切换人数", "切换人数将清空当前对局分数并开始新对局，确定继续？", ()=>{
+      askConfirm(t("切换人数"), t("切换人数将清空当前对局分数并开始新对局，确定继续？"), ()=>{
         state.rounds=[]; state.adjust=state.players.map(()=>0); state.bonusApplied=false; state.hundredUsed=state.players.map(()=>false);
         syncCount(n); renderSetup();
       });
@@ -1029,14 +1231,14 @@ function renderSetup(){
     }
     btn.onclick = (ev)=>{
       ev.preventDefault();
-      if(btn.classList.contains("failed")){ toast("规则图未能加载，请看下方文字版规则"); return; }
+      if(btn.classList.contains("failed")){ toast(t("规则图未能加载，请看下方文字版规则")); return; }
       openLightbox(idx);
     };
   });
   document.querySelector("#startBtn").onclick = ()=>{
     const es = parseInt(document.querySelector("#endScore").value,10);
     if(es>0) state.endScore = es;
-    state.players.forEach((p,i)=>{ const el=document.getElementById("name-"+i); if(el) p.name = el.value.trim()||("玩家"+(i+1)); });
+    state.players.forEach((p,i)=>{ const el=document.getElementById("name-"+i); if(el) p.name = el.value.trim()||(t("玩家")+(i+1)); });
     if(state.rounds.length > 0){ state.started = true; save(); render(); return; }
     state.started = true; state.rounds = []; state.adjust = state.players.map(()=>0); state.bonusApplied=false; state.archived=false; state.hundredUsed=state.players.map(()=>false);
     save(); render();
@@ -1044,21 +1246,17 @@ function renderSetup(){
   document.querySelectorAll("#homeHist [data-report]").forEach(b=> b.onclick=()=> openSavedReport(b.dataset.report));
   document.querySelectorAll("#homeHist [data-load]").forEach(b=> b.onclick=()=> loadSave(b.dataset.load));
   document.querySelectorAll("#homeHist [data-del]").forEach(b=> b.onclick=()=>{
-    askConfirm("删除存档","确定删除这个存档？", ()=>{ saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del)); renderSetup(); toast("已删除存档"); });
+    askConfirm(t("删除存档"),t("确定删除这个存档？"), ()=>{ saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del)); renderSetup(); toast(t("已删除存档")); });
   });
   const ca = document.querySelector("#clearAllBtn");
-  if(ca) ca.onclick = ()=> askConfirm("清空全部记录","确定清空所有历史对局？此操作不可恢复。", ()=>{ saveSaves([]); renderSetup(); toast("已清空全部历史对局"); });
+  if(ca) ca.onclick = ()=> askConfirm(t("清空全部记录"),t("确定清空所有历史对局？此操作不可恢复。"), ()=>{ saveSaves([]); renderSetup(); toast(t("已清空全部历史对局")); });
 }
 function renderNameList(){
   const box = document.querySelector("#nameList"); if(!box) return;
   box.innerHTML = state.players.map((p,i)=>`
     <div class="name-row">
-      <div class="pidx">${i+1}</div>
-      <div class="name-field">
-        <span class="nf-label">玩家 ${i+1}</span>
-        <input type="text" id="name-${i}" value="${escapeHtml(p.name)}" placeholder="点此输入名字" maxlength="10" autocomplete="off">
-      </div>
-    </div>`).join("");
+      <div class="pidx">${i+1}${t(`</div> <div class="name-field"> <span class="nf-label">玩家`)}${i+1}</span>
+        <input type="text" id="name-${i}" value="${escapeHtml(p.name)}${t(`" placeholder="点此输入名字" maxlength="10" autocomplete="off"> </div> </div>`)}`).join("");
 }
 
 function renderGame(){
@@ -1068,67 +1266,7 @@ function renderGame(){
   const order = state.players.map((_,i)=>i).sort((a,b)=> state.winRule==="low" ? ts[a]-ts[b] : ts[b]-ts[a]);
   const rankOf = {}; order.forEach((idx,pos)=> rankOf[idx]=pos+1);
   const leadIdx = order[0];
-  screen.innerHTML = `
-    <div class="round-info"><span>第 ${roundNo} 局 · ${state.players.length} 人</span><span>结束线 ${state.endScore} 分 · ${state.winRule==='low'?'低分胜':'高分胜'}</span></div>
-    <div id="players"></div>
-    <div class="special-panel" id="specialPanel"></div>
-    <div class="actions">
-      <div class="action-bar">
-        <button class="primary" id="submitBtn">提交本局</button>
-        <button class="ghost icon-btn" id="autoSaveBtn" title="自动存档：开">💾</button>
-        <button class="ghost" id="moreBtn">更多操作 ▾</button>
-      </div>
-    </div>
-    <div class="overlay hidden" id="moreSheet">
-      <div class="modal more-modal" id="moreModal">
-        <h2>更多操作</h2>
-        <div class="action-panel">
-          <div class="action-row">
-            <button id="undoBtn">↩ 撤销上一局</button>
-            <button id="undoMultiBtn">↩ 撤销多局</button>
-            <button id="clearBtn">🧹 重置本局</button>
-          </div>
-          <div class="action-row">
-            <button id="opLogBtn">📜 操作记录</button>
-          </div>
-          <div class="action-row">
-            <button class="ghost" id="countBtn">👥 ${state.players.length} 人</button>
-            <button class="ghost" id="newGameBtn">🔄 新对局</button>
-          </div>
-          <div class="action-row">
-            <button class="ghost" id="saveBtn">💾 保存对局</button>
-            <button class="ghost" id="savesBtn">📂 我的存档</button>
-          </div>
-          <div class="action-row">
-            <button class="ghost" id="chartBtn">📊 趋势</button>
-            <button class="ghost" id="reportBtn">📤 战报</button>
-          </div>
-          <div class="action-row">
-            <button class="ghost" id="statsBtn">🏅 战绩</button>
-            <button class="ghost" id="shareBtn">🔗 分享本局</button>
-          </div>
-          <div class="action-row">
-            <button class="ghost" id="expBtn">📦 导出/导入</button>
-            <button class="ghost" id="endBtn">🗣 结束本局</button>
-          </div>
-          <div class="action-row">
-            <button class="ghost" id="roomBtn">${roomBtnLabel()}</button>
-          </div>
-          <div class="action-row">
-            <button class="ghost" id="backBtn">← 返回设置</button>
-          </div>
-        </div>
-        <button class="ghost" id="moreClose" style="width:100%;margin-top:12px">收起</button>
-      </div>
-    </div>
-    <div class="chart-wrap hidden" id="chartWrap">
-      <h3>分数趋势</h3>
-      <canvas id="chart"></canvas>
-      <div class="chart-legend" id="chartLegend"></div>
-    </div>
-    <div class="history">
-      <h3>对局记录</h3>
-      <div id="histList">${historyHtml()}</div>
+  screen.innerHTML = `${t(`<div class="round-info"><span>第`)}${roundNo}${t(`局 ·`)}${state.players.length}${t(`人</span><span>结束线`)}${state.endScore}${t(`分 ·`)}${state.winRule==='low'?'低分胜':'高分胜'}${t(`</span></div> <div id="players"></div> <div class="special-panel" id="specialPanel"></div> <div class="actions"> <div class="action-bar"> <button class="primary" id="submitBtn">提交本局</button> <button class="ghost icon-btn" id="autoSaveBtn" title="自动存档：开">💾</button> <button class="ghost" id="moreBtn">更多操作 ▾</button> </div> </div> <div class="overlay hidden" id="moreSheet"> <div class="modal more-modal" id="moreModal"> <h2>更多操作</h2> <div class="action-panel"> <div class="action-row"> <button id="undoBtn">↩ 撤销上一局</button> <button id="undoMultiBtn">↩ 撤销多局</button> <button id="clearBtn">🧹 重置本局</button> </div> <div class="action-row"> <button id="opLogBtn">📜 操作记录</button> </div> <div class="action-row"> <button class="ghost" id="countBtn">👥`)}${state.players.length}${t(`人</button> <button class="ghost" id="newGameBtn">🔄 新对局</button> </div> <div class="action-row"> <button class="ghost" id="saveBtn">💾 保存对局</button> <button class="ghost" id="savesBtn">📂 我的存档</button> </div> <div class="action-row"> <button class="ghost" id="chartBtn">📊 趋势</button> <button class="ghost" id="reportBtn">📤 战报</button> </div> <div class="action-row"> <button class="ghost" id="statsBtn">🏅 战绩</button> <button class="ghost" id="shareBtn">🔗 分享本局</button> </div> <div class="action-row"> <button class="ghost" id="expBtn">📦 导出/导入</button> <button class="ghost" id="endBtn">🗣 结束本局</button> </div> <div class="action-row"> <button class="ghost" id="roomBtn">`)}${roomBtnLabel()}${t(`</button> </div> <div class="action-row"> <button class="ghost" id="backBtn">← 返回设置</button> </div> </div> <button class="ghost" id="moreClose" style="width:100%;margin-top:12px">收起</button> </div> </div> <div class="chart-wrap hidden" id="chartWrap"> <h3>分数趋势</h3> <canvas id="chart"></canvas> <div class="chart-legend" id="chartLegend"></div> </div> <div class="history"> <h3>对局记录</h3> <div id="histList">`)}${historyHtml()}</div>
     </div>`;
   const pl = document.querySelector("#players");
   state.players.forEach((p,i)=>{
@@ -1136,16 +1274,15 @@ function renderGame(){
     pl.insertAdjacentHTML("beforeend", `
       <div class="player-card ${lead?'lead':''}" style="border-left:5px solid ${p.color}">
         <div class="pc-top">
-          <div class="pc-name" id="pcName-${i}" title="点击修改名字">${escapeHtml(p.name)}<span class="rank-badge">#${rankOf[i]}</span>${lead?'<span class="crown">👑</span>':''}</div>
+          <div class="pc-name" id="pcName-${i}${t(`" title="点击修改名字">`)}${escapeHtml(p.name)}<span class="rank-badge">#${rankOf[i]}</span>${lead?'<span class="crown">👑</span>':''}</div>
           <div class="pc-right">
-            <button class="pc-adj" id="adj-${i}" title="手动补扣分数">±${state.adjust[i]||0}</button>
-            <div class="pc-total"><small>总分</small>${ts[i]}</div>
+            <button class="pc-adj" id="adj-${i}${t(`" title="手动补扣分数">±`)}${state.adjust[i]||0}${t(`</button> <div class="pc-total"><small>总分</small>`)}${ts[i]}</div>
           </div>
         </div>
         <div class="pc-inputs">
           ${state.rules.cardInput==='cards'
-            ? `<div class="card4"><span class="lab">本局 4 张牌（自动求和）</span><div class="card4-row">${[0,1,2,3].map(j=>`<input type="number" class="c4" id="c${i}-${j}" inputmode="numeric" placeholder="0" max="13">`).join('')}</div></div>`
-            : `<div><span class="lab">本局牌点</span><input type="number" id="pts-${i}" inputmode="numeric" placeholder="0"></div>`}
+            ? `${t(`<div class="card4"><span class="lab">本局 4 张牌（自动求和）</span><div class="card4-row">`)}${[0,1,2,3].map(j=>`<input type="number" class="c4" id="c${i}-${j}" inputmode="numeric" placeholder="0" max="13">`).join('')}</div></div>`
+            : `${t(`<div><span class="lab">本局牌点</span><input type="number" id="pts-`)}${i}" inputmode="numeric" placeholder="0"></div>`}
         </div>
       </div>`);
   });
@@ -1158,13 +1295,13 @@ function renderGame(){
   document.querySelector("#submitBtn").onclick = submitRound;
   if(roomIsReadOnly()){
     const sb = document.querySelector("#submitBtn");
-    if(sb){ sb.disabled = true; sb.title = "房间已锁定，您为只读"; sb.style.opacity = .5; }
+    if(sb){ sb.disabled = true; sb.title = t("房间已锁定，您为只读"); sb.style.opacity = .5; }
   }
   document.querySelector("#autoSaveBtn").onclick = ()=>{ setAutoSaveOn(!autoSaveOn()); refreshAutoBtn(); toast(autoSaveOn()?"自动存档：开":"自动存档：关"); };
   document.querySelector("#undoBtn").onclick = undo;
   document.querySelector("#undoMultiBtn").onclick = openUndoMulti;
   document.querySelector("#opLogBtn").onclick = openOpLog;
-  document.querySelector("#clearBtn").onclick = ()=>{ renderGame(); toast("已清空本局输入"); };
+  document.querySelector("#clearBtn").onclick = ()=>{ renderGame(); toast(t("已清空本局输入")); };
   document.querySelector("#backBtn").onclick = ()=>{ state.started=false; save(); render(); };
   document.querySelector("#countBtn").onclick = openCountPicker;
   document.querySelector("#newGameBtn").onclick = newGame;
@@ -1201,35 +1338,20 @@ function renderSpecialPanel(){
   const box = document.querySelector("#specialPanel");
   if(!box) return;
   const caboTag = roundCabo!=null
-    ? `<div class="sp-cabo-card"><span class="sp-cabo-label">本轮 CABO</span><b>${escapeHtml(state.players[roundCabo].name)}</b><button class="sp-clear" id="clrCabo" title="取消选择">✕</button></div>`
+    ? `${t(`<div class="sp-cabo-card"><span class="sp-cabo-label">本轮 CABO</span><b>`)}${escapeHtml(state.players[roundCabo].name)}${t(`</b><button class="sp-clear" id="clrCabo" title="取消选择">✕</button></div>`)}`
     : '';
-  box.innerHTML = `
-    <div class="sp-title">⚡ 本轮特殊事件（点按钮选玩家，自动套规则）</div>
-    <div class="special-row">
-      <button class="sp-btn cabo ${roundCabo!=null?'on':''}" id="btnCabo">🗣 本轮有人喊 CABO</button>
-      ${caboTag}
+  box.innerHTML = `${t(`<div class="sp-title">⚡ 本轮特殊事件（点按钮选玩家，自动套规则）</div> <div class="special-row"> <button class="sp-btn cabo`)}${roundCabo!=null?'on':''}${t(`" id="btnCabo">🗣 本轮有人喊 CABO</button>`)}${caboTag}
     </div>
     <div class="special-row">
-      <button class="sp-btn kami ${roundKami!=null?'on':''}" id="btnKami">🚀 神风特攻队（至尊组合）</button>
-    </div>
-    <p class="ev-hint">神风他人各 +50 / Cabo 惩罚 +${state.rules.caboPenalty} / 并列最低喊话者 0 分；两者<b>不冲突可同时记录</b>，随「提交本局」一起结算。</p>`;
+      <button class="sp-btn kami ${roundKami!=null?'on':''}${t(`" id="btnKami">🚀 神风特攻队（至尊组合）</button> </div> <p class="ev-hint">神风他人各 +50 / Cabo 惩罚 +`)}${state.rules.caboPenalty}${t(`/ 并列最低喊话者 0 分；两者<b>不冲突可同时记录</b>，随「提交本局」一起结算。</p>`)}`;
   box.querySelector("#btnCabo").onclick = () => openCaboPicker();
   box.querySelector("#btnKami").onclick = () => openKamiPicker();
   const cC = box.querySelector("#clrCabo"); if(cC) cC.onclick = ()=>{ roundCabo=null; renderSpecialPanel(); };
 }
 function openCaboPicker(onDone){
   let sel = roundCabo;
-  const cards = state.players.map((p,i)=>`<button class="kami-pick ${sel===i?'on':''}" data-i="${i}"><span>${escapeHtml(p.name)}</span><small>本轮喊 Cabo</small></button>`).join("");
-  overlay.innerHTML = `
-    <div class="modal kami-modal">
-      <h2>🗣 本轮有人喊 CABO</h2>
-      <p class="muted">选择喊 CABO 的玩家，系统将自动结算惩罚或 0 分。</p>
-      <div class="kami-grid">${cards}</div>
-      <div class="modal-actions">
-        <button class="ghost" id="caboCancel">取消</button>
-        <button class="primary" id="caboConfirm" ${sel==null?'disabled':''}>确认</button>
-      </div>
-    </div>`;
+  const cards = state.players.map((p,i)=>`<button class="kami-pick ${sel===i?'on':''}" data-i="${i}"><span>${escapeHtml(p.name)}${t(`</span><small>本轮喊 Cabo</small></button>`)}`).join("");
+  overlay.innerHTML = `${t(`<div class="modal kami-modal"> <h2>🗣 本轮有人喊 CABO</h2> <p class="muted">选择喊 CABO 的玩家，系统将自动结算惩罚或 0 分。</p> <div class="kami-grid">`)}${cards}${t(`</div> <div class="modal-actions"> <button class="ghost" id="caboCancel">取消</button> <button class="primary" id="caboConfirm"`)}${sel==null?'disabled':''}${t(`>确认</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
   overlay.querySelectorAll(".kami-pick").forEach(b=> b.onclick=()=>{
     sel = +b.dataset.i;
@@ -1244,17 +1366,8 @@ function openCaboPicker(onDone){
 }
 function openKamiPicker(){
   let sel = roundKami;
-  const cards = state.players.map((p,i)=>`<button class="kami-pick ${sel===i?'on':''}" data-i="${i}"><span>${escapeHtml(p.name)}</span><small>本局 0 分</small><span class="others">其余玩家各 +50</span></button>`).join("");
-  overlay.innerHTML = `
-    <div class="modal kami-modal">
-      <h2>🚀 神风特攻队</h2>
-      <p class="muted">至尊组合 · 选择本局获得 <b>0 分</b> 的玩家，其余玩家各 <b>+50</b> 分。<br><span style="font-size:12px;opacity:.85">官方触发前提：呼唤 CABO 后，牌桌为「2 张 13 + 2 张 12」且无其他牌时达成。若同时喊了 CABO 也不冲突，该玩家本局仍为 0 分。</span></p>
-      <div class="kami-grid">${cards}</div>
-      <div class="modal-actions">
-        <button class="ghost" id="kamiCancel">取消</button>
-        <button class="primary" id="kamiConfirm" ${sel==null?'disabled':''}>确认</button>
-      </div>
-    </div>`;
+  const cards = state.players.map((p,i)=>`<button class="kami-pick ${sel===i?'on':''}" data-i="${i}"><span>${escapeHtml(p.name)}${t(`</span><small>本局 0 分</small><span class="others">其余玩家各 +50</span></button>`)}`).join("");
+  overlay.innerHTML = `${t(`<div class="modal kami-modal"> <h2>🚀 神风特攻队</h2> <p class="muted">至尊组合 · 选择本局获得 <b>0 分</b> 的玩家，其余玩家各 <b>+50</b> 分。<br><span style="font-size:12px;opacity:.85">官方触发前提：呼唤 CABO 后，牌桌为「2 张 13 + 2 张 12」且无其他牌时达成。若同时喊了 CABO 也不冲突，该玩家本局仍为 0 分。</span></p> <div class="kami-grid">`)}${cards}${t(`</div> <div class="modal-actions"> <button class="ghost" id="kamiCancel">取消</button> <button class="primary" id="kamiConfirm"`)}${sel==null?'disabled':''}${t(`>确认</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
   overlay.querySelectorAll(".kami-pick").forEach(b=> b.onclick=()=>{
     sel = +b.dataset.i;
@@ -1276,7 +1389,7 @@ function editName(i){
   const inp = document.querySelector("#nmEdit-"+i);
   inp.focus(); inp.select();
   const commit = ()=>{
-    const v = inp.value.trim() || ("玩家"+(i+1));
+    const v = inp.value.trim() || (t("玩家")+(i+1));
     state.players[i].name = v; save();
     renderGame();
   };
@@ -1292,15 +1405,7 @@ function rankOfLabel(i){
   return order.indexOf(i)+1;
 }
 function openCountPicker(){
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>👥 玩家人数</h2>
-      <p style="color:var(--muted);font-size:14px;margin:0 0 14px">当前 ${state.players.length} 人。切换人数将开始新的一局。</p>
-      <div class="seg" id="segCount2" style="margin-bottom:14px">
-        ${[2,3,4].map(n=>`<button data-n="${n}" class="${state.players.length===n?'active':''}">${n} 人</button>`).join("")}
-      </div>
-      <div class="modal-actions"><button class="ghost" id="countCancel">取消</button></div>
-    </div>`;
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>👥 玩家人数</h2> <p style="color:var(--muted);font-size:14px;margin:0 0 14px">当前`)}${state.players.length}${t(`人。切换人数将开始新的一局。</p> <div class="seg" id="segCount2" style="margin-bottom:14px">`)}${[2,3,4].map(n=>`<button data-n="${n}" class="${state.players.length===n?'active':''}">${n}${t(`人</button>`)}`).join("")}${t(`</div> <div class="modal-actions"><button class="ghost" id="countCancel">取消</button></div> </div>`)}`;
   overlay.classList.remove("hidden");
   document.querySelectorAll("#segCount2 button").forEach(b=> b.onclick=()=>{
     const n = +b.dataset.n;
@@ -1311,7 +1416,7 @@ function openCountPicker(){
       state.started = true; state.rounds = []; state.adjust = state.players.map(()=>0); state.bonusApplied = false; state.archived = false; state.hundredUsed = state.players.map(()=>false);
       save(); render();
     };
-    if(state.rounds.length > 0) askConfirm("切换人数", "切换人数将开始新对局，当前分数会清空，确定继续？", doSwitch);
+    if(state.rounds.length > 0) askConfirm(t("切换人数"), t("切换人数将开始新对局，当前分数会清空，确定继续？"), doSwitch);
     else doSwitch();
   });
   document.querySelector("#countCancel").onclick = ()=> overlay.classList.add("hidden");
@@ -1321,7 +1426,7 @@ function newGame(){
     state.rounds = []; state.adjust = state.players.map(()=>0); state.bonusApplied = false; state.archived = false; state.hundredUsed = state.players.map(()=>false);
     save(); render();
   };
-  if(state.rounds.length > 0) askConfirm("新对局", "开始新对局？当前分数会清空。", go);
+  if(state.rounds.length > 0) askConfirm(t("新对局"), t("开始新对局？当前分数会清空。"), go);
   else go();
 }
 
@@ -1340,7 +1445,7 @@ function saveSaves(list){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify(lis
 function pinnedSaves(list){ return list.filter(s=> s.auto).concat(list.filter(s=> !s.auto)); }
 function autoArchive(){
   const list = loadSaves();
-  const name = "对局 " + fmtTime(Date.now());
+  const name = t("对局 ") + fmtTime(Date.now());
   list.unshift({
     id: Date.now()*1000 + Math.floor(Math.random()*1000),
     name, time: Date.now(), auto:true,
@@ -1362,7 +1467,7 @@ function refreshAutoBtn(){
   if(!b) return;
   const on = autoSaveOn();
   b.textContent = on ? "💾" : "💤";
-  b.title = "自动存档：" + (on ? "开（点此关闭）" : "关（点此开启）");
+  b.title = t("自动存档：") + (on ? "开（点此关闭）" : "关（点此开启）");
   b.classList.toggle("off", !on);
 }
 // 4 张小框：输完自动跳到下一格（设置里可关）。事件委托，覆盖动态生成的录入框
@@ -1381,7 +1486,7 @@ document.addEventListener("input", function(e){
 });
 function clearAutoSave(){
   saveSaves(loadSaves().filter(s=> String(s.id) !== AUTOSAVE_ID));
-  toast("已清空自动存档");
+  toast(t("已清空自动存档"));
   if(!overlay.classList.contains("hidden") && overlay.querySelector("#saveList")) openSavesList();
   else render();
 }
@@ -1391,7 +1496,7 @@ function autoSaveSnapshot(){
     if(!(state.started || state.rounds.length > 0)) return;
     const list = loadSaves().filter(s=> String(s.id) !== AUTOSAVE_ID);
     list.unshift({
-      id: AUTOSAVE_ID, name: "自动存档（最新一场）", time: Date.now(), auto: true,
+      id: AUTOSAVE_ID, name: t("自动存档（最新一场）"), time: Date.now(), auto: true,
       players: state.players.map(p=>({name:p.name})),
       rounds: deep(state.rounds), adjust: state.adjust.slice(),
       bonusApplied: state.bonusApplied, hundredUsed: (state.hundredUsed||[]).slice(),
@@ -1401,23 +1506,13 @@ function autoSaveSnapshot(){
   }catch(e){}
 }
 function openSaveDialog(){
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>💾 保存对局</h2>
-      <p style="color:var(--muted);font-size:14px;margin:0 0 14px">给这场对局起个名字，之后可在「我的存档」里载入继续或回看。</p>
-      <input type="text" id="saveName" placeholder="例如：周五夜局" maxlength="20" value="对局 ${fmtTime(Date.now())}">
-      <input type="text" id="saveNote" placeholder="备注/标签（可选，如：8月2日线下局）" maxlength="20" style="margin-top:10px">
-      <div class="modal-actions" style="margin-top:14px">
-        <button class="ghost" id="saveCancel">取消</button>
-        <button class="primary" id="saveOk">保存</button>
-      </div>
-    </div>`;
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>💾 保存对局</h2> <p style="color:var(--muted);font-size:14px;margin:0 0 14px">给这场对局起个名字，之后可在「我的存档」里载入继续或回看。</p> <input type="text" id="saveName" placeholder="例如：周五夜局" maxlength="20" value="对局`)}${fmtTime(Date.now())}${t(`"> <input type="text" id="saveNote" placeholder="备注/标签（可选，如：8月2日线下局）" maxlength="20" style="margin-top:10px"> <div class="modal-actions" style="margin-top:14px"> <button class="ghost" id="saveCancel">取消</button> <button class="primary" id="saveOk">保存</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
   const inp = document.querySelector("#saveName");
   inp.focus(); inp.select();
   document.querySelector("#saveCancel").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#saveOk").onclick = ()=>{
-    const name = inp.value.trim() || ("对局 " + fmtTime(Date.now()));
+    const name = inp.value.trim() || (t("对局 ") + fmtTime(Date.now()));
     const note = (document.querySelector("#saveNote") && document.querySelector("#saveNote").value || "").trim();
     overlay.classList.add("hidden");
     const list = loadSaves();
@@ -1429,7 +1524,7 @@ function openSaveDialog(){
       endScore: state.endScore, winRule: state.winRule, rules: deep(state.rules)
     });
     saveSaves(list);
-    toast("已保存：" + name);
+    toast(t("已保存：") + name);
   };
 }
 function savedItemHtml(s){
@@ -1439,41 +1534,24 @@ function savedItemHtml(s){
   const scores = s.players.map((p,i)=> escapeHtml(p.name)+" "+sc[i]).join(" · ");
   return `<div class="save-item ${s.auto?'save-item--auto':''}">
     <div class="save-head"><span class="save-name">${escapeHtml(s.name)}</span>${s.auto?'<span class="save-auto">自动</span>':''}<span class="save-time">${fmtTime(s.time)}</span></div>
-    <div class="save-sub">${s.players.length} 人 · ${s.rounds.length} 局 · ${scores} · 胜：${escapeHtml(winner)}</div>
+    <div class="save-sub">${s.players.length}${t(`人 ·`)}${s.rounds.length}${t(`局 ·`)}${scores}${t(`· 胜：`)}${escapeHtml(winner)}</div>
     ${s.note ? `<div class="save-note">🏷 ${escapeHtml(s.note)}</div>` : ''}
     <div class="save-actions">
-      <button class="mini" data-report="${s.id}">查看战报</button>
-      <button class="mini" data-load="${s.id}">载入继续</button>
-      ${s.auto?'<button class="mini" data-clearauto="${s.id}">清空自动存档</button>':''}
-      <button class="mini danger" data-del="${s.id}">删除</button>
-    </div>
-  </div>`;
+      <button class="mini" data-report="${s.id}${t(`">查看战报</button> <button class="mini" data-load="`)}${s.id}${t(`">载入继续</button>`)}${s.auto?'<button class="mini" data-clearauto="${s.id}">清空自动存档</button>':''}
+      <button class="mini danger" data-del="${s.id}${t(`">删除</button> </div> </div>`)}`;
 }
 function homeHistoryHtml(){
   const list = loadSaves();
   if(list.length===0) return "";
   const body = pinnedSaves(list).map(s=> savedItemHtml(s)).join("");
-  return `<div class="history home-history">
-    <h3>📂 历史对局（${list.length} 场）</h3>
-    <div id="homeHist">${body}</div>
-    <button class="ghost clear-all" id="clearAllBtn">清空全部记录</button>
-  </div>`;
+  return `${t(`<div class="history home-history"> <h3>📂 历史对局（`)}${list.length}${t(`场）</h3> <div id="homeHist">`)}${body}${t(`</div> <button class="ghost clear-all" id="clearAllBtn">清空全部记录</button> </div>`)}`;
 }
 function openSavesList(){
   const list = loadSaves();
   const body = list.length===0
     ? '<div style="color:var(--muted);font-size:14px">还没有保存的对局。</div>'
     : pinnedSaves(list).map(s=> savedItemHtml(s)).join("");
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>📂 我的存档</h2>
-      <div class="save-toolbar">
-        <input type="text" id="saveFilter" placeholder="🔍 按备注/名称筛选" style="flex:1">
-        <button class="ghost" id="cloudPull">☁ 云端覆盖</button>
-      </div>
-      <div id="saveList" style="max-height:55vh;overflow:auto;margin:4px 0 10px">${body}</div>
-      <div class="modal-actions"><button class="ghost" id="savesClose">关闭</button></div>
-    </div>`;
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>📂 我的存档</h2> <div class="save-toolbar"> <input type="text" id="saveFilter" placeholder="🔍 按备注/名称筛选" style="flex:1"> <button class="ghost" id="cloudPull">☁ 云端覆盖</button> </div> <div id="saveList" style="max-height:55vh;overflow:auto;margin:4px 0 10px">`)}${body}${t(`</div> <div class="modal-actions"><button class="ghost" id="savesClose">关闭</button></div> </div>`)}`;
   overlay.classList.remove("hidden");
   const sf = overlay.querySelector("#saveFilter");
   if(sf) sf.oninput = ()=>{
@@ -1491,19 +1569,19 @@ function bindSavesList(){
   overlay.querySelectorAll("[data-report]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); openSavedReport(b.dataset.report); });
   overlay.querySelectorAll("[data-load]").forEach(b=> b.onclick=()=>{ overlay.classList.add("hidden"); loadSave(b.dataset.load); });
   overlay.querySelectorAll("[data-del]").forEach(b=> b.onclick=()=>{
-    askConfirm("删除存档", "确定删除这个存档？", ()=>{
+    askConfirm(t("删除存档"), t("确定删除这个存档？"), ()=>{
       saveSaves(loadSaves().filter(s=> String(s.id) !== b.dataset.del));
       renderSavesListBody(loadSaves());
     });
   });
   overlay.querySelectorAll("[data-clearauto]").forEach(b=> b.onclick=()=>{
-    askConfirm("清空自动存档", "确定清空自动存档？此操作只删除自动存档，不影响其他手动存档。", ()=>{
+    askConfirm(t("清空自动存档"), t("确定清空自动存档？此操作只删除自动存档，不影响其他手动存档。"), ()=>{
       clearAutoSave(); renderSavesListBody(loadSaves());
     });
   });
 }
 async function pullCloudSaves(){
-  toast("本地版无云端存档。请改用在线版并登录子账号（设置里）后，再使用「云端覆盖」。");
+  toast(t("本地版无云端存档。请改用在线版并登录子账号（设置里）后，再使用「云端覆盖」。"));
 }
 function computeSavedTotals(s){
   const st = { players:s.players, rounds:s.rounds, adjust:s.adjust||s.players.map(()=>0), rules:s.rules,
@@ -1529,12 +1607,12 @@ function loadSave(id){
   state.started = true;
   state.archived = false;
   save(); render();
-  toast("已载入：" + s.name);
+  toast(t("已载入：") + s.name);
 }
 
 function historyHtml(){
   const {series, eggs} = computeTotals();
-  if(state.rounds.length===0) return '<div style="color:var(--muted);font-size:14px">还没有提交过局数</div>';
+  if(state.rounds.length===0) return t('<div style="color:var(--muted);font-size:14px">还没有提交过局数</div>');
   let html = "";
   state.rounds.forEach((r,k)=>{
     const prev = k===0 ? state.players.map(()=>0) : series[k-1];
@@ -1543,9 +1621,9 @@ function historyHtml(){
     const isK = has(r.kami);
     const isC = has(r.cabo);
     const rnHtml = isK
-      ? `<span class="rn">第 ${k+1} 局</span><span class="rn-kami">🚀 神风特攻队</span>`
-      : `<span class="rn">第 ${k+1} 局</span>`;
-    const tools = `<span class="r-tools"><button class="r-act" data-edit="${k}" title="修改本局">修改</button><button class="r-act danger" data-del="${k}" title="删除本局">删除</button></span>`;
+      ? `${t(`<span class="rn">第`)}${k+1}${t(`局</span><span class="rn-kami">🚀 神风特攻队</span>`)}`
+      : `${t(`<span class="rn">第`)}${k+1}${t(`局</span>`)}`;
+    const tools = `<span class="r-tools"><button class="r-act" data-edit="${k}${t(`" title="修改本局">修改</button><button class="r-act danger" data-del="`)}${k}${t(`" title="删除本局">删除</button></span>`)}`;
     const rawPts = state.players.map((_,i)=> (has(r.pts)&&has(r.pts[i])) ? r.pts[i] : 0);
     const roundEggs = eggs.filter(e=> e.round===k).map(e=> e.player);
     const parts = state.players.map((p,i)=>{
@@ -1555,8 +1633,8 @@ function historyHtml(){
     }).join(" ");
     let tag = "";
     if(isK){
-      tag = `<div class="r-tag kami">🚀 神风特攻队：${escapeHtml(state.players[r.kami].name)} 本局 0 分 · 其余各 +50</div>`;
-      if(isC) tag += `<div class="r-tag cabo ${r.cabo===r.kami?'ok':''}">🗣 本局 ${escapeHtml(state.players[r.cabo].name)} 也喊了 Cabo${r.cabo===r.kami?'（与神风不冲突，本局 0 分）':'（按神风结算 +50）'}</div>`;
+      tag = `${t(`<div class="r-tag kami">🚀 神风特攻队：`)}${escapeHtml(state.players[r.kami].name)}${t(`本局 0 分 · 其余各 +50</div>`)}`;
+      if(isC) tag += `<div class="r-tag cabo ${r.cabo===r.kami?'ok':''}${t(`">🗣 本局`)}${escapeHtml(state.players[r.cabo].name)}${t(`也喊了 Cabo`)}${r.cabo===r.kami?'（与神风不冲突，本局 0 分）':'（按神风结算 +50）'}</div>`;
     }
     else if(isC){
       // Cabo 成败只看【本局手牌分】
@@ -1564,14 +1642,14 @@ function historyHtml(){
       const minT = Math.min.apply(null, preTotal);
       const callerLow = preTotal[r.cabo] === minT;
       tag = callerLow
-        ? `<div class="r-tag cabo ok">🗣 Cabo：${escapeHtml(state.players[r.cabo].name)} 全场最低 → 本局 0 分</div>`
-        : `<div class="r-tag cabo fail">🗣 Cabo：${escapeHtml(state.players[r.cabo].name)} 未达最低 → 本局 +${state.rules.caboPenalty} 惩罚</div>`;
+        ? `${t(`<div class="r-tag cabo ok">🗣 Cabo：`)}${escapeHtml(state.players[r.cabo].name)}${t(`全场最低 → 本局 0 分</div>`)}`
+        : `${t(`<div class="r-tag cabo fail">🗣 Cabo：`)}${escapeHtml(state.players[r.cabo].name)}${t(`未达最低 → 本局 +`)}${state.rules.caboPenalty}${t(`惩罚</div>`)}`;
     }
     const ruleLine = isK
-      ? `<div class="r-rule kami">规则：神风特攻队持有者 ${escapeHtml(state.players[r.kami].name)} 本局 0 分，其余玩家各 +50 分</div>`
+      ? `${t(`<div class="r-rule kami">规则：神风特攻队持有者`)}${escapeHtml(state.players[r.kami].name)}${t(`本局 0 分，其余玩家各 +50 分</div>`)}`
       : (isC ? tag : '');
     const eggHtml = eggs.filter(e=> e.round===k).map(e=>
-      `<div class="r-event ev-hundred"><span class="ev-emoji">💯</span><span><b>得分满减！</b>${escapeHtml(state.players[e.player].name)} 本局前总分 100 → 重置为 50</span></div>`
+      `${t(`<div class="r-event ev-hundred"><span class="ev-emoji">💯</span><span><b>得分满减！</b>`)}${escapeHtml(state.players[e.player].name)}${t(`本局前总分 100 → 重置为 50</span></div>`)}`
     ).join("");
     html += `<div class="r ${isK?'r-kamikaze':''}"><div class="r-head">${rnHtml}<span class="parts">${parts}</span>${tools}</div>${ruleLine}${eggHtml}</div>`;
   });
@@ -1583,16 +1661,7 @@ function submitRound(){
   commitRound();
 }
 function openCaboGate(){
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>🗣 本轮是否有人喊 CABO？</h2>
-      <p style="color:var(--muted);font-size:14px;margin:0 0 16px">提交前确认一下：本轮是否有人喊了 CABO？选「有人喊」可指定玩家；选「没人喊」则按普通分数结算。</p>
-      <div class="modal-actions">
-        <button class="ghost" id="cgCancel">取消</button>
-        <button class="ghost" id="cgNo">🚫 没人喊</button>
-        <button class="primary" id="cgYes">🗣 有人喊</button>
-      </div>
-    </div>`;
+  overlay.innerHTML = t(`<div class="modal"> <h2>🗣 本轮是否有人喊 CABO？</h2> <p style="color:var(--muted);font-size:14px;margin:0 0 16px">提交前确认一下：本轮是否有人喊了 CABO？选「有人喊」可指定玩家；选「没人喊」则按普通分数结算。</p> <div class="modal-actions"> <button class="ghost" id="cgCancel">取消</button> <button class="ghost" id="cgNo">🚫 没人喊</button> <button class="primary" id="cgYes">🗣 有人喊</button> </div> </div>`);
   overlay.classList.remove("hidden");
   document.querySelector("#cgCancel").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#cgNo").onclick = ()=>{ overlay.classList.add("hidden"); commitRound(); };
@@ -1606,7 +1675,7 @@ function commitRound(){
     }
     return parseFloat(document.getElementById("pts-"+i).value)||0;
   });
-  if(pts.every(p=> p===0) && roundCabo==null && roundKami==null){ toast("本局全是 0，确认要提交？"); }
+  if(pts.every(p=> p===0) && roundCabo==null && roundKami==null){ toast(t("本局全是 0，确认要提交？")); }
   const r = { pts, cabo: roundCabo, kami: roundKami };
   if(state.rules.cardInput==='cards'){
     r.cards = state.players.map((_,i)=> [0,1,2,3].map(j=> parseFloat(document.getElementById("c"+i+"-"+j).value)||0));
@@ -1629,12 +1698,12 @@ function commitRound(){
   render();
   if(has(roundCabo)) voiceCabo(state.players[roundCabo].name);
   voiceRound(pts);
-  toast("✅ 已自动保存");
+  toast(t("✅ 已自动保存"));
 }
 function pushOpLog(desc){
   try{
     state.opLog = state.opLog || [];
-    state.opLog.unshift({ t: Date.now(), d: String(desc||"操作") });
+    state.opLog.unshift({ t: Date.now(), d: String(desc||t("操作")) });
     if(state.opLog.length > 60) state.opLog.length = 60;
     save();
   }catch(e){}
@@ -1644,62 +1713,37 @@ function openOpLog(){
     const dt = new Date(o.t);
     const hh = String(dt.getHours()).padStart(2,"0"), mm = String(dt.getMinutes()).padStart(2,"0");
     return `<div class="oplog-item"><span class="oplog-t">${hh}:${mm}</span><span class="oplog-d">${escapeHtml(o.d)}</span></div>`;
-  }).join("") || '<div style="color:var(--muted)">暂无操作记录</div>';
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>📜 操作记录</h2>
-      <p class="muted" style="margin:0 0 10px">最近 60 条改分 / 撤销 / 清人 / 锁定等操作，便于对账追溯。</p>
-      <div class="oplog-list">${items}</div>
-      <div class="modal-actions"><button class="primary" id="olClose">关闭</button></div>
-    </div>`;
+  }).join("") || t('<div style="color:var(--muted)">暂无操作记录</div>');
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>📜 操作记录</h2> <p class="muted" style="margin:0 0 10px">最近 60 条改分 / 撤销 / 清人 / 锁定等操作，便于对账追溯。</p> <div class="oplog-list">`)}${items}${t(`</div> <div class="modal-actions"><button class="primary" id="olClose">关闭</button></div> </div>`)}`;
   overlay.classList.remove("hidden");
   document.querySelector("#olClose").onclick = ()=> overlay.classList.add("hidden");
 }
 function undo(){
   if(state.rounds.length===0) return;
-  askConfirm("撤销上一局", "确定撤销最近一局？该局分数将被移除（可随时重新提交）。", ()=>{
+  askConfirm(t("撤销上一局"), t("确定撤销最近一局？该局分数将被移除（可随时重新提交）。"), ()=>{
     state.rounds.pop();
-    save(); autoSaveSnapshot(); render(); toast("已撤销上一局");
-    pushOpLog("撤销上一局");
+    save(); autoSaveSnapshot(); render(); toast(t("已撤销上一局"));
+    pushOpLog(t("撤销上一局"));
   });
 }
 function undoRounds(n){
   n = Math.max(1, Math.min(n|0, state.rounds.length));
   if(n<=0 || state.rounds.length===0) return;
   state.rounds.splice(state.rounds.length - n, n);
-  save(); autoSaveSnapshot(); render(); toast("已撤销最近 " + n + " 局");
-  pushOpLog("撤销最近 " + n + " 局");
+  save(); autoSaveSnapshot(); render(); toast(t("已撤销最近 ") + n + t(" 局"));
+  pushOpLog(t("撤销最近 ") + n + t(" 局"));
 }
 function openUndoMulti(){
-  if(state.rounds.length===0){ toast("还没有可撤销的局"); return; }
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>↩ 撤销多局</h2>
-      <p style="color:var(--muted);font-size:14px;margin:0 0 12px">当前共 ${state.rounds.length} 局，输入要回退的局数（1 = 撤销上一局）。</p>
-      <input type="number" id="undoN" value="1" min="1" max="${state.rounds.length}" inputmode="numeric">
-      <div class="modal-actions" style="margin-top:14px">
-        <button class="ghost" id="uCancel">取消</button>
-        <button class="primary" id="uOk">撤销</button>
-      </div>
-    </div>`;
+  if(state.rounds.length===0){ toast(t("还没有可撤销的局")); return; }
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>↩ 撤销多局</h2> <p style="color:var(--muted);font-size:14px;margin:0 0 12px">当前共`)}${state.rounds.length}${t(`局，输入要回退的局数（1 = 撤销上一局）。</p> <input type="number" id="undoN" value="1" min="1" max="`)}${state.rounds.length}${t(`" inputmode="numeric"> <div class="modal-actions" style="margin-top:14px"> <button class="ghost" id="uCancel">取消</button> <button class="primary" id="uOk">撤销</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
   const inp = overlay.querySelector("#undoN"); inp.focus(); inp.select();
   overlay.querySelector("#uCancel").onclick = ()=> overlay.classList.add("hidden");
   overlay.querySelector("#uOk").onclick = ()=>{ const n = parseInt(inp.value,10)||1; overlay.classList.add("hidden"); undoRounds(n); };
 }
 function openAdjust(i){
-  if(roomIsReadOnly()){ toast("房间已锁定，您为只读，无法改分"); return; }
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>✏️ 调整 ${escapeHtml(state.players[i].name)} 的分数</h2>
-      <p style="color:var(--muted);font-size:14px;margin:0 0 12px">当前补扣值：<b>${state.adjust[i]||0}</b>。输入正数加分、负数扣分（不影响已记各局，独立记录）。</p>
-      <input type="number" id="adjVal" value="${state.adjust[i]||0}" inputmode="numeric">
-      <div class="modal-actions" style="margin-top:14px">
-        <button class="ghost" id="adjCancel">取消</button>
-        <button class="primary" id="adjOk">确定</button>
-      </div>
-      <button class="ghost danger-text" id="adjClear" style="width:100%;margin-top:10px">🗑 清空该玩家全部计分</button>
-    </div>`;
+  if(roomIsReadOnly()){ toast(t("房间已锁定，您为只读，无法改分")); return; }
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>✏️ 调整`)}${escapeHtml(state.players[i].name)}${t(`的分数</h2> <p style="color:var(--muted);font-size:14px;margin:0 0 12px">当前补扣值：<b>`)}${state.adjust[i]||0}${t(`</b>。输入正数加分、负数扣分（不影响已记各局，独立记录）。</p> <input type="number" id="adjVal" value="`)}${state.adjust[i]||0}${t(`" inputmode="numeric"> <div class="modal-actions" style="margin-top:14px"> <button class="ghost" id="adjCancel">取消</button> <button class="primary" id="adjOk">确定</button> </div> <button class="ghost danger-text" id="adjClear" style="width:100%;margin-top:10px">🗑 清空该玩家全部计分</button> </div>`)}`;
   overlay.classList.remove("hidden");
   const inp = overlay.querySelector("#adjVal"); inp.focus(); inp.select();
   overlay.querySelector("#adjCancel").onclick = ()=> overlay.classList.add("hidden");
@@ -1707,15 +1751,15 @@ function openAdjust(i){
   overlay.querySelector("#adjOk").onclick = ()=>{
     const v = parseInt(inp.value,10); const val = isNaN(v)?0:v;
     state.adjust[i] = val; overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render();
-    toast("已调整 " + state.players[i].name + "：" + (val>=0?"+":"") + val + " 分");
-    pushOpLog("调整 " + state.players[i].name + "：" + (val>=0?"+":"") + val + " 分");
+    toast(t("已调整 ") + state.players[i].name + t("：") + (val>=0?"+":"") + val + t(" 分"));
+    pushOpLog(t("调整 ") + state.players[i].name + t("：") + (val>=0?"+":"") + val + t(" 分"));
   };
 }
 function clearPlayer(i){
   if(i<0 || i>=state.players.length) return;
-  if(roomIsReadOnly()){ toast("房间已锁定，您为只读，无法改分"); return; }
+  if(roomIsReadOnly()){ toast(t("房间已锁定，您为只读，无法改分")); return; }
   const nm = state.players[i].name;
-  askConfirm("清空该玩家", "确定清空「" + nm + "」的全部计分？将清零其所有已记局数的得分与手动补扣分（不影响其他玩家）。", ()=>{
+  askConfirm(t("清空该玩家"), t("确定清空「") + nm + t("」的全部计分？将清零其所有已记局数的得分与手动补扣分（不影响其他玩家）。"), ()=>{
     state.rounds.forEach(r=>{
       if(has(r.pts)) r.pts[i] = 0;
       if(has(r.cards)) r.cards[i] = [0,0,0,0];
@@ -1723,15 +1767,15 @@ function clearPlayer(i){
     state.adjust[i] = 0;
     overlay.classList.add("hidden");
     save(); autoSaveSnapshot(); render();
-    pushOpLog("清空玩家 " + nm);
-    toast("已清空 " + nm + " 的计分");
+    pushOpLog(t("清空玩家 ") + nm);
+    toast(t("已清空 ") + nm + t(" 的计分"));
   });
 }
 function deleteRound(k){
   if(k<0 || k>=state.rounds.length) return;
-  askConfirm("删除本局", "确定删除第 "+(k+1)+" 局？该局分数将被移除并重新计算总分。", ()=>{
+  askConfirm(t("删除本局"), t("确定删除第 ")+(k+1)+t(" 局？该局分数将被移除并重新计算总分。"), ()=>{
     state.rounds.splice(k,1);
-    save(); autoSaveSnapshot(); render(); toast("已删除第 "+(k+1)+" 局");
+    save(); autoSaveSnapshot(); render(); toast(t("已删除第 ")+(k+1)+t(" 局"));
   });
 }
 function openRoundEditor(k){
@@ -1740,11 +1784,7 @@ function openRoundEditor(k){
   const cabo = has(r.cabo) ? r.cabo : null;
   const kami = has(r.kami) ? r.kami : null;
   const opts = (sel)=> state.players.map((p,i)=>`<option value="${i}" ${sel===i?'selected':''}>${escapeHtml(p.name)}</option>`).join("");
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>✏️ 修改第 ${k+1} 局</h2>
-      <div class="field"><label>本局各玩家手牌分</label>
-        ${state.players.map((p,i)=>{
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>✏️ 修改第`)}${k+1}${t(`局</h2> <div class="field"><label>本局各玩家手牌分</label>`)}${state.players.map((p,i)=>{
           const pv = (has(r.pts)&&has(r.pts[i]))?r.pts[i]:0;
           const cv = (has(r.cards)&&has(r.cards[i]))?r.cards[i]:[pv,0,0,0];
           return state.rules.cardInput==='cards'
@@ -1753,19 +1793,10 @@ function openRoundEditor(k){
         }).join("")}
       </div>
       <div class="special-row">
-        <label class="ev-check"><input type="checkbox" id="eCabo" ${cabo!=null?'checked':''}> 🗣 本轮有人喊 CABO</label>
-        <select id="eSelCabo" class="ev-sel" ${cabo==null?'disabled':''}>${opts(cabo==null?0:cabo)}</select>
+        <label class="ev-check"><input type="checkbox" id="eCabo" ${cabo!=null?'checked':''}${t(`> 🗣 本轮有人喊 CABO</label> <select id="eSelCabo" class="ev-sel"`)}${cabo==null?'disabled':''}>${opts(cabo==null?0:cabo)}</select>
       </div>
       <div class="special-row">
-        <label class="ev-check"><input type="checkbox" id="eKami" ${kami!=null?'checked':''}> 🚀 触发神风特攻队</label>
-        <select id="eSelKami" class="ev-sel" ${kami==null?'disabled':''}>${opts(kami==null?0:kami)}</select>
-      </div>
-      <div class="modal-actions">
-        <button class="danger" id="erDel">删除本局</button>
-        <button class="ghost" id="erCancel">取消</button>
-        <button class="primary" id="erSave">保存修改</button>
-      </div>
-    </div>`;
+        <label class="ev-check"><input type="checkbox" id="eKami" ${kami!=null?'checked':''}${t(`> 🚀 触发神风特攻队</label> <select id="eSelKami" class="ev-sel"`)}${kami==null?'disabled':''}>${opts(kami==null?0:kami)}${t(`</select> </div> <div class="modal-actions"> <button class="danger" id="erDel">删除本局</button> <button class="ghost" id="erCancel">取消</button> <button class="primary" id="erSave">保存修改</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
   const eCabo = document.querySelector("#eCabo"), eSelCabo = document.querySelector("#eSelCabo");
   eCabo.onchange = ()=>{ eSelCabo.disabled = !eCabo.checked; };
@@ -1775,7 +1806,7 @@ function openRoundEditor(k){
   eSelKami.onchange = ()=>{};
   document.querySelector("#erCancel").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#erDel").onclick = ()=>{
-    askConfirm("删除本局","确定删除第 "+(k+1)+" 局？", ()=>{ state.rounds.splice(k,1); overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render(); toast("已删除第 "+(k+1)+" 局"); });
+    askConfirm(t("删除本局"),t("确定删除第 ")+(k+1)+t(" 局？"), ()=>{ state.rounds.splice(k,1); overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render(); toast(t("已删除第 ")+(k+1)+t(" 局")); });
   };
   document.querySelector("#erSave").onclick = ()=>{
     const pts = state.players.map((_,i)=>{
@@ -1792,7 +1823,7 @@ function openRoundEditor(k){
       nr.cards = state.players.map((_,i)=> [0,1,2,3].map(j=> parseFloat(document.querySelector('.er-c4i[data-i="'+i+'"][data-j="'+j+'"]').value)||0));
     }
     state.rounds[k] = nr;
-    overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render(); toast("已保存第 "+(k+1)+" 局修改");
+    overlay.classList.add("hidden"); save(); autoSaveSnapshot(); render(); toast(t("已保存第 ")+(k+1)+t(" 局修改"));
   };
 }
 function checkEnd(ts){
@@ -1814,24 +1845,15 @@ function showGameOver(ts, reachedIdx){
       state.adjust[winIdx] = (state.adjust[winIdx]||0) - amt;
       state.bonusApplied = true;
       ts = totals();
-      bonusTxt = `（险胜嘉奖 -${amt}）`;
+      bonusTxt = `${t(`（险胜嘉奖 -`)}${amt}${t(`）`)}`;
       order = state.players.map((_,i)=>i).sort((a,b)=> state.winRule==="low" ? ts[a]-ts[b] : ts[b]-ts[a]);
       winIdx = order[0];
     }
   }
-  const list = order.map((i,pos)=> `<div class="li ${i===winIdx?'win':''}"><span><span class="rk">#${pos+1}</span>${escapeHtml(state.players[i].name)}</span><span>${ts[i]} 分</span></div>`).join("");
-  overlay.innerHTML = `
-    <div class="modal">
-      <div class="go-win"><div class="trophy">🏆</div>
-        <div class="who">🎉 恭喜 ${escapeHtml(state.players[winIdx].name)} 获胜！</div>
-        <div style="color:var(--muted);font-size:14px">${reachedIdx>=0 ? escapeHtml(state.players[reachedIdx].name)+" 达到结束线 "+state.endScore+" 分" : "本局已手动结束"}${bonusTxt}</div>
+  const list = order.map((i,pos)=> `<div class="li ${i===winIdx?'win':''}"><span><span class="rk">#${pos+1}</span>${escapeHtml(state.players[i].name)}</span><span>${ts[i]}${t(`分</span></div>`)}`).join("");
+  overlay.innerHTML = `${t(`<div class="modal"> <div class="go-win"><div class="trophy">🏆</div> <div class="who">🎉 恭喜`)}${escapeHtml(state.players[winIdx].name)}${t(`获胜！</div> <div style="color:var(--muted);font-size:14px">`)}${reachedIdx>=0 ? escapeHtml(state.players[reachedIdx].name)+t(" 达到结束线 ")+state.endScore+t(" 分") : "本局已手动结束"}${bonusTxt}</div>
       </div>
-      <div class="go-list">${list}</div>
-      <div class="modal-actions">
-        <button class="primary" id="newBtn">开始新对局</button>
-        <button class="ghost" id="closeBtn">查看详情</button>
-      </div>
-    </div>`;
+      <div class="go-list">${list}${t(`</div> <div class="modal-actions"> <button class="primary" id="newBtn">开始新对局</button> <button class="ghost" id="closeBtn">查看详情</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
   launchConfetti(3400);
   playCheer();
@@ -1843,7 +1865,7 @@ function showGameOver(ts, reachedIdx){
 async function exportReportImage(reportText){
   if(typeof reportText !== "string") reportText = String(reportText || "");
   const cv = document.querySelector("#reportCanvas");
-  if(!cv){ toast("未找到绘图区域"); return; }
+  if(!cv){ toast(t("未找到绘图区域")); return; }
   const ctx = cv.getContext("2d");
   const W = 400, H = 720;
   const S = 2;
@@ -1861,17 +1883,17 @@ async function exportReportImage(reportText){
   let winner = "";
   lines.forEach(ln=>{
     const t = ln.trim();
-    if(t.startsWith("对局：")) meta.name = t.slice(3);
-    else if(t.startsWith("对局时间：")) meta.time = t.slice(5);
-    else if(t.startsWith("玩家人数：")) meta.players = t;
-    else if(t.startsWith("规则：")) meta.rule = t.slice(3);
-    else if(t.startsWith("总轮数：")) meta.rounds = t;
+    if(t.startsWith(t("对局："))) meta.name = t.slice(3);
+    else if(t.startsWith(t("对局时间："))) meta.time = t.slice(5);
+    else if(t.startsWith(t("玩家人数："))) meta.players = t;
+    else if(t.startsWith(t("规则："))) meta.rule = t.slice(3);
+    else if(t.startsWith(t("总轮数："))) meta.rounds = t;
     else if(/^\d+\.\s+(.+?)\s+[\u2014\u2013-]\s+(\d+)\s*分$/.test(t)){
       const m = t.match(/^(\d+)\.\s+(.+?)\s+[\u2014\u2013-]\s+(\d+)\s*分$/);
       ranks.push({pos:+m[1], name:m[2].trim(), score:+m[3]});
     }
-    else if(t.startsWith("🎉 获胜：")) winner = t.slice(5);
-    else if(t.startsWith("神风特攻队：") || t.startsWith("CABO 喊话：") || t.startsWith("得分满减：")) events.push(t);
+    else if(t.startsWith(t("🎉 获胜："))) winner = t.slice(5);
+    else if(t.startsWith(t("神风特攻队：")) || t.startsWith(t("CABO 喊话：")) || t.startsWith(t("得分满减："))) events.push(t);
   });
 
   const ff = "PingFang SC,Microsoft YaHei,Helvetica Neue,Arial,sans-serif";
@@ -1940,8 +1962,8 @@ async function exportReportImage(reportText){
   const orn=(x,y,rot)=>{ ctx.save(); ctx.translate(x,y); ctx.rotate(rot); ctx.strokeStyle="rgba(218,195,140,.6)"; ctx.lineWidth=1.8; ctx.beginPath(); ctx.moveTo(-10,0); ctx.quadraticCurveTo(0,0,0,-10); ctx.stroke(); ctx.restore(); };
   orn(px+14,py+14,0); orn(px+pw-14,py+14,Math.PI/2); orn(px+pw-14,py+ph-14,Math.PI); orn(px+14,py+ph-14,-Math.PI/2);
 
-  drawText("CABO 胜利结算", W/2, py+52, 32, "#fff", "800", "center");
-  drawText("本轮" + (meta.rule && meta.rule.includes("高分") ? "最高分" : "最低分") + "玩家获胜", W/2, py+80, 14, "rgba(255,255,255,.75)", "500", "center");
+  drawText(t("CABO 胜利结算"), W/2, py+52, 32, "#fff", "800", "center");
+  drawText(t("本轮") + (meta.rule && meta.rule.includes(t("高分")) ? "最高分" : "最低分") + t("玩家获胜"), W/2, py+80, 14, "rgba(255,255,255,.75)", "500", "center");
 
   const n = ranks.length || 1;
   const gap = n<=3 ? 14 : 10;
@@ -1960,7 +1982,7 @@ async function exportReportImage(reportText){
     drawText(String(r.pos), x+cardW/2, y+25, 14, gold?"#4a3b00":"#0a1628", "800", "center");
     drawText(fitText(r.name, cardW-12, 13), x+cardW/2, y+52, 13, "#fff", "700", "center");
     drawText(String(r.score), x+cardW/2, y+84, 28, gold?"#ffd700":"#fff", "800", "center");
-    drawText("分", x+cardW/2, y+100, 11, "rgba(255,255,255,.55)", "500", "center");
+    drawText(t("分"), x+cardW/2, y+100, 11, "rgba(255,255,255,.55)", "500", "center");
   });
 
   let y = cy0 + 124;
@@ -1974,9 +1996,9 @@ async function exportReportImage(reportText){
 
   if(events.length){
     y += 6;
-    drawText("规则战报：", px+26, y, 16, "#ffd699", "700"); y+=24;
+    drawText(t("规则战报："), px+26, y, 16, "#ffd699", "700"); y+=24;
     events.forEach(ev=>{
-      const idx = ev.indexOf("：");
+      const idx = ev.indexOf(t("："));
       const label = idx>=0 ? ev.slice(0,idx+1) : ev;
       const val = idx>=0 ? ev.slice(idx+1) : "";
       drawText("• " + label, px+30, y, 13, "rgba(255,255,255,.88)", "500");
@@ -1986,7 +2008,7 @@ async function exportReportImage(reportText){
   }
 
   y = Math.min(y+14, py+ph-70);
-  drawText("🏆 获胜：" + winner, W/2, y, 18, "#ffd700", "700", "center");
+  drawText(t("🏆 获胜：") + winner, W/2, y, 18, "#ffd700", "700", "center");
 
   const by = py+ph-44;
   function drawButton(label, cx, w){
@@ -1999,13 +2021,13 @@ async function exportReportImage(reportText){
     ctx.beginPath(); ctx.moveTo(x+w-10,y+h/2); ctx.lineTo(x+w-16,y+h/2-4); ctx.lineTo(x+w-22,y+h/2); ctx.lineTo(x+w-16,y+h/2+4); ctx.closePath(); ctx.fill();
     drawText(label, cx, y+20, 13, "#fff", "600", "center");
   }
-  drawButton("复制战报", W/2-86, 130);
-  drawButton("再来一局", W/2+86, 130);
+  drawButton(t("复制战报"), W/2-86, 130);
+  drawButton(t("再来一局"), W/2+86, 130);
 
   drawText("Cabo Scorer v0.6.0", W/2, H-16, 11, "rgba(255,255,255,.45)", "400", "center");
 
   try{
-    const fname = "卡波战报_" + fmtTime(Date.now()).replace(/[:\s]/g,"-") + ".png";
+    const fname = t("卡波战报_") + fmtTime(Date.now()).replace(/[:\s]/g,"-") + ".png";
     const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const finish = (url, blobUrl)=>{
       const img = document.querySelector("#reportImg");
@@ -2020,14 +2042,14 @@ async function exportReportImage(reportText){
     };
     if(cv.toBlob){
       cv.toBlob((blob)=>{
-        if(!blob){ try{ finish(cv.toDataURL("image/png"), false); }catch(e){ toast("导出图片失败：" + e.message); } return; }
+        if(!blob){ try{ finish(cv.toDataURL("image/png"), false); }catch(e){ toast(t("导出图片失败：") + e.message); } return; }
         finish(URL.createObjectURL(blob), true);
       }, "image/png");
     } else {
       finish(cv.toDataURL("image/png"), false);
     }
   }catch(e){
-    toast("导出图片失败：" + e.message);
+    toast(t("导出图片失败：") + e.message);
     console.error(e);
   }
 }
@@ -2079,20 +2101,20 @@ function buildReportText(players, rounds, adjust, winRule, endScore, rules, time
   const eggs = computeTotals().eggs||[];
   state = saved;
   const lines = [];
-  lines.push("🃏 卡波计分 · 战报");
-  if(name) lines.push("对局：" + name);
-  lines.push("对局时间：" + timeStr);
-  lines.push("玩家人数：" + players.length + " 人");
-  lines.push("规则：" + (winRule==="low"?"低分胜":"高分胜") + " · 结束线 " + endScore + " 分");
-  lines.push("总轮数：" + rounds.length + " 局");
+  lines.push(t("🃏 卡波计分 · 战报"));
+  if(name) lines.push(t("对局：") + name);
+  lines.push(t("对局时间：") + timeStr);
+  lines.push(t("玩家人数：") + players.length + t(" 人"));
+  lines.push(t("规则：") + (winRule==="low"?"低分胜":"高分胜") + t(" · 结束线 ") + endScore + t(" 分"));
+  lines.push(t("总轮数：") + rounds.length + t(" 局"));
   lines.push("");
-  lines.push("🏆 最终排名：");
-  order.forEach((i,pos)=> lines.push(`  ${pos+1}. ${players[i].name} — ${ts[i]} 分`));
+  lines.push(t("🏆 最终排名："));
+  order.forEach((i,pos)=> lines.push(`  ${pos+1}. ${players[i].name} — ${ts[i]}${t(`分`)}`));
   lines.push("");
-  lines.push("🎉 获胜：" + winner);
+  lines.push(t("🎉 获胜：") + winner);
   const evLines = [];
   const kamiPlayers = [...new Set(rounds.filter(r=> r.kami!=null).map(r=> players[r.kami].name))];
-  if(kamiPlayers.length) evLines.push("神风特攻队：" + kamiPlayers.join("、") + " 触发");
+  if(kamiPlayers.length) evLines.push(t("神风特攻队：") + kamiPlayers.join(t("、")) + t(" 触发"));
   const caboRounds = rounds.map((r,ri)=> ({r,ri})).filter(x=> x.r.cabo!=null);
   caboRounds.forEach(({r,ri})=>{
     const c = r.cabo;
@@ -2100,43 +2122,32 @@ function buildReportText(players, rounds, adjust, winRule, endScore, rules, time
     const min = Math.min(...raw);
     const ties = raw.filter(v=> v===min).length;
     const isMin = raw[c] === min;
-    let desc = isMin ? (ties>1 ? "并列最低" : "成功") : "失败（+" + rules.caboPenalty + "）";
-    evLines.push(`CABO 喊话：${players[c].name} ${desc}`);
+    let desc = isMin ? (ties>1 ? "并列最低" : "成功") : t("失败（+") + rules.caboPenalty + t("）");
+    evLines.push(`${t(`CABO 喊话：`)}${players[c].name} ${desc}`);
   });
   const hundredPlayers = [...new Set(eggs.map(e=> players[e.player].name))];
-  if(hundredPlayers.length) evLines.push("得分满减：" + hundredPlayers.join("、") + " 已使用");
+  if(hundredPlayers.length) evLines.push(t("得分满减：") + hundredPlayers.join(t("、")) + t(" 已使用"));
   if(evLines.length){
     lines.push("");
-    lines.push("📜 规则战报：");
+    lines.push(t("📜 规则战报："));
     evLines.forEach(s=> lines.push("  " + s));
   }
   return lines.join("\n");
 }
 function openReportModal(text){
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>📤 战报</h2>
-      <textarea class="report-text" id="reportText" readonly>${escapeHtml(text)}</textarea>
-      <img id="reportImg" class="report-preview hidden" alt="战报图片">
-      <canvas id="reportCanvas" class="hidden"></canvas>
-      <div class="modal-actions">
-        <button class="ghost" id="repClose">关闭</button>
-        <button class="primary" id="repCopy">复制分享</button>
-        <button class="primary" id="repExportBtn">导出图片</button>
-      </div>
-    </div>`;
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>📤 战报</h2> <textarea class="report-text" id="reportText" readonly>`)}${escapeHtml(text)}${t(`</textarea> <img id="reportImg" class="report-preview hidden" alt="战报图片"> <canvas id="reportCanvas" class="hidden"></canvas> <div class="modal-actions"> <button class="ghost" id="repClose">关闭</button> <button class="primary" id="repCopy">复制分享</button> <button class="primary" id="repExportBtn">导出图片</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
   document.querySelector("#repClose").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#repCopy").onclick = ()=>{
     const ta = document.querySelector("#reportText");
-    const done = ()=> toast("战报已复制，去粘贴分享吧");
+    const done = ()=> toast(t("战报已复制，去粘贴分享吧"));
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(text).then(done).catch(()=>{ ta.select(); document.execCommand("copy"); done(); });
     } else {
       ta.select(); try{ document.execCommand("copy"); }catch(e){} done();
     }
   };
-  document.querySelector("#repExportBtn").onclick = ()=> exportReportImage(text).catch(e=>{ toast("导出图片失败：" + e.message); console.error(e); });
+  document.querySelector("#repExportBtn").onclick = ()=> exportReportImage(text).catch(e=>{ toast(t("导出图片失败：") + e.message); console.error(e); });
 }
 function openReport(){
   const text = buildReportText(state.players, state.rounds, state.adjust, state.winRule, state.endScore, state.rules, fmtTime(Date.now()), null);
@@ -2170,51 +2181,9 @@ function openSettings(){
         ? '当前为<b>低分胜</b>（官方标准）：总分最低者获胜。'
         : '当前为<b>高分胜</b>（娱乐模式）：仅<b>反转排名方向</b>，总分最高者获胜；Cabo 惩罚、神风特攻队 +50、得分满减（恰好 100→50）等规则<b>照常生效</b>。'}</div>
       <div class="rules-block">
-        <label>${t("ruleCustom")}</label>
-        <div class="rule-row">
-          <div class="desc">Cabo 失败惩罚</div>
-          <div class="seg mini-seg" id="setPenalty">
-            <button data-v="5" class="${r.caboPenalty==5?'active':''}">+5</button>
-            <button data-v="10" class="${r.caboPenalty==10?'active':''}">+10</button>
-          </div>
-        </div>
-        <div class="rule-row">
-          <div class="desc">平局判定（Cabo 平最低）<small>官方：喊 Cabo 者与他人并列最低时，喊话者获胜记 0 分</small></div>
-          <div class="seg mini-seg" id="setTie">
-            <button data-v="callerWins" class="${r.tieRule==='callerWins'?'active':''}">${t("callerWins")}</button>
-            <button data-v="bothZero" class="${r.tieRule==='bothZero'?'active':''}">${t("bothZero")}</button>
-          </div>
-        </div>
-        <div class="rule-row">
-          <div class="desc">得分满减<small>总分<b>恰好 100</b> 才触发（超过不触发）· 每位玩家各限 1 次</small></div>
-          <div class="seg mini-seg" id="setEgg">
-            <button data-v="off" class="${r.hundredEgg==='off'?'active':''}">关闭</button>
-            <button data-v="half" class="${r.hundredEgg==='half'?'active':''}">减半到 50</button>
-            <button data-v="none" class="${r.hundredEgg==='none'?'active':''}">无效果</button>
-          </div>
-        </div>
-        <div class="rule-row">
-          <div class="desc">本局牌点录入方式<small>「4 张小框」可直接写每张牌，自动求和</small></div>
-          <div class="seg mini-seg" id="setCardInput">
-            <button data-v="total" class="${r.cardInput==='total'?'active':''}">数字总分</button>
-            <button data-v="cards" class="${r.cardInput==='cards'?'active':''}">4 张小框</button>
-          </div>
-        </div>
-        <div class="rule-row">
-          <div class="desc">低分嘉奖：获胜者 -<input type="number" id="setBonus" value="${r.lowBonus.amount}" min="0"> 分</div>
-          <button class="toggle ${r.lowBonus.enabled?'on':''}" data-r="lowBonus">${r.lowBonus.enabled?'开':'关'}</button>
-        </div>
-        <div class="rule-row">
-          <div class="desc">音效</div>
-          <button class="toggle ${state.sound?'on':''}" data-snd="1">${state.sound?'开':'关'}</button>
-        </div>
-        <div class="rule-row">
-          <div class="desc">自动存档<small>每次提交本局自动存入「我的存档」</small></div>
-          <button class="toggle ${autoSaveOn()?'on':''}" data-auto="1">${autoSaveOn()?'开':'关'}</button>
-        </div>
-        <div class="rule-row">
-          <div class="desc">输入后自动跳格<small>4 张小框输完自动跳到下一格</small></div>
-          <button class="toggle ${state.rules.autoAdvance?'on':''}" data-adv="1">${state.rules.autoAdvance?'开':'关'}</button>
+        <label>${t("ruleCustom")}${t(`</label> <div class="rule-row"> <div class="desc">Cabo 失败惩罚</div> <div class="seg mini-seg" id="setPenalty"> <button data-v="5" class="`)}${r.caboPenalty==5?'active':''}">+5</button>
+            <button data-v="10" class="${r.caboPenalty==10?'active':''}${t(`">+10</button> </div> </div> <div class="rule-row"> <div class="desc">平局判定（Cabo 平最低）<small>官方：喊 Cabo 者与他人并列最低时，喊话者获胜记 0 分</small></div> <div class="seg mini-seg" id="setTie"> <button data-v="callerWins" class="`)}${r.tieRule==='callerWins'?'active':''}">${t("callerWins")}</button>
+            <button data-v="bothZero" class="${r.tieRule==='bothZero'?'active':''}">${t("bothZero")}${t(`</button> </div> </div> <div class="rule-row"> <div class="desc">得分满减<small>总分<b>恰好 100</b> 才触发（超过不触发）· 每位玩家各限 1 次</small></div> <div class="seg mini-seg" id="setEgg"> <button data-v="off" class="`)}${r.hundredEgg==='off'?'active':''}${t(`">关闭</button> <button data-v="half" class="`)}${r.hundredEgg==='half'?'active':''}${t(`">减半到 50</button> <button data-v="none" class="`)}${r.hundredEgg==='none'?'active':''}${t(`">无效果</button> </div> </div> <div class="rule-row"> <div class="desc">本局牌点录入方式<small>「4 张小框」可直接写每张牌，自动求和</small></div> <div class="seg mini-seg" id="setCardInput"> <button data-v="total" class="`)}${r.cardInput==='total'?'active':''}${t(`">数字总分</button> <button data-v="cards" class="`)}${r.cardInput==='cards'?'active':''}${t(`">4 张小框</button> </div> </div> <div class="rule-row"> <div class="desc">低分嘉奖：获胜者 -<input type="number" id="setBonus" value="`)}${r.lowBonus.amount}${t(`" min="0"> 分</div> <button class="toggle`)}${r.lowBonus.enabled?'on':''}" data-r="lowBonus">${r.lowBonus.enabled?'开':'关'}${t(`</button> </div> <div class="rule-row"> <div class="desc">音效</div> <button class="toggle`)}${state.sound?'on':''}" data-snd="1">${state.sound?'开':'关'}${t(`</button> </div> <div class="rule-row"> <div class="desc">自动存档<small>每次提交本局自动存入「我的存档」</small></div> <button class="toggle`)}${autoSaveOn()?'on':''}" data-auto="1">${autoSaveOn()?'开':'关'}${t(`</button> </div> <div class="rule-row"> <div class="desc">输入后自动跳格<small>4 张小框输完自动跳到下一格</small></div> <button class="toggle`)}${state.rules.autoAdvance?'on':''}" data-adv="1">${state.rules.autoAdvance?'开':'关'}</button>
         </div>
       </div>
       <div class="rules-block" style="margin-top:14px">
@@ -2226,8 +2195,7 @@ function openSettings(){
         <div class="rule-row">
           <div class="desc">${t("language")}</div>
           <div class="seg mini-seg" id="setLang">
-            <button data-v="zh" class="${state.lang==='zh'?'active':''}">中文</button>
-            <button data-v="en" class="${state.lang==='en'?'active':''}">English</button>
+            <button data-v="zh" class="${state.lang==='zh'?'active':''}${t(`">中文</button> <button data-v="en" class="`)}${state.lang==='en'?'active':''}">English</button>
           </div>
         </div>
         <div class="rule-row">
@@ -2242,16 +2210,7 @@ function openSettings(){
       <div class="rules-block" style="margin-top:14px">
         <label>${t("clearLocal")}</label>
         <div class="rule-row">
-          <div class="desc">${t("clearLocal")}<small>删除本机「我的存档」全部条目（不联网，不影响云端版账号）</small></div>
-          <button class="ghost danger-text" id="clearSavesBtn">🧹 清理</button>
-        </div>
-        <div class="rule-row">
-          <div class="desc">${t("clearAuto")}<small>仅删除自动保存的那一条对局</small></div>
-          <button class="ghost danger-text" id="clearAutoBtn">🧹 清理</button>
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button class="primary" id="saveSet">${t("save")}</button>
+          <div class="desc">${t("clearLocal")}${t(`<small>删除本机「我的存档」全部条目（不联网，不影响云端版账号）</small></div> <button class="ghost danger-text" id="clearSavesBtn">🧹 清理</button> </div> <div class="rule-row"> <div class="desc">`)}${t("clearAuto")}${t(`<small>仅删除自动保存的那一条对局</small></div> <button class="ghost danger-text" id="clearAutoBtn">🧹 清理</button> </div> </div> <div class="modal-actions"> <button class="primary" id="saveSet">`)}${t("save")}</button>
         <button class="danger" id="resetAll">${t("resetAll")}</button>
       </div>
       <div class="modal-actions" style="margin-top:10px">
@@ -2279,18 +2238,18 @@ function openSettings(){
   const _m1 = overlay.querySelector(".modal"); if(_m1 && _wasOpen) _m1.scrollTop = _sc;
   const sb = document.querySelector("#setBonus"); if(sb) sb.oninput = e=> state.rules.lowBonus.amount = Math.max(0, parseInt(e.target.value,10)||0);
   document.querySelector("#saveSet").onclick = ()=>{
-    state.players.forEach((p,i)=>{ const el=document.getElementById("sname-"+i); if(el) p.name = el.value.trim()||("玩家"+(i+1)); });
+    state.players.forEach((p,i)=>{ const el=document.getElementById("sname-"+i); if(el) p.name = el.value.trim()||(t("玩家")+(i+1)); });
     const es = parseInt(document.querySelector("#setEnd").value,10); if(es>0) state.endScore = es;
     save(); overlay.classList.add("hidden"); render();
   };
   document.querySelector("#resetAll").onclick = ()=>{
-    askConfirm(t("resetAll"), "确定要重置全部对局吗？所有分数将清空。", ()=>{ state = defaultState(); save(); overlay.classList.add("hidden"); render(); });
+    askConfirm(t("resetAll"), t("确定要重置全部对局吗？所有分数将清空。"), ()=>{ state = defaultState(); save(); overlay.classList.add("hidden"); render(); });
   };
   document.querySelector("#clearSavesBtn").onclick = ()=>{
-    askConfirm(t("clearLocal"), "确定删除本机全部「我的存档」？此操作不可恢复。", ()=>{ saveSaves([]); toast("已清空本地存档"); });
+    askConfirm(t("clearLocal"), t("确定删除本机全部「我的存档」？此操作不可恢复。"), ()=>{ saveSaves([]); toast(t("已清空本地存档")); });
   };
   document.querySelector("#clearAutoBtn").onclick = ()=>{
-    askConfirm(t("clearAuto"), "确定删除自动保存的那一条对局？", ()=>{ clearAutoSave(); toast("已清空自动存档"); });
+    askConfirm(t("clearAuto"), t("确定删除自动保存的那一条对局？"), ()=>{ clearAutoSave(); toast(t("已清空自动存档")); });
   };
 }
 
@@ -2319,22 +2278,8 @@ function openStats(){
   const s = computeStats();
   const rows = s.map(x=>`
     <div class="stat-row" style="border-left:5px solid ${x.color}">
-      <div class="stat-name">${escapeHtml(x.name)}</div>
-      <div class="stat-grid">
-        <span>总分</span><b>${x.total}</b>
-        <span>当前排名</span><b>#${x.rank}</b>
-        <span>平均 / 局</span><b>${x.avg>=0?'+':''}${x.avg}</b>
-        <span>最佳单局</span><b>${x.best==null?'—':(x.best>=0?'+':'')+x.best}</b>
-        <span>喊 Cabo</span><b>${x.caboCalls} 次（成功 ${x.caboOk}）</b>
-        <span>神风特攻队</span><b>${x.kami} 次</b>
-      </div>
-    </div>`).join("");
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>🏅 玩家战绩</h2>
-      <div class="stat-list">${rows || '<div style="color:var(--muted)">还没有提交过局数</div>'}</div>
-      <div class="modal-actions"><button class="primary" id="stClose">关闭</button></div>
-    </div>`;
+      <div class="stat-name">${escapeHtml(x.name)}${t(`</div> <div class="stat-grid"> <span>总分</span><b>`)}${x.total}${t(`</b> <span>当前排名</span><b>#`)}${x.rank}${t(`</b> <span>平均 / 局</span><b>`)}${x.avg>=0?'+':''}${x.avg}${t(`</b> <span>最佳单局</span><b>`)}${x.best==null?'—':(x.best>=0?'+':'')+x.best}${t(`</b> <span>喊 Cabo</span><b>`)}${x.caboCalls}${t(`次（成功`)}${x.caboOk}${t(`）</b> <span>神风特攻队</span><b>`)}${x.kami}${t(`次</b> </div> </div>`)}`).join("");
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>🏅 玩家战绩</h2> <div class="stat-list">`)}${rows || t('<div style="color:var(--muted)">还没有提交过局数</div>')}${t(`</div> <div class="modal-actions"><button class="primary" id="stClose">关闭</button></div> </div>`)}`;
   overlay.classList.remove("hidden");
   document.querySelector("#stClose").onclick = ()=> overlay.classList.add("hidden");
 }
@@ -2344,14 +2289,14 @@ function exportState(){
   const blob = new Blob([JSON.stringify(state)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = "卡波对局_" + fmtTime(Date.now()).replace(/[:\s]/g,"-") + ".json";
+  a.href = url; a.download = t("卡波对局_") + fmtTime(Date.now()).replace(/[:\s]/g,"-") + ".json";
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=> URL.revokeObjectURL(url), 3000);
-  toast("已导出本局 JSON");
+  toast(t("已导出本局 JSON"));
 }
 function importStateFromFile(file){
   const rd = new FileReader();
-  rd.onload = ()=>{ try{ const obj = JSON.parse(rd.result); state = obj; normalize(); save(); overlay.classList.add("hidden"); render(); toast("已导入对局"); }catch(e){ toast("导入失败：" + e.message); } };
+  rd.onload = ()=>{ try{ const obj = JSON.parse(rd.result); state = obj; normalize(); save(); overlay.classList.add("hidden"); render(); toast(t("已导入对局")); }catch(e){ toast(t("导入失败：") + e.message); } };
   rd.readAsText(file);
 }
 
@@ -2367,7 +2312,7 @@ async function ghFindOrCreateGist(){
   try{ const c = localStorage.getItem("cabo-gistid"); if(c){ _gistId = c; return c; } }catch(e){}
   for(let page=1; page<=3; page++){
     const res = await fetch(GH_API+"/gists?per_page=100&page="+page, { headers: ghHeaders() });
-    if(!res.ok) throw new Error("网络或凭据异常 "+res.status);
+    if(!res.ok) throw new Error(t("网络或凭据异常 ")+res.status);
     const list = await res.json();
     if(!Array.isArray(list) || !list.length) break;
     const f = list.find(g=> g.description===GH_DESC && g.files && g.files[GH_FILE]);
@@ -2375,7 +2320,7 @@ async function ghFindOrCreateGist(){
   }
   const res = await fetch(GH_API+"/gists", { method:"POST", headers: ghHeaders(),
     body: JSON.stringify({ description:GH_DESC, public:false, files:{ [GH_FILE]:{ content: JSON.stringify({state:null,saves:[]}) } } }) });
-  if(!res.ok) throw new Error("创建存储失败 "+res.status);
+  if(!res.ok) throw new Error(t("创建存储失败 ")+res.status);
   const g = await res.json(); _gistId = g.id;
   try{ localStorage.setItem("cabo-gistid", g.id); }catch(e){}
   return g.id;
@@ -2383,7 +2328,7 @@ async function ghFindOrCreateGist(){
 async function ghReadFile(filename){
   const id = await ghFindOrCreateGist();
   const res = await fetch(GH_API+"/gists/"+id, { headers: ghHeaders() });
-  if(!res.ok) throw new Error("读取失败 "+res.status);
+  if(!res.ok) throw new Error(t("读取失败 ")+res.status);
   const g = await res.json();
   const f = g.files && g.files[filename];
   return (f && f.content) ? f.content : null;
@@ -2392,7 +2337,7 @@ async function ghWriteFile(filename, content){
   const id = await ghFindOrCreateGist();
   const res = await fetch(GH_API+"/gists/"+id, { method:"PATCH", headers: ghHeaders(),
     body: JSON.stringify({ files:{ [filename]:{ content } } }) });
-  if(!res.ok) throw new Error("保存失败 "+res.status);
+  if(!res.ok) throw new Error(t("保存失败 ")+res.status);
 }
 
 /* ===== 房间码联机（v0.6.0）：免登录，输入同一房间码或扫码即可合并对局 ===== */
@@ -2557,17 +2502,17 @@ function roomFile(code){ return "cabo-room-" + code + ".json"; }
 function roomErrMsg(e){
   const m = e && e.message ? String(e.message) : (e ? String(e) : "");
   if(location.protocol === "file:"){
-    return "你正用本地文件(file://)打开，浏览器会拦截联网请求。请改用在线地址 https://feikong66.github.io/cabo/ 打开本页";
+    return t("你正用本地文件(file://)打开，浏览器会拦截联网请求。请改用在线地址 https://feikong66.github.io/cabo/ 打开本页");
   }
   if(/Failed to fetch|NetworkError|network|timeout|aborted|fetch|TypeError/i.test(m)){
     if(location.hostname.indexOf("github.io") < 0){
-      return "无法连接同步服务器（当前页不是在线地址）。请改用 https://feikong66.github.io/cabo/ 打开本页再试";
+      return t("无法连接同步服务器（当前页不是在线地址）。请改用 https://feikong66.github.io/cabo/ 打开本页再试");
     }
-    return "无法连接同步服务器。Edge 请：① 地址栏左侧关掉「跟踪防护」；② 改用 InPrivate 窗口(Ctrl+Shift+N)；③ 确认本机能访问 api.github.com";
+    return t("无法连接同步服务器。Edge 请：① 地址栏左侧关掉「跟踪防护」；② 改用 InPrivate 窗口(Ctrl+Shift+N)；③ 确认本机能访问 api.github.com");
   }
   return m;
 }
-function roomBtnLabel(){ return room && room.code ? ("📡 房间 " + room.code) : "📡 联机房间"; }
+function roomBtnLabel(){ return room && room.code ? (t("📡 房间 ") + room.code) : "📡 联机房间"; }
 function genRoomCode(){
   let s = "";
   try{
@@ -2610,7 +2555,7 @@ async function roomPull(){
         room.rev = d.rev;
         state = d.state;
         normalize(); render(); roomSaveLocal();
-        toast("已同步队友的最新对局");
+        toast(t("已同步队友的最新对局"));
         roomCheckSelfKicked();
       }
     }
@@ -2652,7 +2597,7 @@ async function roomJoin(code, creator){
   if(room.code) roomLeave();   // 先销毁旧房间监听，再连接新房间
   code = String(code||"").trim().toUpperCase();
   room.isCreator = !!creator;
-  if(!ROOM_RE.test(code)) throw new Error("房间码为 6 位，只含数字 2-9 与字母（不含 I、O）");
+  if(!ROOM_RE.test(code)) throw new Error(t("房间码为 6 位，只含数字 2-9 与字母（不含 I、O）"));
   let d = null;
   try{ const c = await ghReadFile(roomFile(code)); if(c){ try{ d = JSON.parse(c); }catch(e){} } }catch(e){}
   if(d && d.state){
@@ -2665,12 +2610,12 @@ async function roomJoin(code, creator){
       const _bnm = (_b && _b.name) ? String(_b.name) : "";
       if((_bid && _bid === DEVICE_ID) || (_bnm && myLoginName() && _bnm === myLoginName())){
         room.code = null; room.rev = 0;
-        throw new Error("你已被房主移出该房间，无法再次加入");
+        throw new Error(t("你已被房主移出该房间，无法再次加入"));
       }
     }
     if(_lk.loginOnly && !isLoggedIn()){
       room.code = null; room.rev = 0;
-      throw new Error("该房间仅限已登录用户加入。本地版没有账号，请改用在线版并登录后再加入");
+      throw new Error(t("该房间仅限已登录用户加入。本地版没有账号，请改用在线版并登录后再加入"));
     }
     room.code = code; room.rev = d.rev || 0; room.err = null; state = d.state; normalize(); render();
     // 成员维护：未锁定则把本机登记为成员；锁定则非成员视为只读
@@ -2690,7 +2635,7 @@ async function roomJoin(code, creator){
     if(mqttClient){ try{ mqttClient.close(); }catch(e){} mqttClient = null; }
     mqttConnected = false;
     room.code = null; room.rev = 0;
-    throw new Error("房间不存在，请核对房间码");
+    throw new Error(t("房间不存在，请核对房间码"));
   }
 }
 function roomLeave(){
@@ -2708,9 +2653,9 @@ function roomRefreshStatus(){
   const st = document.querySelector("#roomStat");
   if(!st) return;
   let txt, cls = "room-status";
-  if(mqttConnected){ txt = "🟢 实时已连接（毫秒级）"; }
+  if(mqttConnected){ txt = t("🟢 实时已连接（毫秒级）"); }
   else if(room.err){ txt = "⚠ " + room.err; cls += " off"; }
-  else { txt = "🟡 轮询备份中（实时未连通）"; }
+  else { txt = t("🟡 轮询备份中（实时未连通）"); }
   st.className = cls; st.textContent = txt;
 }
 /* ===== 房间成员名单 / 准入控制 =====
@@ -2719,7 +2664,7 @@ function roomRefreshStatus(){
 function myLoginName(){ return ""; }                     // 本地版无账户
 function isLoggedIn(){ return false; }
 function myNick(){ try{ return String(localStorage.getItem("cabo-nick") || ""); }catch(e){ return ""; } }
-function myDisplayName(){ return myLoginName() || myNick() || ("设备" + String(DEVICE_ID).slice(-4)); }
+function myDisplayName(){ return myLoginName() || myNick() || (t("设备") + String(DEVICE_ID).slice(-4)); }
 function lockObj(){
   if(!state.lock || typeof state.lock !== "object") state.lock = {locked:false, loginOnly:false, owner:"", members:[], banned:[]};
   if(!Array.isArray(state.lock.members)) state.lock.members = [];
@@ -2759,33 +2704,33 @@ function roomCheckSelfKicked(){
   const code = room.code;
   roomLeave();
   try{ overlay.classList.add("hidden"); }catch(e){}
-  toast("⚠ 你已被房主移出房间 " + code + "，无法再修改本局数据");
+  toast(t("⚠ 你已被房主移出房间 ") + code + t("，无法再修改本局数据"));
   return true;
 }
 function roomKick(id){
-  if(!roomIsOwner()){ toast("仅房主可以移出成员"); return; }
-  if(id === DEVICE_ID){ toast("不能移出自己"); return; }
+  if(!roomIsOwner()){ toast(t("仅房主可以移出成员")); return; }
+  if(id === DEVICE_ID){ toast(t("不能移出自己")); return; }
   const L = lockObj(); const m = memberFind(id);
-  const nm = (m && m.name) || ("设备" + String(id).slice(-4));
+  const nm = (m && m.name) || (t("设备") + String(id).slice(-4));
   L.members = L.members.filter(function(x){ return x.id !== id; });
   if(!isBanned(id, (m && m.name) || "")) L.banned.push({id:id, name:(m && m.name) || ""});
   memberSelfTouch();
   save(); render();
   roomPush();          // 立刻落盘 Gist，避免被踢者趁备份窗口用旧数据重新进来
-  toast("已移出：" + nm + "（对方将被自动退出）");
-  pushOpLog("移出成员 " + nm);
+  toast(t("已移出：") + nm + t("（对方将被自动退出）"));
+  pushOpLog(t("移出成员 ") + nm);
 }
 function roomUnban(id){
-  if(!roomIsOwner()){ toast("仅房主可以操作"); return; }
+  if(!roomIsOwner()){ toast(t("仅房主可以操作")); return; }
   const L = lockObj();
   const b = L.banned.filter(function(x){ return x.id === id; })[0];
   L.banned = L.banned.filter(function(x){ return x.id !== id; });
   memberSelfTouch(); save(); render(); roomPush();
-  toast("已恢复：" + ((b && b.name) || ("设备" + String(id).slice(-4))) + "，对方可重新加入");
-  pushOpLog("恢复成员 " + ((b && b.name) || id));
+  toast(t("已恢复：") + ((b && b.name) || (t("设备") + String(id).slice(-4))) + t("，对方可重新加入"));
+  pushOpLog(t("恢复成员 ") + ((b && b.name) || id));
 }
 async function roomToggleLoginOnly(){
-  if(!roomIsOwner()){ toast("仅房主可以更改准入设置"); return; }
+  if(!roomIsOwner()){ toast(t("仅房主可以更改准入设置")); return; }
   const L = lockObj();
   L.loginOnly = !L.loginOnly;
   memberSelfTouch(); save(); render(); roomPush();
@@ -2819,17 +2764,17 @@ async function roomForceSync(){
   if(!applied){ try{ await roomPush(); }catch(e){} }
   roomRefreshStatus();
   toast(applied ? "✅ 已用云端最新数据覆盖本地" : "已与云端校对，本地即最新");
-  pushOpLog("强制同步本局");
+  pushOpLog(t("强制同步本局"));
 }
 async function roomReconnect(){
   let raw = null;
   try{ raw = JSON.parse(localStorage.getItem(ROOM_KEY) || "null"); }catch(e){}
-  if(!raw || !raw.code){ toast("没有可重连的房间（可能已退出）"); return; }
-  try{ await roomJoin(raw.code, raw.isCreator); toast("已重连房间 " + room.code); render(); }
-  catch(e){ toast("重连失败：" + roomErrMsg(e)); }
+  if(!raw || !raw.code){ toast(t("没有可重连的房间（可能已退出）")); return; }
+  try{ await roomJoin(raw.code, raw.isCreator); toast(t("已重连房间 ") + room.code); render(); }
+  catch(e){ toast(t("重连失败：") + roomErrMsg(e)); }
 }
 async function roomToggleLock(){
-  if(!roomIsOwner()){ toast("仅房主可以锁定/解锁房间"); return; }
+  if(!roomIsOwner()){ toast(t("仅房主可以锁定/解锁房间")); return; }
   const L = lockObj();
   L.locked = !L.locked;
   memberSelfTouch();
@@ -2845,25 +2790,25 @@ function roomMembersHtml(){
     const online = (now - (m.at||0)) < 150000;          // 2.5 分钟内有推送视为在线
     const me = (m.id === DEVICE_ID);
     const isOwn = L.owner ? (L.owner === m.id) : false;
-    const nm = escapeHtml(m.name || ("设备" + String(m.id).slice(-4)));
+    const nm = escapeHtml(m.name || (t("设备") + String(m.id).slice(-4)));
     const tags = (isOwn ? '<span class="mb-tag owner">'+t("owner")+'</span>' : '')
                + (me ? '<span class="mb-tag me">'+t("me")+'</span>' : '')
                + (m.login ? '' : '<span class="mb-tag guest">'+t("guest")+'</span>');
     const kick = (owner && !me) ? `<button class="mb-kick" data-kick="${escapeHtml(m.id)}">${t("kick")}</button>` : '';
     return `<div class="mb-row"><span class="mb-dot ${online?'on':'off'}"></span><span class="mb-name">${nm}</span>${tags}<span class="mb-spacer"></span>${kick}</div>`;
   }).join("");
-  if(!rows) rows = '<div class="room-hint">暂无成员记录，队友加入或改分后会自动出现</div>';
+  if(!rows) rows = t('<div class="room-hint">暂无成员记录，队友加入或改分后会自动出现</div>');
   let banned = "";
   if(owner && L.banned.length){
     banned = '<div class="mb-banned-title">'+t("bannedTitle")+'</div>' + L.banned.map(function(b){
-      const nm = escapeHtml(b.name || ("设备" + String(b.id).slice(-4)));
+      const nm = escapeHtml(b.name || (t("设备") + String(b.id).slice(-4)));
       return `<div class="mb-row banned"><span class="mb-name">${nm}</span><span class="mb-spacer"></span><button class="mb-unban" data-unban="${escapeHtml(b.id)}">${t("unban")}</button></div>`;
     }).join("");
   }
   const nick = (!isLoggedIn())
-    ? `<div class="mb-nick"><input id="mbNick" maxlength="10" placeholder="${state.lang==='en'?'My display name (teammates see this)':'我的显示名（队友会看到）'}" value="${escapeHtml(myNick())}"><button class="ghost" id="mbNickSave">保存</button></div>`
+    ? `<div class="mb-nick"><input id="mbNick" maxlength="10" placeholder="${state.lang==='en'?'My display name (teammates see this)':'我的显示名（队友会看到）'}" value="${escapeHtml(myNick())}${t(`"><button class="ghost" id="mbNickSave">保存</button></div>`)}`
     : '';
-  return `<div class="mb-box"><div class="mb-title">👥 ${t("roomMembers")}（${L.members.length}）${owner ? '<span class="mb-hint-inline">'+t("kick")+'</span>' : ''}</div>${rows}${banned}${nick}</div>`;
+  return `<div class="mb-box"><div class="mb-title">👥 ${t("roomMembers")}${t(`（`)}${L.members.length}${t(`）`)}${owner ? '<span class="mb-hint-inline">'+t("kick")+'</span>' : ''}</div>${rows}${banned}${nick}</div>`;
 }
 function roomPanelHtml(){
   const _offline = (location.protocol === "file:" || location.hostname.indexOf("github.io") < 0);
@@ -2872,18 +2817,12 @@ function roomPanelHtml(){
     let reconnectHtml = '';
     try{
       const raw = JSON.parse(localStorage.getItem(ROOM_KEY) || "null");
-      if(raw && raw.code){ reconnectHtml = `<button class="ghost" id="roomReconnect" style="width:100%;margin-top:8px">🔄 重连房间 ${raw.code}</button>`; }
+      if(raw && raw.code){ reconnectHtml = `${t(`<button class="ghost" id="roomReconnect" style="width:100%;margin-top:8px">🔄 重连房间`)}${raw.code}</button>`; }
     }catch(e){}
-    return _warn + `
-      <p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方）。本地版<b>无账号</b>，因此无法加入在线版开启了「仅登录用户」的房间——需要那种防护请用在线版登录后联机。</p>
-      <button class="primary" id="roomCreate" style="width:100%;margin-bottom:16px">➕ 创建房间</button>
-      ${reconnectHtml}
-      <div class="room-or"><span>已有房间码？</span></div>
-      <input class="room-input" id="roomInput" maxlength="6" placeholder="ABC123" autocomplete="off" spellcheck="false" inputmode="latin">
-      <button class="ghost" id="roomJoinBtn" style="width:100%;margin-top:10px">🔑 加入房间</button>`;
+    return _warn + `${t(`<p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方）。本地版<b>无账号</b>，因此无法加入在线版开启了「仅登录用户」的房间——需要那种防护请用在线版登录后联机。</p> <button class="primary" id="roomCreate" style="width:100%;margin-bottom:16px">➕ 创建房间</button>`)}${reconnectHtml}${t(`<div class="room-or"><span>已有房间码？</span></div> <input class="room-input" id="roomInput" maxlength="6" placeholder="ABC123" autocomplete="off" spellcheck="false" inputmode="latin"> <button class="ghost" id="roomJoinBtn" style="width:100%;margin-top:10px">🔑 加入房间</button>`)}`;
   }
   const link = roomLink(room.code);
-  const qr = (typeof CABOQR !== "undefined" && CABOQR.svg(link, 190)) || '<div class="room-hint">二维码生成失败</div>';
+  const qr = (typeof CABOQR !== "undefined" && CABOQR.svg(link, 190)) || t('<div class="room-hint">二维码生成失败</div>');
   const L = lockObj();
   const locked = !!L.locked;
   const readOnly = roomIsReadOnly();
@@ -2894,32 +2833,15 @@ function roomPanelHtml(){
   const loginBtn = owner
     ? `<button class="ghost" id="roomLoginOnly">${L.loginOnly ? "🔐 仅登录用户：开" : "🔓 仅登录用户：关"}</button>`
     : `<div class="room-hint">${L.loginOnly ? "🔐 本房间仅限登录用户" : "🔓 本房间允许未登录设备"}</div>`;
-  return `
-    <div class="room-hint" style="margin:0 0 2px">把房间码告诉队友，或让对方直接扫码加入</div>
-    <div class="room-code">${room.code}</div>
-    <div class="room-qr">${qr}</div>
-    <div style="text-align:center"><span class="room-status" id="roomStat">🟢 实时已连接（毫秒级）</span></div>
-    <div class="room-link">${escapeHtml(link)}</div>
-    <div class="action-row" style="margin-top:14px">
-      <button class="ghost" id="roomCopyCode">📋 复制房间码</button>
-      <button class="ghost" id="roomCopy">📋 复制链接</button>
-    </div>
-    <div class="action-row">
-      <button class="ghost" id="roomSyncNow">⬇ 强制同步</button>
-      ${lockBtn}
+  return `${t(`<div class="room-hint" style="margin:0 0 2px">把房间码告诉队友，或让对方直接扫码加入</div> <div class="room-code">`)}${room.code}</div>
+    <div class="room-qr">${qr}${t(`</div> <div style="text-align:center"><span class="room-status" id="roomStat">🟢 实时已连接（毫秒级）</span></div> <div class="room-link">`)}${escapeHtml(link)}${t(`</div> <div class="action-row" style="margin-top:14px"> <button class="ghost" id="roomCopyCode">📋 复制房间码</button> <button class="ghost" id="roomCopy">📋 复制链接</button> </div> <div class="action-row"> <button class="ghost" id="roomSyncNow">⬇ 强制同步</button>`)}${lockBtn}
     </div>
     <div class="action-row">${loginBtn}</div>
     ${roomMembersHtml()}
-    ${readOnly ? '<div class="room-hint" style="color:var(--danger);text-align:center">⚠ 你当前没有改分权限（只读）：可能已被房主移出、本房间仅限登录用户（本地版无账号）、或房间已锁定且你不在成员名单。</div>' : ''}
-    <button class="ghost" id="roomLeave" style="width:100%;margin-top:10px;color:var(--danger)">🚪 退出房间</button>`;
+    ${readOnly ? '<div class="room-hint" style="color:var(--danger);text-align:center">⚠ 你当前没有改分权限（只读）：可能已被房主移出、本房间仅限登录用户（本地版无账号）、或房间已锁定且你不在成员名单。</div>' : ''}${t(`<button class="ghost" id="roomLeave" style="width:100%;margin-top:10px;color:var(--danger)">🚪 退出房间</button>`)}`;
 }
 function openRoom(){
-  overlay.innerHTML = `
-    <div class="modal">
-      <h2>📡 联机房间</h2>
-      <div id="roomBody">${roomPanelHtml()}</div>
-      <div class="modal-actions"><button class="primary" id="roomClose">关闭</button></div>
-    </div>`;
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>📡 联机房间</h2> <div id="roomBody">`)}${roomPanelHtml()}${t(`</div> <div class="modal-actions"><button class="primary" id="roomClose">关闭</button></div> </div>`)}`;
   overlay.classList.remove("hidden");
   bindRoomPanel();
 }
@@ -2932,37 +2854,37 @@ function bindRoomPanel(){
   };
   const cr = document.querySelector("#roomCreate");
   if(cr) cr.onclick = async ()=>{
-    cr.disabled = true; cr.textContent = "创建中…";
-    try{ const code = await roomCreate(); toast("房间已创建：" + code); redraw(); render(); }
-    catch(e){ toast("创建失败：" + roomErrMsg(e)); cr.disabled = false; cr.textContent = "➕ 创建房间"; }
+    cr.disabled = true; cr.textContent = t("创建中…");
+    try{ const code = await roomCreate(); toast(t("房间已创建：") + code); redraw(); render(); }
+    catch(e){ toast(t("创建失败：") + roomErrMsg(e)); cr.disabled = false; cr.textContent = t("➕ 创建房间"); }
   };
   const jb = document.querySelector("#roomJoinBtn");
   if(jb) jb.onclick = async ()=>{
     const inp = document.querySelector("#roomInput");
     const code = inp ? inp.value : "";
-    jb.disabled = true; jb.textContent = "加入中…";
-    try{ await roomJoin(code); toast("已加入房间 " + room.code); redraw(); }
-    catch(e){ toast(e.message); jb.disabled = false; jb.textContent = "🔑 加入房间"; }
+    jb.disabled = true; jb.textContent = t("加入中…");
+    try{ await roomJoin(code); toast(t("已加入房间 ") + room.code); redraw(); }
+    catch(e){ toast(e.message); jb.disabled = false; jb.textContent = t("🔑 加入房间"); }
   };
   const cp = document.querySelector("#roomCopy");
   if(cp) cp.onclick = ()=>{
     const url = roomLink(room.code);
     if(navigator.clipboard && navigator.clipboard.writeText)
-      navigator.clipboard.writeText(url).then(()=> toast("邀请链接已复制")).catch(()=> prompt("复制此链接：", url));
-    else prompt("复制此链接：", url);
+      navigator.clipboard.writeText(url).then(()=> toast(t("邀请链接已复制"))).catch(()=> prompt(t("复制此链接："), url));
+    else prompt(t("复制此链接："), url);
   };
   const sn = document.querySelector("#roomSyncNow");
-  if(sn) sn.onclick = async ()=>{ sn.disabled = true; sn.textContent = "同步中…"; await roomForceSync(); sn.disabled = false; sn.textContent = "⬇ 强制同步"; };
+  if(sn) sn.onclick = async ()=>{ sn.disabled = true; sn.textContent = t("同步中…"); await roomForceSync(); sn.disabled = false; sn.textContent = t("⬇ 强制同步"); };
   const rc = document.querySelector("#roomCopyCode");
   if(rc) rc.onclick = ()=>{
     const code = room.code || "";
-    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(()=> toast("房间码已复制：" + code)).catch(()=> prompt("复制此房间码：", code));
-    else prompt("复制此房间码：", code);
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(code).then(()=> toast(t("房间码已复制：") + code)).catch(()=> prompt(t("复制此房间码："), code));
+    else prompt(t("复制此房间码："), code);
   };
   const rlk = document.querySelector("#roomLock");
   if(rlk) rlk.onclick = async ()=>{ await roomToggleLock(); redraw(); };
   const rcn = document.querySelector("#roomReconnect");
-  if(rcn) rcn.onclick = async ()=>{ rcn.disabled = true; rcn.textContent = "重连中…"; await roomReconnect(); redraw(); };
+  if(rcn) rcn.onclick = async ()=>{ rcn.disabled = true; rcn.textContent = t("重连中…"); await roomReconnect(); redraw(); };
   const lo = document.querySelector("#roomLoginOnly");
   if(lo) lo.onclick = async ()=>{ await roomToggleLoginOnly(); redraw(); };
   // 踢人：行内二次确认，避免误触（不用弹窗，弹窗会顶掉房间面板）
@@ -2971,8 +2893,8 @@ function bindRoomPanel(){
     (function(btn){
       btn.onclick = function(){
         if(btn.getAttribute("data-sure") === "1"){ roomKick(btn.getAttribute("data-kick")); redraw(); return; }
-        btn.setAttribute("data-sure", "1"); btn.textContent = "确认踢出?";
-        setTimeout(function(){ try{ btn.setAttribute("data-sure",""); btn.textContent = "踢出"; }catch(e){} }, 3000);
+        btn.setAttribute("data-sure", "1"); btn.textContent = t("确认踢出?");
+        setTimeout(function(){ try{ btn.setAttribute("data-sure",""); btn.textContent = t("踢出"); }catch(e){} }, 3000);
       };
     })(kicks[i]);
   }
@@ -2986,20 +2908,20 @@ function bindRoomPanel(){
     const v = el ? String(el.value||"").trim() : "";
     try{ localStorage.setItem("cabo-nick", v); }catch(e){}
     if(room.code && !roomIsReadOnly()){ memberSelfTouch(); save(); }
-    toast(v ? ("显示名已设为：" + v) : "已清空显示名");
+    toast(v ? (t("显示名已设为：") + v) : "已清空显示名");
     redraw();
   };
   const lv = document.querySelector("#roomLeave");
-  if(lv) lv.onclick = ()=>{ roomLeave(); overlay.classList.add("hidden"); toast("已退出房间"); };
+  if(lv) lv.onclick = ()=>{ roomLeave(); overlay.classList.add("hidden"); toast(t("已退出房间")); };
 }
 function roomBoot(){
   const h = location.hash || "";
   if(h.indexOf("#r=") === 0){
     const code = h.slice(3).trim().toUpperCase();
     if(ROOM_RE.test(code)){
-      askConfirm("加入联机房间", "检测到房间码 " + code + "，加入后会载入房间里的对局（覆盖当前对局）。确定加入？", async ()=>{
-        try{ await roomJoin(code); toast("已加入房间 " + code); }
-        catch(e){ toast("加入失败：" + roomErrMsg(e)); }
+      askConfirm(t("加入联机房间"), t("检测到房间码 ") + code + t("，加入后会载入房间里的对局（覆盖当前对局）。确定加入？"), async ()=>{
+        try{ await roomJoin(code); toast(t("已加入房间 ") + code); }
+        catch(e){ toast(t("加入失败：") + roomErrMsg(e)); }
       });
       return;
     }
@@ -3249,7 +3171,7 @@ var CABOQR = (function(){
     var size = m.length, total = size + quiet*2, path = "";
     for(var r=0;r<size;r++) for(var c=0;c<size;c++)
       if(m[r][c]) path += "M"+(c+quiet)+" "+(r+quiet)+"h1v1h-1z";
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total+' '+total+'" width="'+px+'" height="'+px+'" shape-rendering="crispEdges" role="img" aria-label="二维码">'
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+total+' '+total+'" width="'+px+'" height="'+px+t('" shape-rendering="crispEdges" role="img" aria-label="二维码">')
          + '<rect width="'+total+'" height="'+total+'" fill="#ffffff"/><path d="'+path+'" fill="#000000"/></svg>';
   }
   return { make: make, svg: svg };
@@ -3259,16 +3181,16 @@ function shareLink(){
   try{
     const enc = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
     const url = location.origin + location.pathname + "#g=" + enc;
-    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(()=> toast("分享链接已复制，发给朋友即可同步本局")).catch(()=> prompt("复制此链接分享：", url));
-    else prompt("复制此链接分享：", url);
-  }catch(e){ toast("生成分享链接失败：" + e.message); }
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(()=> toast(t("分享链接已复制，发给朋友即可同步本局"))).catch(()=> prompt(t("复制此链接分享："), url));
+    else prompt(t("复制此链接分享："), url);
+  }catch(e){ toast(t("生成分享链接失败：") + e.message); }
 }
 function parseHashImport(){
   if(location.hash.startsWith("#g=")){
     try{
       const json = decodeURIComponent(escape(atob(location.hash.slice(3))));
       const obj = JSON.parse(json);
-      askConfirm("载入分享的对局", "检测到分享链接中的对局，是否载入？（会覆盖当前对局）", ()=>{ state = obj; normalize(); save(); location.hash=""; render(); });
+      askConfirm(t("载入分享的对局"), t("检测到分享链接中的对局，是否载入？（会覆盖当前对局）"), ()=>{ state = obj; normalize(); save(); location.hash=""; render(); });
     }catch(e){ /* 链接无效，忽略 */ }
   }
 }
