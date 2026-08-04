@@ -994,6 +994,26 @@ function computeTotals(){
   });
   return { totals, series, eggs, used };
 }
+function roundDelta(pts, cabo, kami){
+  if(has(kami)) return state.players.map((_,i)=> i===kami ? 0 : 50);
+  if(has(cabo)){
+    const pre = state.players.map((_,i)=> pts[i]||0);
+    const minT = Math.min.apply(null, pre);
+    const callerLow = pre[cabo] === minT;
+    let zeroSet = [];
+    if(callerLow){
+      if(state.rules.tieRule === "bothZero")
+        zeroSet = pre.map((v,i)=> v===minT ? i : -1).filter(i=> i>=0);
+      else zeroSet = [cabo];
+    }
+    return state.players.map((_,i)=>{
+      if(zeroSet.indexOf(i) >= 0) return 0;
+      if(i === cabo) return (pts[i]||0) + state.rules.caboPenalty;
+      return pts[i]||0;
+    });
+  }
+  return pts.slice();
+}
 function totals(){ const {totals:t} = computeTotals(); return t.map((v,i)=> v + (state.adjust[i]||0)); }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 function syncCount(n){
@@ -1101,7 +1121,12 @@ function showEventBanner(e){
     html = `${t(`<div class="eb-emoji">🚀</div><div class="eb-title">神风特攻队！</div><div class="eb-sub">`)}${escapeHtml(e.name)}${t(`本局 0 分，其余全员各 +50！</div>`)}`;
     playWhoosh();
   } else if(e.type === "cabo"){
-    html = `<div class="eb-emoji">🗣</div><div class="eb-title">${e.success?"Cabo 成功！":"Cabo 失败"}</div><div class="eb-sub">${escapeHtml(e.name)} ${e.success?"全场最低 → 本局 0 分":t("未达最低 → 本局 +")+state.rules.caboPenalty+t(" 惩罚")}</div>`;
+    const caboSub = e.success
+      ? (state.lang==='en' ? "Lowest overall → 0 this round" : "全场最低 → 本局 0 分")
+      : (state.lang==='en'
+          ? `Below minimum → +${e.result} pts this round (cards ${e.card} + penalty ${e.penalty})`
+          : `未达最低 → 本局 +${e.result} 分（手牌 ${e.card} + 惩罚 ${e.penalty}）`);
+    html = `<div class="eb-emoji">🗣</div><div class="eb-title">${e.success?"Cabo 成功！":"Cabo 失败"}</div><div class="eb-sub">${escapeHtml(e.name)} ${caboSub}</div>`;
     if(e.success) playDing(); else playFail();
   }
   b.className = cls; b.innerHTML = html;
@@ -1643,7 +1668,7 @@ function historyHtml(){
       const callerLow = preTotal[r.cabo] === minT;
       tag = callerLow
         ? `${t(`<div class="r-tag cabo ok">🗣 Cabo：`)}${escapeHtml(state.players[r.cabo].name)}${t(`全场最低 → 本局 0 分</div>`)}`
-        : `${t(`<div class="r-tag cabo fail">🗣 Cabo：`)}${escapeHtml(state.players[r.cabo].name)}${t(`未达最低 → 本局 +`)}${state.rules.caboPenalty}${t(`惩罚</div>`)}`;
+        : `${t(`<div class="r-tag cabo fail">🗣 Cabo：`)}${escapeHtml(state.players[r.cabo].name)}${(state.lang==='en') ? ('Below min → +'+delta[r.cabo]+' pts (cards '+(rawPts[r.cabo]||0)+' + penalty '+state.rules.caboPenalty+')') : ('未达最低 → 本局 +'+delta[r.cabo]+' 分（手牌 '+(rawPts[r.cabo]||0)+' + 惩罚 '+state.rules.caboPenalty+'）')}${t(`</div>`)}`;
     }
     const ruleLine = isK
       ? `${t(`<div class="r-rule kami">规则：神风特攻队持有者`)}${escapeHtml(state.players[r.kami].name)}${t(`本局 0 分，其余玩家各 +50 分</div>`)}`
@@ -1683,12 +1708,13 @@ function commitRound(){
   state.rounds.push(r);
   const events = [];
   if(has(roundKami)) events.push({type:"kamikaze", name: state.players[roundKami].name});
+  const delta = roundDelta(pts, roundCabo, roundKami);
   if(has(roundCabo)){
     // Cabo 成败只看【本局手牌分】
     const preTotal = state.players.map((_,i)=> pts[i]||0);
     const minT = Math.min.apply(null, preTotal);
     const callerLow = preTotal[roundCabo] === minT;
-    events.push({type:"cabo", name: state.players[roundCabo].name, success: callerLow});
+    events.push({type:"cabo", name: state.players[roundCabo].name, success: callerLow, card: pts[roundCabo]||0, penalty: state.rules.caboPenalty, result: delta[roundCabo]});
   }
   const {eggs} = computeTotals();
   eggs.filter(e=> e.round===state.rounds.length-1).forEach(e=> events.push({type:"egg", name: state.players[e.player].name}));
@@ -1697,7 +1723,7 @@ function commitRound(){
   events.forEach((e,idx)=> setTimeout(()=> showEventBanner(e), idx*2700));
   render();
   if(has(roundCabo)) voiceCabo(state.players[roundCabo].name);
-  voiceRound(pts);
+  voiceRound(delta);
   toast(t("✅ 已自动保存"));
 }
 function pushOpLog(desc){
