@@ -1750,6 +1750,8 @@ function renderGame(){
   if(roomIsReadOnly()){
     const sb = document.querySelector("#submitBtn");
     if(sb){ sb.disabled = true; sb.title = t("roomLockedTitle","房间已锁定，您为只读"); sb.style.opacity = .5; }
+    ["#undoBtn","#undoMultiBtn"].forEach(id=>{ const b=document.querySelector(id); if(b){ b.disabled=true; b.style.opacity=.5; } });
+    document.querySelectorAll("#histList .r-act").forEach(b=>{ b.disabled=true; b.style.opacity=.5; });
   }
   document.querySelector("#autoSaveBtn").onclick = ()=>{ setAutoSaveOn(!autoSaveOn()); refreshAutoBtn(); toast(autoSaveOn()?t("autoSaveOnMsg","自动存档：开"):t("autoSaveOffMsg","自动存档：关")); };
   document.querySelector("#undoBtn").onclick = undo;
@@ -2153,6 +2155,7 @@ function historyHtml(){
   return html;
 }
 function submitRound(){
+  if(typeof roomIsReadOnly==='function' && roomIsReadOnly()){ toast(t("房间已锁定，您为只读，无法改分")); return; }
   // 提交前若还没决定是否有人喊 Cabo，先弹窗确认（避免漏选）
   if(roundCabo == null){ openCaboGate(); return; }
   commitRound();
@@ -2165,6 +2168,7 @@ function openCaboGate(){
   document.querySelector("#cgYes").onclick = ()=>{ overlay.classList.add("hidden"); openCaboPicker(commitRound); };
 }
 function commitRound(){
+  if(typeof roomIsReadOnly==='function' && roomIsReadOnly()){ toast(t("房间已锁定，您为只读，无法改分")); return; }
   const pts = state.players.map((_,i)=>{
     if(state.rules.cardInput==='cards'){
       const vals = [0,1,2,3].map(j=> parseFloat(document.getElementById("c"+i+"-"+j).value)||0);
@@ -2217,6 +2221,7 @@ function openOpLog(){
   document.querySelector("#olClose").onclick = ()=> overlay.classList.add("hidden");
 }
 function undo(){
+  if(typeof roomIsReadOnly==='function' && roomIsReadOnly()){ toast(t("房间已锁定，您为只读，无法改分")); return; }
   if(state.rounds.length===0) return;
   askConfirm(t("撤销上一局"), t("确定撤销最近一局？该局分数将被移除（可随时重新提交）。"), ()=>{
     state.rounds.pop();
@@ -2225,6 +2230,7 @@ function undo(){
   });
 }
 function undoRounds(n){
+  if(typeof roomIsReadOnly==='function' && roomIsReadOnly()){ toast(t("房间已锁定，您为只读，无法改分")); return; }
   n = Math.max(1, Math.min(n|0, state.rounds.length));
   if(n<=0 || state.rounds.length===0) return;
   state.rounds.splice(state.rounds.length - n, n);
@@ -2270,6 +2276,7 @@ function clearPlayer(i){
   });
 }
 function deleteRound(k){
+  if(typeof roomIsReadOnly==='function' && roomIsReadOnly()){ toast(t("房间已锁定，您为只读，无法改分")); return; }
   if(k<0 || k>=state.rounds.length) return;
   askConfirm(t("删除本局"), t("确定删除第 ")+(k+1)+t(" 局？该局分数将被移除并重新计算总分。"), ()=>{
     state.rounds.splice(k,1);
@@ -2277,6 +2284,7 @@ function deleteRound(k){
   });
 }
 function openRoundEditor(k){
+  if(typeof roomIsReadOnly==='function' && roomIsReadOnly()){ toast(t("房间已锁定，您为只读，无法改分")); return; }
   const r = state.rounds[k];
   if(!r) return;
   const cabo = has(r.cabo) ? r.cabo : null;
