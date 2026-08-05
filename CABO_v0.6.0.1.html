@@ -808,7 +808,7 @@ const I18N = {
     "🔄 实时同步：": "🔄 Real-time sync: "
 }
 };
-function t(k, fb){ const d = (state && state.lang && I18N[state.lang]) ? I18N[state.lang] : I18N.zh; if(d && d[k]!=null) return d[k]; if(fb!=null) return fb; if(I18N.zh[k]!=null) return I18N.zh[k]; return k; }
+function t(k, fb){ const d = (typeof state !== 'undefined' && state && state.lang && I18N[state.lang]) ? I18N[state.lang] : I18N.zh; if(d && d[k]!=null) return d[k]; if(fb!=null) return fb; if(I18N.zh[k]!=null) return I18N.zh[k]; return k; }
 function applyLang(){ try{ document.documentElement.lang = (state && state.lang==='en') ? 'en' : 'zh-CN'; }catch(e){} }
 
 /* ===== 语音播报 Voice announce (v0.6.0.1) ===== */
@@ -865,25 +865,27 @@ function voiceCabo(name){ if(!voiceOn) return; speak((state.lang==='en' ? `${nam
 function voiceWinner(name){ if(!voiceOn) return; speak((state.lang==='en' ? `Congratulations ${name} wins` : `${t(`恭喜`)}${name}${t(`获胜`)}`)); }
 
 /* ===== 更新日志 Changelog (v0.6.0.1) ===== */
-const CHANGELOG = [
-  { v:"0.6.0.1", date:"2026-08-04", items:[
-    t("新增：数据导出 Excel / PDF（在「导出 / 导入本局」中）"),
-    t("新增：多语言切换（中文 / 英文），设置里一键切换并记忆"),
-    t("新增：语音播报（分数变化、回合结算、胜利时刻），可开关与调音量"),
-    t("新增：更新日志（本弹窗）"),
-    t("增强：深色模式此前已支持，本版补充系统主题跟随说明")
-  ]},
-  { v:"0.5.0.1", date:"2026-08-02", items:[
-    t("房间成员名单 + 房主踢人（被踢者立即退场且不可重进）"),
-    t("仅已登录玩家可创建 / 加入房间，游客不行")
-  ]},
-  { v:"0.5.0", date:"2026-07-30", items:[
-    t("多人实时同步（MQTT + Gist 兜底）"),
-    t("撤销确认、操作记录、清人、房间锁定等联机增强")
-  ]}
-];
+function getChangelog(){
+  return [
+    { v:"0.6.0.1", date:"2026-08-04", items:[
+      t("新增：数据导出 Excel / PDF（在「导出 / 导入本局」中）"),
+      t("新增：多语言切换（中文 / 英文），设置里一键切换并记忆"),
+      t("新增：语音播报（分数变化、回合结算、胜利时刻），可开关与调音量"),
+      t("新增：更新日志（本弹窗）"),
+      t("增强：深色模式此前已支持，本版补充系统主题跟随说明")
+    ]},
+    { v:"0.5.0.1", date:"2026-08-02", items:[
+      t("房间成员名单 + 房主踢人（被踢者立即退场且不可重进）"),
+      t("仅已登录玩家可创建 / 加入房间，游客不行")
+    ]},
+    { v:"0.5.0", date:"2026-07-30", items:[
+      t("多人实时同步（MQTT + Gist 兜底）"),
+      t("撤销确认、操作记录、清人、房间锁定等联机增强")
+    ]}
+  ];
+}
 function openChangelog(){
-  const body = CHANGELOG.map(c=>`
+  const body = getChangelog().map(c=>`
     <div class="cl-block">
       <div class="cl-head"><span class="cl-v">v${c.v}</span><span class="cl-date">${c.date}</span></div>
       <ul class="cl-items">${c.items.map(i=>`<li>${escapeHtml(i)}</li>`).join("")}</ul>
@@ -973,7 +975,7 @@ const screen = document.querySelector("#screen");
 const overlay = document.querySelector("#overlay");
 const has = v => v !== null && v !== undefined;
 
-let state = load();
+var state = load();
 function load(){ try{ return JSON.parse(localStorage.getItem(KEY)); }catch(e){ return null; } }
 function save(){
   syncBump();
