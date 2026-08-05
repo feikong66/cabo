@@ -405,6 +405,10 @@ const I18N = {
     nicknamePlaceholder:"你的昵称", passwordPlaceholder:"至少 4 位",
     loginHint:"账号数据统一存到「群组拥有者」的 GitHub 私有 Gist，多设备可登录查看。只需记住自己的用户名 + 密码，无需配置任何 GitHub 信息。",
     exportImportDesc:"导出当前对局为 <b>JSON / Excel / PDF</b>（含玩家、每轮得分明细、特殊事件与规则设置），用于备份或换设备恢复；导入<b>相同格式</b>的 JSON 即可还原。也可用「分享本局」生成链接直接发给朋友。",
+    "修复：英文模式下仍残留的中文按钮、提示、开关状态已全部补译":"Fixed: remaining Chinese text in English mode now fully translated",
+    "修复：规则说明书图片未能在线显示的问题":"Fixed: rule manual image now displays correctly online",
+    "优化：语音播报现在会朗读卡波成功/失败、神风特攻队、100 分减半等全部事件":"Improved: voice announce now reads Cabo success/fail, Kamikaze, 100-point halving, etc.",
+    "优化：嗓音选择器默认按当前语言过滤，优先展示中文/英文可用嗓音":"Improved: voice picker filters by current language and prioritizes available voices",
   },
   en: {
     appName:"Cabo Scorer", settings:"Settings", switchLang:"Switch language", toggleTheme:"Toggle dark / light",
@@ -814,6 +818,12 @@ function voiceWinner(name){ if(!voiceOn) return; speak((state.lang==='en' ? `Con
 /* ===== 更新日志 Changelog (v0.6.1.1) ===== */
 function getChangelog(){
   return [
+    { v:"0.6.1", date:"2026-08-05", items:[
+      t("修复：英文模式下仍残留的中文按钮、提示、开关状态已全部补译"),
+      t("修复：规则说明书图片未能在线显示的问题"),
+      t("优化：语音播报现在会朗读卡波成功/失败、神风特攻队、100 分减半等全部事件"),
+      t("优化：嗓音选择器默认按当前语言过滤，优先展示中文/英文可用嗓音")
+    ]},
     { v:"0.6.0.1", date:"2026-08-04", items:[
       t("新增：数据导出 Excel / PDF（在「导出 / 导入本局」中）"),
       t("新增：多语言切换（中文 / 英文），设置里一键切换并记忆"),
