@@ -1,0 +1,15 @@
+{
+  "name": "卡波计分 Cabo Scorer",
+  "short_name": "卡波计分",
+  "description": "卡波（Cabo）桌游专用计分工具",
+  "start_url": "./CABO_v0.6.10.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef1f4",
+  "theme_color": "#2e7d52",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
