@@ -909,7 +909,7 @@ function voiceRoundSummary(){
   // 2) 临近胜利：距结束线 <=10 分
   state.players.forEach((p,i)=>{
     const remain = end - tot[i];
-    if(remain >= 0 && remain <= 10) speak(fmt(t("voiceNearWin"), {name:p.name}));
+    if(remain > 0 && remain <= 10) speak(fmt(t("voiceNearWin"), {name:p.name}));
   });
   // 3) 百分减半提醒：规则开启且本人尚未用过、已过半（>=50）未满 100，挑最接近 100 的一位提醒
   if(state.rules.hundredEgg && state.rules.hundredEgg !== "off"){
