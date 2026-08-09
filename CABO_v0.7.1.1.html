@@ -927,7 +927,7 @@ function populateVoiceSelect(){
   if(typeof window!=='undefined' && window.speechSynthesis){ try{ window.speechSynthesis.onvoiceschanged = ()=>{ const s=document.querySelector('#setVoice'); if(s) populateVoiceSelect(); }; }catch(e){} }
 }
 function currentVoiceName(){
-  const url = (state.voice && state.voice.serviceUrl) || "";
+  const url = (typeof voiceBaseUrl === "function") ? voiceBaseUrl() : ((state.voice && state.voice.serviceUrl) || "");
   if(url){
     const mid = (state.voice && state.voice.model) || "nanami";
     const map = {nanami:(state.lang==='en'?'Nanami (female)':'奈奈美（女声）'), lwjhh:'LWJHH', daboluo:'大菠萝'};
@@ -950,7 +950,7 @@ function processSpeakQueue(){
   speaking = true;
   const text = speakQueue.shift();
   const v = state.voice || {};
-  const url = v.serviceUrl || "";
+  const url = voiceBaseUrl();
   if(url){ speakRemote(text, url, v.model || "nanami", processSpeakQueue); }
   else { speakLocal(text, processSpeakQueue); }
 }
@@ -986,6 +986,36 @@ function speakRemote(text, baseUrl, model, cb){
       audio.play().catch(()=> speakLocal(text, cb));
     })
     .catch(()=>{ clearTimeout(to); speakLocal(text, cb); if(!window._rvcWarned){ window._rvcWarned = true; toast(t("rvcNotConn")); } });
+}
+
+/* 同源语音服务自动发现。
+   一体化部署时 CABO 网页和 RVC 后端在同一个域名下，此时无需任何配置即可用 RVC：
+   探测一次同源 /healthz，成功就把同源地址当作语音服务。
+   手动填写的地址优先级更高，探测不会覆盖它。 */
+let rvcSameOrigin = false;
+function voiceBaseUrl(){
+  const u = (state.voice && state.voice.serviceUrl) || "";
+  if(u) return u;
+  return rvcSameOrigin ? location.origin : "";
+}
+async function voiceAutoDetect(){
+  try{
+    if(!/^https?:$/.test(location.protocol)) return false;
+    if(state.voice && state.voice.serviceUrl) return false;
+    const ctrl = new AbortController();
+    const to = setTimeout(()=>ctrl.abort(), 4000);
+    const r = await fetch(location.origin + "/healthz", {signal: ctrl.signal, cache:"no-store"});
+    clearTimeout(to);
+    if(!r.ok) return false;
+    const j = await r.json();
+    if(j && j.ok){
+      rvcSameOrigin = true;
+      state.voice = state.voice || {on:false, volume:1, lang:null, serviceUrl:""};
+      if(j.default_model && !state.voice.model) state.voice.model = j.default_model;
+      return true;
+    }
+  }catch(e){}
+  return false;
 }
 function voiceRound(pts){
   if(!voiceOn) return;
@@ -4080,16 +4110,24 @@ function syncSet(on){
 applyOwner();
 renderHeader();
 applyLang(); initVoice();
-// 跨设备同步 RVC 语音服务地址：管理员在一台设备填过，其他设备（手机）自动拿到
-voiceCfgLoad().then(cfg=>{
-  if(cfg && cfg.serviceUrl){
-    state.voice = state.voice || {on:false,volume:1,lang:null,serviceUrl:""};
-    state.voice.serviceUrl = cfg.serviceUrl;
-    if(cfg.model) state.voice.model = cfg.model;
-    save();
+// 一体化部署时语音服务与网页同源，先探测；探测到就无需任何配置。
+voiceAutoDetect().then(found=>{
+  if(found){
     if(typeof refreshVoiceModels === "function") refreshVoiceModels();
     render();
+    return;
   }
+  // 否则回到跨设备同步：管理员在一台设备填过，其他设备（手机）自动拿到
+  return voiceCfgLoad().then(cfg=>{
+    if(cfg && cfg.serviceUrl){
+      state.voice = state.voice || {on:false,volume:1,lang:null,serviceUrl:""};
+      state.voice.serviceUrl = cfg.serviceUrl;
+      if(cfg.model) state.voice.model = cfg.model;
+      save();
+      if(typeof refreshVoiceModels === "function") refreshVoiceModels();
+      render();
+    }
+  });
 });
 if(subAuth.user){ subAutoLogin(); }
 else { render(); parseHashImport(); }
