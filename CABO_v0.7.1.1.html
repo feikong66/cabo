@@ -1292,7 +1292,9 @@ async function voiceCfgLoad(){
     const c = await ghReadFile("cabo-voice.json");
     if(!c) return null;
     const o = JSON.parse(c);
-    if(o && typeof o.serviceUrl === "string" && o.serviceUrl) return o;
+    // 云端版 CABO 是 HTTPS 页面，浏览器会拦截对 http 语音服务的请求（混合内容）。
+    // 因此 gist 里若存的是 http:// 旧地址，直接忽略，避免把手机坑回系统嗓音。
+    if(o && typeof o.serviceUrl === "string" && /^https:\/\//i.test(o.serviceUrl.trim())) return o;
   }catch(e){}
   return null;
 }
@@ -3018,6 +3020,14 @@ function openSettings(){
           <div class="voice-info" id="setVoiceInfo">${escapeHtml(currentVoiceName())}</div>
           <small class="voice-hint">${t("voiceAutoHint")}</small>
         </div>
+        <div class="rule-row voice-row" style="display:flex;align-items:flex-start;gap:12px">
+          <div style="flex:0 0 130px">
+            <div style="font-size:13px;color:var(--text);font-weight:600">${t("voiceServiceUrl")}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4">${t("voiceServiceUrlHint")}</div>
+          </div>
+          <input type="text" id="setVoiceUrl" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px" placeholder="https://你的语音服务地址" value="${(state.voice && state.voice.serviceUrl) ? escapeHtml(state.voice.serviceUrl) : ""}">
+          <div style="display:flex;align-items:center;gap:10px;margin-top:8px"><button class="ghost" id="setTestRvc" type="button" style="font-size:13px;padding:6px 12px">🔊 ${t("testConnection")}</button><span id="setRvcStatus" style="font-size:12px;color:var(--muted)"></span></div>
+        </div>
         <div class="rule-row voice-row" style="display:flex;align-items:center;gap:12px">
           <div style="flex:0 0 130px">
             <div style="font-size:13px;color:var(--text);font-weight:600">${t("voiceModel")}</div>
@@ -3066,11 +3076,22 @@ function openSettings(){
   if(logoutBtn) logoutBtn.onclick = ()=>{ overlay.classList.add("hidden"); doLogout(); };
   const adminBtn = document.querySelector("#setAdmin");
   if(adminBtn) adminBtn.onclick = ()=>{ overlay.classList.add("hidden"); openAdmin(); };
+  const setTest = document.querySelector("#setTestRvc");
+  if(setTest){ setTest.onclick = async ()=>{
+    const st = document.querySelector("#setRvcStatus");
+    const url = (document.querySelector("#setVoiceUrl").value||"").trim();
+    if(st) st.textContent = t("connecting");
+    const res = await testRvc(url, (state.voice&&state.voice.model)||"nanami");
+    if(st) st.textContent = res.msg;
+  }; }
   document.querySelector("#saveSet").onclick = ()=>{
+    const _vu = document.querySelector("#setVoiceUrl"); if(_vu){ state.voice = state.voice||{on:false,volume:1,lang:null,serviceUrl:""}; state.voice.serviceUrl = (_vu.value||"").trim(); }
     const _vm = document.querySelector("#setVoiceModel"); if(_vm){ state.voice = state.voice||{on:false,volume:1,lang:null,serviceUrl:""}; state.voice.model = _vm.value || "nanami"; }
+    if(state.voice.serviceUrl) voiceCfgSave(state.voice.serviceUrl, state.voice.model || "nanami");
     state.players.forEach((p,i)=>{ const el=document.getElementById("sname-"+i); if(el) p.name = el.value.trim()||(t("玩家")+(i+1)); });
     const es = parseInt(document.querySelector("#setEnd").value,10); if(es>0) state.endScore = es;
     save(); overlay.classList.add("hidden"); render();
+    if(state.voice.serviceUrl) toast(t("rvcSync"));
   };
   document.querySelector("#resetAll").onclick = ()=>{
     askConfirm(t("resetAll"), t("确定要重置全部对局吗？所有分数将清空。"), ()=>{ state = defaultState(); save(); overlay.classList.add("hidden"); render(); });
