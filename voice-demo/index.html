@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CABO · AI 配音音色试听 (14 种神经语音)</title>
+<style>
+  :root { --bg:#0f1115; --card:#181b22; --txt:#e6e8ec; --sub:#9aa0aa; --accent:#4f8cff; --line:#262b34; }
+  @media (prefers-color-scheme: light) {
+    :root { --bg:#f6f7f9; --card:#ffffff; --txt:#1b1f24; --sub:#5b626c; --accent:#2f6fed; --line:#e6e8ec; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+         background:var(--bg); color:var(--txt); line-height:1.5; padding:24px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .meta { color:var(--sub); font-size:13px; margin-bottom:20px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:14px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  .top { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
+  .num { font-variant-numeric:tabular-nums; color:var(--accent); font-weight:700; font-size:13px;
+         background:color-mix(in srgb,var(--accent) 14%,transparent); border-radius:6px; padding:1px 7px; }
+  .zh { font-weight:600; font-size:15px; }
+  .en { color:var(--sub); font-size:12px; }
+  .badge { font-size:11px; padding:1px 7px; border-radius:999px; border:1px solid var(--line); color:var(--sub); }
+  .badge.m { color:#ff9aa2; } .badge.f { color:#a0c4ff; }
+  .id { color:var(--sub); font-size:11px; font-family:ui-monospace,Menlo,Consolas,monospace; margin:2px 0 8px; word-break:break-all; }
+  audio { width:100%; height:34px; }
+  footer { color:var(--sub); font-size:12px; margin-top:22px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+  <h1>CABO · AI 配音音色试听</h1>
+  <div class="meta">微软 Edge TTS 神经语音 · 语速 +10% · 共 14 种（含方言 / 粤语 / 台湾腔 / 英文）。点击播放即可对比挑选。</div>
+  <div class="grid" id="grid"></div>
+  <footer>
+    试听样本由本地脚本批量生成（<code>voice-demo/_gen_samples.py</code>）。线上服务见
+    <a href="https://feikong66.github.io/cabo/" target="_blank">feikong66.github.io/cabo</a>，
+    默认音色为 云健 · 激情解说。
+  </footer>
+
+<script>
+const VOICES = [
+  {n:1,  zh:"云健 · 激情解说",   en:"Yunjian · sports caster", g:"m", id:"zh-CN-YunjianNeural",        f:"01-云健-激情解说.mp3"},
+  {n:2,  zh:"晓晓 · 温暖女声",   en:"Xiaoxiao · warm",        g:"f", id:"zh-CN-XiaoxiaoNeural",       f:"02-晓晓-温暖女声.mp3"},
+  {n:3,  zh:"晓伊 · 活泼少女",   en:"Xiaoyi · lively",        g:"f", id:"zh-CN-XiaoyiNeural",         f:"03-晓伊-活泼少女.mp3"},
+  {n:4,  zh:"云希 · 阳光少年",   en:"Yunxi · sunshine",       g:"m", id:"zh-CN-YunxiNeural",          f:"04-云希-阳光少年.mp3"},
+  {n:5,  zh:"云夏 · 可爱童声",   en:"Yunxia · cute",          g:"m", id:"zh-CN-YunxiaNeural",         f:"05-云夏-可爱童声.mp3"},
+  {n:6,  zh:"云扬 · 专业播报",   en:"Yunyang · news",         g:"m", id:"zh-CN-YunyangNeural",        f:"06-云扬-专业播报.mp3"},
+  {n:7,  zh:"小北 · 东北话",     en:"Xiaobei · NE dialect",   g:"f", id:"zh-CN-liaoning-XiaobeiNeural", f:"07-小北-东北话.mp3"},
+  {n:8,  zh:"小妮 · 陕西话",     en:"Xiaoni · Shaanxi",       g:"f", id:"zh-CN-shaanxi-XiaoniNeural", f:"08-小妮-陕西话.mp3"},
+  {n:9,  zh:"曉佳 · 粤语",       en:"HiuGaai · Cantonese",    g:"f", id:"zh-HK-HiuGaaiNeural",        f:"09-曉佳-粤语.mp3"},
+  {n:10, zh:"雲龍 · 粤语男声",   en:"WanLung · Cantonese",    g:"m", id:"zh-HK-WanLungNeural",        f:"10-雲龍-粤语男声.mp3"},
+  {n:11, zh:"曉臻 · 台湾腔",     en:"HsiaoChen · TW",         g:"f", id:"zh-TW-HsiaoChenNeural",      f:"11-曉臻-台湾腔.mp3"},
+  {n:12, zh:"雲哲 · 台湾腔男",   en:"YunJhe · TW",            g:"m", id:"zh-TW-YunJheNeural",         f:"12-雲哲-台湾腔男.mp3"},
+  {n:13, zh:"Aria · 英文女声",   en:"Aria · English",         g:"f", id:"en-US-AriaNeural",          f:"13-Aria-英文女声.mp3"},
+  {n:14, zh:"Guy · 英文男声",    en:"Guy · English",          g:"m", id:"en-US-GuyNeural",           f:"14-Guy-英文男声.mp3"},
+];
+const grid = document.getElementById("grid");
+for (const v of VOICES) {
+  const gtxt = v.g === "m" ? "男" : "女";
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `
+    <div class="top">
+      <span class="num">${String(v.n).padStart(2,"0")}</span>
+      <span class="zh">${v.zh}</span>
+      <span class="badge ${v.g}">${gtxt}</span>
+    </div>
+    <div class="en">${v.en}</div>
+    <div class="id">${v.id}</div>
+    <audio controls preload="none" src="${encodeURIComponent(v.f)}"></audio>`;
+  grid.appendChild(card);
+}
+</script>
+</body>
+</html>
