@@ -448,6 +448,7 @@ const I18N = {
     voiceKamikaze:"{name} 触发神风特攻队，本局 0 分，其余玩家各加 50 分",
     voiceHundred:"{name} 总分恰好 100 分，自动减半为 50 分",
     nicknamePlaceholder:"你的昵称", passwordPlaceholder:"至少 4 位",
+    identity:"我的身份", identityDesc:"设置你的显示名", identityHint:"用于联机房间标明你是谁；仅存本机，无密码、不强制登录", currentIdentity:"当前身份", noIdentity:"未设置（联机时显示为设备名）", clearIdentity:"清除",
     loginHint:"账号数据统一存到「群组拥有者」的 GitHub 私有 Gist，多设备可登录查看。只需记住自己的用户名 + 密码，无需配置任何 GitHub 信息。",
     exportImportDesc:"导出当前对局为 <b>JSON / Excel / PDF</b>（含玩家、每轮得分明细、特殊事件与规则设置），用于备份或换设备恢复；导入<b>相同格式</b>的 JSON 即可还原。也可用「分享本局」生成链接直接发给朋友。",
     "修复：英文模式下仍残留的中文按钮、提示、开关状态已全部补译":"Fixed: remaining Chinese text in English mode now fully translated",
@@ -481,6 +482,7 @@ const I18N = {
     exportTitle:"📦 Export / Import game", exportJson:"⬇ Export JSON", exportExcel:"⬇ Export Excel", exportPdf:"🖨 Export PDF / Print", importJson:"⬆ Import JSON", shareLink:"🔗 Share link",
     login:"Log in", register:"Register", skipLogin:"Skip, use locally", username:"Username", password:"Password",
     loginSub:"After login your game syncs with your account — pick up on any device",
+    identity:"My identity", identityDesc:"Set your display name", identityHint:"Shown in rooms to identify you; stored locally, no password, login not required", currentIdentity:"Current identity", noIdentity:"Not set (shows device name in rooms)", clearIdentity:"Clear",
     roomMembers:"Room members", online:"online", offline:"offline", owner:"host", me:"(me)", guest:"guest", kick:"Kick", confirmKick:"Kick?", bannedTitle:"Kicked list", unban:"Restore", youAreKicked:"You were removed by the host and can no longer score",
     loginOnly:"Members only", roundSaved:"Saved", gameOver:"Game over", congrats:"Congrats", caboCalled:"calls Cabo"
   ,
@@ -2752,6 +2754,17 @@ function openSettings(){
     <div class="modal">
       <h2>${t("settings")}</h2>
       <div class="field"><label>${t("playerNames")}</label><div id="setNames"></div></div>
+      <div class="rules-block" style="margin-top:14px">
+        <label>${t("identity")}</label>
+        <div class="rule-row">
+          <div class="desc">${t("identityDesc")}<small>${t("identityHint")}</small></div>
+        </div>
+        <div class="rule-row" style="display:flex;align-items:center;gap:10px">
+          <input type="text" id="setNick" style="flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px" placeholder="${t("nicknamePlaceholder")}" value="${escapeHtml(myNick())}" maxlength="16">
+          <button class="ghost" id="clearNickBtn" type="button">${t("clearIdentity")}</button>
+        </div>
+        <div id="nickStatus" style="font-size:12px;color:var(--muted);margin-top:6px"></div>
+      </div>
       <div class="row2">
         <div class="field"><label>${t("endScore")}</label><input type="number" id="setEnd" value="${state.endScore}" min="1"></div>
         <div class="field"><label>${t("winRule")}</label>
@@ -2831,6 +2844,25 @@ function openSettings(){
     </div>`;
   overlay.classList.remove("hidden");
   document.querySelector("#setNames").innerHTML = state.players.map((p,i)=> `<div class="name-row"><div class="pidx">${i+1}</div><input type="text" id="sname-${i}" value="${escapeHtml(p.name)}" maxlength="10"></div>`).join("");
+  // 轻量身份：在设置里填/看/清显示名（仅本机，无密码、不强制登录）；联机房间用此名标识自己
+  function refreshNickStatus(){
+    const st = document.querySelector("#nickStatus");
+    if(!st) return;
+    const n = (myNick()||"").trim();
+    st.textContent = n ? (t("currentIdentity") + "：" + n) : t("noIdentity");
+  }
+  const nickEl = document.querySelector("#setNick");
+  if(nickEl){
+    refreshNickStatus();
+    nickEl.oninput = ()=>{ try{ localStorage.setItem("cabo-nick", nickEl.value.trim()); }catch(e){} refreshNickStatus(); };
+  }
+  const clearNickBtn = document.querySelector("#clearNickBtn");
+  if(clearNickBtn) clearNickBtn.onclick = ()=>{
+    try{ localStorage.removeItem("cabo-nick"); }catch(e){}
+    if(nickEl) nickEl.value = "";
+    refreshNickStatus();
+    toast(t("身份已清除"));
+  };
   document.querySelectorAll("#setRule button").forEach(b=> b.onclick=()=>{ state.winRule=b.dataset.r; openSettings(); });
   document.querySelectorAll("#setPenalty button").forEach(b=> b.onclick=()=>{ state.rules.caboPenalty = +b.dataset.v; openSettings(); });
   document.querySelectorAll("#setTie button").forEach(b=> b.onclick=()=>{ state.rules.tieRule=b.dataset.v; openSettings(); });
