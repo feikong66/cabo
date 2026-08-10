@@ -132,10 +132,10 @@ summary{font-size:12px;color:var(--muted);cursor:pointer;font-weight:600}
   <button class="wide" id="demoBtn" style="margin-top:8px">🧪 用示例图自检（先跑通再拍照）</button>
   <input type="file" id="camIn" accept="image/*" capture="environment" class="hide">
   <input type="file" id="fileIn" accept="image/*" class="hide">
-  <p class="hint"><b>简化版用法：</b>拍摄时请让卡牌<b>数字朝上摆正</b>（不做旋转矫正）。拍完<b>拖动框选</b>只圈住<b>单个数字块</b>（角落那个数字，避开卡面插画），识别最准。<br>
-  没图也能先点<b>示例图自检</b>：它会生成一张深底白字的单数字卡，正确结果应是 <b>7</b>，用来验证整条链路（含反色分支）。</p>
+  <p class="hint"><b>简化版用法：</b>拍完<b>拖动框选</b>圈住<b>单个数字块</b>（避开卡面插画），识别最准。<b>朝向任意都行</b>——算法会自动把数字转正。卡牌是<b>白字彩底</b>也没问题。<br>
+  没图也能先点<b>示例图自检</b>：它会生成一张深底白字的单数字卡，正确结果应是 <b>7</b>，用来验证整条链路。</p>
   <div style="margin-top:10px">
-    <div class="lab" style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">📐 正确拍法参考（框选每人的单块数字）</div>
+    <div class="lab" style="font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px">📐 拍法参考（框选每人的单块数字，朝向任意）</div>
     <img src="assets/cabo-table-demo.png" alt="4 人围桌参考图" style="width:100%;border-radius:12px;border:1px solid var(--line)">
   </div>
   <div class="stage hide" id="stage">
@@ -149,36 +149,14 @@ summary{font-size:12px;color:var(--muted);cursor:pointer;font-weight:600}
 </div>
 
 <div class="card hide" id="prepCard">
-  <h2>② 图像预处理</h2>
+  <h2>② 提取数字（自动）</h2>
+  <p class="hint" style="margin-top:0">已自动从选区里把数字「抠」成<b>黑字白底</b>送给识别：<b>白字卡 / 深底白字卡 / 黑字卡都能读</b>，并自动<b>转正</b>（卡牌朝向任意均可，含 10/11/12/13 多位数）。无需手动调参。</p>
   <div class="tabs">
-    <button data-view="proc" class="on">处理后（送给 OCR）</button>
-    <button data-view="src">原图区域</button>
+    <button data-view="proc" class="on">提取结果（送给识别）</button>
+    <button data-view="src">原图选区</button>
   </div>
   <canvas class="prev" id="prevCv"></canvas>
-
-  <label class="fld">放大倍数 <b id="scaleV">2.0×</b>（小字建议 2~3×）</label>
-  <input type="range" id="scale" min="1" max="4" step="0.5" value="2">
-
-  <div class="sw">
-    <div><div class="lab">灰度 + 对比度增强</div><div class="sub">去掉彩色干扰，字更实</div></div>
-    <label class="toggle"><input type="checkbox" id="gray" checked><span></span></label>
-  </div>
-  <div class="sw">
-    <div><div class="lab">二值化（黑白化）</div><div class="sub">仅手动微调用；会吃掉细笔画，深底白字务必关闭（自动分支已处理）</div></div>
-    <label class="toggle"><input type="checkbox" id="bin"><span></span></label>
-  </div>
-  <div class="sw" id="otsuRow">
-    <div><div class="lab">自动阈值 Otsu</div><div class="sub">默认 128 更稳；照片明暗不均时再开</div></div>
-    <label class="toggle"><input type="checkbox" id="otsu"><span></span></label>
-  </div>
-  <div id="thrRow">
-    <label class="fld">手动阈值 <b id="thrV">128</b></label>
-    <input type="range" id="thr" min="40" max="220" step="1" value="128">
-  </div>
-  <div class="sw">
-    <div><div class="lab">反色</div><div class="sub">深底浅字（如黑板、深色 App）时打开</div></div>
-    <label class="toggle"><input type="checkbox" id="inv"><span></span></label>
-  </div>
+  <p class="hint" id="extractHint">框选得越贴近数字越好；框到牌面白边或桌面也行，算法会自动只取数字。</p>
 </div>
 
 <div class="card hide" id="cfgCard">
@@ -254,10 +232,11 @@ summary{font-size:12px;color:var(--muted);cursor:pointer;font-weight:600}
 </div>
 
 <div class="card" id="planCard">
-  <h2>📷 拍照自动录入分数【规划中・简化版】</h2>
+  <h2>📷 拍照自动录入分数【手动框选版 · 已可用】</h2>
   <p class="hint" style="margin-top:0">
-    拍摄记分卡牌后<b>手动框选正向数字区域</b>，AI 识别纯数字并自动计算玩家得分；<b>无需自动矫正旋转卡牌</b>，拍摄需保证数字朝上摆正。<br><br>
-    <b>技术限制：</b>内置<b>原图 / 反色</b>双预处理分支适配深色底白字卡牌，OCR 仅识别 0-9 数字，舍弃全局卡牌检测、角度矫正逻辑，适配现有单文件前端架构。
+    拍摄记分卡牌后<b>手动框选单个数字块</b>（朝向任意均可，算法自动转正），AI 识别纯数字并录入对应玩家。已支持<b>白字彩底卡牌</b>、<b>10/11/12/13 多位数</b>与<b>任意朝向</b>。<br><br>
+    <b>已知限制：</b>6 与 9 仅靠卡面横线区分，偶会混淆，低置信度时会提示人工核对（见下方「手动修正」）。<br><br>
+    <b>下一步（规划中）：</b>半自动「整桌识别」——你点 4 个桌角（或自动检测桌子），自动透视矫正并按 4×4 网格切出 16 张牌，逐张提取数字 → 一次性填好 4 名玩家的分，只需核对个别低置信度项。
   </p>
 </div>
 
@@ -507,8 +486,20 @@ function otsu(hist, total){
   return thr;
 }
 
-/* 生成送给 OCR 的画布。forceInv 用于「双预处理分支」：分支2 强制反色 */
-function buildProcessed(forceInv){
+/* ============ 新版预处理：墨迹提取 → 黑字白底 ============
+   关键约束（决定性验证 2026-08-10）：
+   - tesseract 必须「深字 + 浅底」。CABO 牌是「白字 + 彩色牌面」，直接喂读不出。
+   - 故先在选区里提取「墨迹（字）」：亮字分支(L>200) 适配白字卡/深底白字卡；
+     暗字分支(L<60) 适配黑字卡。两分支各产一张黑字白底图，识别端择优。
+   - 旋转：卡牌常因朝向不同导致数字颠倒/侧立，tesseract 只认正立数字。
+     由识别端对每张图试 4 个旋转角选最高置信度（见 runBtn）。
+   - 多位数：CABO 含 10/11/12/13，需保留同一数字块内的全部字形（取并集 bbox），
+     故按「连通分量并集」裁切而非单字形。
+   - 尺寸：字高控制在 ~80px（tesseract 偏好 20-30px 量级，过大读不出）。
+*/
+
+// 取当前选区（或全图）的原始区域 canvas，不做任何处理
+function getRegionCanvas(){
   if(!baseCanvas) return null;
   var bw = baseCanvas.width, bh = baseCanvas.height;
   var rx = 0, ry = 0, rw = bw, rh = bh;
@@ -517,81 +508,148 @@ function buildProcessed(forceInv){
     rw = Math.round(crop.w * bw); rh = Math.round(crop.h * bh);
     if(rw < 8 || rh < 8){ rx = 0; ry = 0; rw = bw; rh = bh; }
   }
-  var scale = parseFloat($("#scale").value);
-  // 控制上限，避免手机上超大图 OOM
   var maxSide = 2600;
-  var outW = Math.round(rw * scale), outH = Math.round(rh * scale);
-  if(Math.max(outW, outH) > maxSide){
-    var k = maxSide / Math.max(outW, outH);
-    outW = Math.round(outW * k); outH = Math.round(outH * k);
+  if(Math.max(rw, rh) > maxSide){
+    var k = maxSide / Math.max(rw, rh);
+    rw = Math.round(rw * k); rh = Math.round(rh * k);
+    rx = Math.round(rx * k); ry = Math.round(ry * k);
   }
-
   var cv = document.createElement("canvas");
-  cv.width = outW; cv.height = outH;
-  var cx = cv.getContext("2d", { willReadFrequently:true });
-  cx.imageSmoothingEnabled = true;
-  cx.imageSmoothingQuality = "high";
-  cx.drawImage(baseCanvas, rx, ry, rw, rh, 0, 0, outW, outH);
+  cv.width = rw; cv.height = rh;
+  cv.getContext("2d").drawImage(baseCanvas, rx, ry, rw, rh, 0, 0, rw, rh);
+  return cv;
+}
 
-  // 双分支自动模式（forceInv 显式传入）与手动预览模式（forceInv 为空，沿用 UI 勾选）分离：
-  // 自动模式使用「已用本地 OCR 校验过」的固定配方，不再受 UI 勾选框影响——
-  //   深底白字卡（如 demo） = 灰度 + 反色（不二值化）
-  //   浅底深字卡           = 灰度（不反色、不二值化）
-  // 固定阈值二值化会把细白笔画吃掉（实测 OCR 返回空），故自动模式强制关闭二值化。
-  var autoMode = (forceInv !== undefined);
-  var useGray = autoMode ? true       : $("#gray").checked;
-  var useBin  = autoMode ? false      : $("#bin").checked;
-  var useInv  = autoMode ? !!forceInv : $("#inv").checked;
-  if(!useGray && !useBin && !useInv) return cv;
-
-  var img = cx.getImageData(0, 0, outW, outH);
-  var d = img.data, n = d.length, i;
-  var hist = new Array(256).fill(0);
-  var total = outW * outH;
-
-  // 1) 灰度（亮度加权）
-  for(i=0;i<n;i+=4){
-    var g = (0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]) | 0;
-    d[i] = d[i+1] = d[i+2] = g;
-    hist[g]++;
+// 8 邻接连通分量，返回每个分量的像素下标数组
+function cc8(mask, W, H){
+  var lab = new Int32Array(W*H);
+  var parent = {};
+  var n = 0;
+  function find(a){ while(parent[a] !== a){ parent[a] = parent[parent[a]]; a = parent[a]; } return a; }
+  function union(a,b){ var ra=find(a), rb=find(b); if(ra !== rb) parent[ra] = rb; }
+  for(var y=0;y<H;y++) for(var x=0;x<W;x++){
+    var idx = y*W + x;
+    if(!mask[idx]) continue;
+    n++; lab[idx] = n; parent[n] = n;
+    if(x>0 && mask[idx-1]) union(n, lab[idx-1]);
+    if(y>0 && mask[idx-W]) union(n, lab[idx-W]);
+    if(x>0 && y>0 && mask[idx-W-1]) union(n, lab[idx-W-1]);
+    if(x<W-1 && y>0 && mask[idx-W+1]) union(n, lab[idx-W+1]);
   }
-  // 2) 对比度拉伸（去掉极端 1% 后线性映射）
-  if(useGray){
-    var lo = 0, hi = 255, acc = 0, cut = total * 0.01;
-    for(i=0;i<256;i++){ acc += hist[i]; if(acc > cut){ lo = i; break; } }
-    acc = 0;
-    for(i=255;i>=0;i--){ acc += hist[i]; if(acc > cut){ hi = i; break; } }
-    if(hi - lo > 12){
-      var span = hi - lo;
-      for(i=0;i<n;i+=4){
-        var v = (d[i] - lo) * 255 / span;
-        v = v < 0 ? 0 : (v > 255 ? 255 : v);
-        d[i] = d[i+1] = d[i+2] = v | 0;
-      }
-      // 重算直方图供 Otsu 用
-      hist = new Array(256).fill(0);
-      for(i=0;i<n;i+=4) hist[d[i]]++;
+  var map = {};
+  for(var i=0;i<W*H;i++){ if(lab[i]){ var r = find(lab[i]); (map[r] = map[r] || []).push(i); } }
+  var out = []; for(var k in map) out.push(map[k]); return out;
+}
+
+// 从区域 canvas 提取黑字白底数字 canvas；branch: "bright" 或 "dark"。失败返回 null
+function extractInk(regionCv, branch){
+  if(!regionCv) return null;
+  var W = regionCv.width, H = regionCv.height;
+  if(W < 4 || H < 4) return null;
+  var data = regionCv.getContext("2d").getImageData(0,0,W,H).data;
+  var N = W*H, i;
+  var L = new Float32Array(N);
+  for(i=0;i<N;i++) L[i] = 0.299*data[i*4] + 0.587*data[i*4+1] + 0.114*data[i*4+2];
+
+  // 墨迹掩码
+  var ink = new Uint8Array(N);
+  var thr = (branch === "bright") ? 200 : 60;
+  for(i=0;i<N;i++) ink[i] = (branch === "bright") ? (L[i] > thr ? 1 : 0) : (L[i] < thr ? 1 : 0);
+
+  // 清理：仅保留 ≥2 个 8 邻域也是墨迹的像素（去盐噪 / 桌布碎点）
+  var pad = new Uint8Array((W+2)*(H+2));
+  for(i=0;i<N;i++){ var x=i%W, y=(i/W)|0; if(ink[i]) pad[(y+1)*(W+2)+(x+1)] = 1; }
+  var cleaned = new Uint8Array(N);
+  for(var y=0;y<H;y++) for(var x=0;x<W;x++){
+    if(!ink[y*W+x]) continue;
+    var cnt = 0;
+    for(var dy=-1;dy<=1;dy++) for(var dx=-1;dx<=1;dx++){
+      if(dy===0 && dx===0) continue;
+      cnt += pad[(y+1+dy)*(W+2)+(x+1+dx)];
+    }
+    if(cnt >= 2) cleaned[y*W+x] = 1;
+  }
+  var sum = 0; for(i=0;i<N;i++) sum += cleaned[i];
+  if(sum < 25) return null;
+
+  // 连通分量
+  var comps = cc8(cleaned, W, H);
+
+  // 筛选：面积≥25、不贴边、填充率≥0.08（排除卡牌白色描边细环 / 整圈轮廓）
+  var kept = [];
+  for(i=0;i<comps.length;i++){
+    var px = comps[i];
+    if(px.length < 25) continue;
+    var xs = [], ys = [];
+    for(var j=0;j<px.length;j++){ xs.push(px[j]%W); ys.push((px[j]/W)|0); }
+    var x0=Math.min.apply(null,xs), x1=Math.max.apply(null,xs);
+    var y0=Math.min.apply(null,ys), y1=Math.max.apply(null,ys);
+    var bw=x1-x0+1, bh=y1-y0+1;
+    var touchBorder = (x0<=0 || y0<=0 || x1>=W-1 || y1>=H-1);
+    var fill = px.length / (bw*bh);
+    if(touchBorder || fill < 0.08) continue;
+    kept.push([x0,y0,x1,y1]);
+  }
+  if(!kept.length){
+    var big = comps.slice().sort(function(a,b){ return b.length - a.length; })[0];
+    if(!big) return null;
+    var bxs = [], bys = [];
+    for(i=0;i<big.length;i++){ bxs.push(big[i]%W); bys.push((big[i]/W)|0); }
+    kept = [[Math.min.apply(null,bxs), Math.min.apply(null,bys),
+             Math.max.apply(null,bxs), Math.max.apply(null,bys)]];
+  }
+  // 并集 bbox
+  var X0=1e9, Y0=1e9, X1=-1, Y1=-1;
+  for(i=0;i<kept.length;i++){
+    X0=Math.min(X0,kept[i][0]); Y0=Math.min(Y0,kept[i][1]);
+    X1=Math.max(X1,kept[i][2]); Y1=Math.max(Y1,kept[i][3]);
+  }
+  var p2 = 6;
+  X0=Math.max(0,X0-p2); Y0=Math.max(0,Y0-p2);
+  X1=Math.min(W-1,X1+p2); Y1=Math.min(H-1,Y1+p2);
+  var cw=X1-X0+1, ch=Y1-Y0+1;
+
+  // 重新着色：墨迹=黑，其余=白
+  var out = document.createElement("canvas"); out.width=cw; out.height=ch;
+  var octx = out.getContext("2d");
+  octx.fillStyle = "#fff"; octx.fillRect(0,0,cw,ch);
+  var od = octx.getImageData(0,0,cw,ch);
+  for(var yy=0;yy<ch;yy++) for(var xx=0;xx<cw;xx++){
+    if(cleaned[(Y0+yy)*W + (X0+xx)]){
+      var oi = (yy*cw+xx)*4;
+      od.data[oi]=0; od.data[oi+1]=0; od.data[oi+2]=0; od.data[oi+3]=255;
     }
   }
-  // 3) 二值化
-  if(useBin){
-    var t = $("#otsu").checked ? otsu(hist, total) : parseInt($("#thr").value, 10);
-    $("#thrV").textContent = t;
-    if($("#otsu").checked) $("#thr").value = t;
-    // 注意用 > 而非 >=：Otsu 返回的 t 是「暗类（字）的最大灰度」，
-    // 用 >= 会把最暗一档的笔画误判成白底，细笔画会被吃掉。
-    for(i=0;i<n;i+=4){
-      var b = d[i] > t ? 255 : 0;
-      d[i] = d[i+1] = d[i+2] = b;
-    }
-  }
-  // 4) 反色
-  if(useInv){
-    for(i=0;i<n;i+=4){
-      d[i] = 255 - d[i]; d[i+1] = 255 - d[i+1]; d[i+2] = 255 - d[i+2];
-    }
-  }
-  cx.putImageData(img, 0, 0);
+  octx.putImageData(od, 0, 0);
+
+  // 缩放到字高 ~80px（保持比例，限宽 400）
+  var targetH = 80, s = targetH / ch;
+  var nw = Math.max(1, Math.round(cw*s)), nh = targetH;
+  if(nw > 400){ s = 400/cw; nw = 400; nh = Math.max(1, Math.round(ch*s)); }
+  var finalCv = document.createElement("canvas"); finalCv.width = nw; finalCv.height = nh;
+  finalCv.getContext("2d").drawImage(out, 0, 0, nw, nh);
+  return finalCv;
+}
+
+// 旋转 canvas（90 的倍数），用于识别端转正数字
+function rotateCanvas(src, deg){
+  if(deg === 0) return src;
+  var c = document.createElement("canvas");
+  var rad = deg * Math.PI / 180;
+  if(deg === 90 || deg === 270){ c.width = src.height; c.height = src.width; }
+  else { c.width = src.width; c.height = src.height; }
+  var ctx = c.getContext("2d");
+  ctx.translate(c.width/2, c.height/2);
+  ctx.rotate(rad);
+  ctx.drawImage(src, -src.width/2, -src.height/2);
+  return c;
+}
+
+// 兼容旧调用：返回优先 bright 分支提取结果（用于预览）
+function buildProcessed(forceInv){
+  var region = getRegionCanvas();
+  var cv = extractInk(region, "bright");
+  if(!cv) cv = extractInk(region, "dark");
   return cv;
 }
 
@@ -623,27 +681,7 @@ function renderPreview(){
   }, 30);
 }
 
-/* 参数联动 */
-$("#scale").oninput = function(){
-  $("#scaleV").textContent = parseFloat(this.value).toFixed(1) + "×";
-  renderPreview();
-};
-$("#thr").oninput = function(){ $("#thrV").textContent = this.value; renderPreview(); };
-["gray","bin","inv"].forEach(function(id){
-  $("#"+id).onchange = renderPreview;
-});
-$("#otsu").onchange = function(){
-  $("#thrRow").classList.toggle("hide", this.checked);
-  renderPreview();
-};
-$("#bin").addEventListener("change", function(){
-  var on = this.checked;
-  $("#otsuRow").classList.toggle("hide", !on);
-  $("#thrRow").classList.toggle("hide", !on || $("#otsu").checked);
-  if(on && !$("#otsu").checked) $("#thrRow").classList.remove("hide");
-});
-// 初始化一次 UI 状态（因为 Otsu 默认未勾选，thrRow 应显示）
-$("#bin").dispatchEvent(new Event("change"));
+/* 参数联动：新版预处理全自动，无需手动调参 */
 document.querySelectorAll(".tabs button").forEach(function(b){
   b.onclick = function(){
     document.querySelectorAll(".tabs button").forEach(function(x){ x.classList.remove("on"); });
@@ -740,59 +778,69 @@ $("#runBtn").onclick = async function(){
   try{
     await loadTesseract();
 
-    // spec：仅识别数字 0-9，psm=6（单块数字），双预处理分支自动择优
+    // 仅识别数字 0-9
     var langCode = "eng";
     var langPath = LANG_PATHS[$("#langp").value];
     var w = await getWorker(langCode, langPath);
-    await w.setParameters({
-      tessedit_pageseg_mode: 6,
-      tessedit_char_whitelist: "0123456789"
-    });
 
-    // 分支1：按当前预处理（原图/灰底）；分支2：强制反色（适配深底白字卡）
-    var cv1 = buildProcessed(false);
-    var cv2 = buildProcessed(true);
-    setStat("识别中…（双分支并行）");
-    var r1 = await w.recognize(cv1);
-    var r2 = await w.recognize(cv2);
-    var c1 = Math.round(r1.data.confidence || 0);
-    var c2 = Math.round(r2.data.confidence || 0);
-    var usedInv = (c2 > c1);
-    var r = usedInv ? r2 : r1;
+    // 提取候选：亮字 / 暗字两分支
+    var region = getRegionCanvas();
+    var cands = [];
+    var cb = extractInk(region, "bright"); if(cb) cands.push(cb);
+    var cd = extractInk(region, "dark");   if(cd) cands.push(cd);
+    if(!cands.length){
+      toast("选区里没找到数字，请重新框选数字块"); setBar(0); btn.disabled = false; return;
+    }
+
+    // 对每张候选试 4 个旋转角（0/90/180/270）+ 多位数模式，取最高置信度数字。
+    // 卡牌朝向任意，tesseract 只认正立数字 → 靠旋转恢复；CABO 含 10/11/12/13 → 用 psm8/6 保多位数。
+    var best = null, bestCanvas = null, bestRot = 0, bestBranch = "";
+    setStat("识别中…（自动转正 + 多位数）");
+    for(var ci=0; ci<cands.length; ci++){
+      for(var rot=0; rot<360; rot+=90){
+        var rc = rotateCanvas(cands[ci], rot);
+        var dw = null;
+        for(var psm of [8, 6]){
+          await w.setParameters({ tessedit_pageseg_mode: psm, tessedit_char_whitelist: "0123456789" });
+          var r = await w.recognize(rc);
+          var cur = (r.data.words || [])
+            .filter(function(x){ return /^\d+$/.test((x.text || "").trim()); })
+            .map(function(x){ return { v: (x.text || "").trim(), c: Math.round(x.confidence) }; })
+            .sort(function(a,b){ return b.c - a.c; });
+          if(cur.length){ dw = cur; if(psm === 8) break; }
+        }
+        if(dw && dw.length && (!best || dw[0].c > best.c)){
+          best = dw[0]; bestCanvas = rc; bestRot = rot; bestBranch = (ci === 0 ? "亮字" : "暗字");
+        }
+      }
+    }
     var ms = Math.round(performance.now() - t0);
 
-    var text = (r.data.text || "").replace(/[ \t]+\n/g, "\n").trim();
-    $("#outText").value = text;
+    // 单数字直接作为 outText
+    $("#outText").value = best ? best.v : "";
 
-    var conf = usedInv ? c2 : c1;
+    var conf = best ? best.c : 0;
     $("#kv").innerHTML =
       '<span class="chip">耗时 <b>' + ms + ' ms</b></span>' +
       '<span class="chip">置信度 <b>' + conf + '</b></span>' +
-      '<span class="chip">分支 <b>' + (usedInv ? '反色' : '原图') + '</b></span>' +
-      '<span class="chip">送检 <b>' + (usedInv ? cv2.width : cv1.width) + '×' + (usedInv ? cv2.height : cv1.height) + '</b></span>';
+      '<span class="chip">转正 <b>' + bestRot + '°</b></span>' +
+      '<span class="chip">分支 <b>' + bestBranch + '</b></span>' +
+      '<span class="chip">送检 <b>' + (bestCanvas ? bestCanvas.width : 0) + '×' + (bestCanvas ? bestCanvas.height : 0) + '</b></span>';
 
     // 逐词置信度
-    var words = (r.data.words || []).filter(function(x){ return x.text && x.text.trim(); });
+    var words = best ? [{ text: best.v, confidence: best.c }] : [];
     $("#words").innerHTML = words.length
       ? words.map(function(x){
           var c = Math.round(x.confidence);
-          return '<span class="' + (c < 70 ? 'lo' : '') + '">' +
-                 esc(x.text) + ' · ' + c + '</span>';
+          return '<span class="' + (c < 70 ? 'lo' : '') + '">' + esc(x.text) + ' · ' + c + '</span>';
         }).join("")
-      : '<span style="color:var(--muted)">无分词数据</span>';
-
-    // 取置信度最高的「纯数字」词作为本次识别数字
-    var digs = (r.data.words || [])
-      .filter(function(x){ return /^\d+$/.test((x.text || "").trim()); })
-      .map(function(x){ return { v: (x.text || "").trim(), c: Math.round(x.confidence) }; })
-      .sort(function(a,b){ return b.c - a.c; });
-    var best = digs[0] || null;
+      : '<span style="color:var(--muted)">未识别到数字</span>';
 
     $("#resCard").classList.remove("hide");
     doParse();
-    showEntry(best, usedInv, buildRaw(), ms);
+    showEntry(best, (bestBranch + " · 转正 " + bestRot + "°"), bestCanvas || region, ms);
     setBar(1);
-    setStat("完成 · " + ms + " ms" + (best ? " · 识别到 " + best.v : ""));
+    setStat("完成 · " + ms + " ms" + (best ? " · 识别到 " + best.v : " · 未识别"));
     $("#resCard").scrollIntoView({ behavior:"smooth", block:"start" });
 
   }catch(err){
@@ -826,14 +874,14 @@ function initEntry(){
   buildPlayerBtns();
   renderPlayerScores();
 }
-function showEntry(best, usedInv, previewCv){
+function showEntry(best, info, previewCv){
   $("#entryCard").classList.remove("hide");
   var pc = $("#entryPrev");
   if(previewCv){ pc.width = previewCv.width; pc.height = previewCv.height; pc.getContext("2d").drawImage(previewCv, 0, 0); }
   ENTRY.lastDigit = best ? best.v : "";
   $("#entryDigit").textContent = best ? best.v : "—";
   $("#entryConf").textContent = best
-    ? ("置信度 " + best.c + (usedInv ? " · 反色分支" : " · 原图分支"))
+    ? ("置信度 " + best.c + (info ? " · " + info : ""))
     : "未识别到数字";
   $("#entryManual").value = best ? best.v : "";
   $("#entryWarn").classList.toggle("hide", !best || best.c >= 70);
