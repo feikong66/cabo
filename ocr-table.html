@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>CABO 整桌识别（C' 半自动）</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:#0f1420; color:#e7ecf3; }
+  .wrap { max-width:640px; margin:0 auto; padding:14px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:#8aa0bd; font-size:13px; margin:0 0 14px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  button { background:#2b6cff; color:#fff; border:0; border-radius:10px; padding:10px 14px; font-size:14px; font-weight:600; cursor:pointer; }
+  button.sec { background:#263247; }
+  button:active { transform:translateY(1px); }
+  button:disabled { opacity:.45; cursor:default; }
+  .stage { position:relative; background:#0a0e16; border-radius:14px; padding:10px; margin-bottom:14px; display:none; }
+  .stage.on { display:block; }
+  canvas { display:block; max-width:100%; touch-action:none; border-radius:8px; background:#111; }
+  .hint { color:#8aa0bd; font-size:12.5px; margin:6px 2px 10px; }
+  .corner { position:absolute; width:30px; height:30px; margin:-15px 0 0 -15px; border:3px solid #ffd23f; border-radius:50%; background:rgba(255,210,63,.18); cursor:grab; touch-action:none; }
+  .corner:active { cursor:grabbing; }
+  .corner span { position:absolute; top:-22px; left:50%; transform:translateX(-50%); font-size:11px; background:#ffd23f; color:#222; padding:1px 6px; border-radius:6px; font-weight:700; }
+  .slot { position:absolute; border:2px dashed #2b6cff; border-radius:6px; background:rgba(43,108,255,.10); cursor:move; touch-action:none; }
+  .slot .lbl { position:absolute; top:-18px; left:0; font-size:10px; color:#9fc0ff; white-space:nowrap; }
+  .ctrl { display:flex; align-items:center; gap:8px; margin:6px 2px; font-size:13px; color:#bcd; flex-wrap:wrap; }
+  .ctrl input[type=range] { flex:1; min-width:120px; }
+  .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:8px; }
+  .cell { background:#16203200; border:1px solid #2a3a55; border-radius:10px; padding:8px 6px; text-align:center; }
+  .cell .who { font-size:11px; color:#7f98ba; }
+  .cell .num { font-size:26px; font-weight:800; color:#fff; width:100%; border:0; background:transparent; text-align:center; }
+  .cell .conf { font-size:11px; color:#6f88a8; }
+  .cell.warn { border-color:#ffb020; box-shadow:0 0 0 1px #ffb020 inset; }
+  .cell .wb { color:#ffb020; font-size:10px; }
+  .out { margin-top:12px; }
+  textarea { width:100%; height:90px; background:#0a0e16; color:#cfe; border:1px solid #2a3a55; border-radius:8px; padding:8px; font-family:ui-monospace,monospace; font-size:13px; }
+  .badge { display:inline-block; background:#1d2a40; color:#9fc0ff; border-radius:6px; padding:2px 8px; font-size:12px; margin-left:6px; }
+  #status { color:#9fc0ff; font-size:13px; min-height:18px; margin:4px 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CABO 整桌识别 <span class="badge">C' 半自动</span></h1>
+  <p class="sub">标 4 个桌角 → 透视拉正 → 自动对 16 张牌取白字识别。朝向任意、白字彩底都行。</p>
+
+  <div class="bar">
+    <button id="fileBtn">📷 选图 / 拍照</button>
+    <button id="demoBtn" class="sec">用示例图</button>
+    <input id="fileInput" type="file" accept="image/*" style="display:none">
+  </div>
+  <div id="status"></div>
+
+  <!-- Stage 1: mark 4 corners -->
+  <div class="stage" id="stage1">
+    <canvas id="srcCanvas"></canvas>
+    <div class="hint">拖动 4 个黄点对齐桌子四角（尽量把 16 张牌都框在内部）。示例图可点「用示例布局」自动定位。</div>
+    <div class="bar">
+      <button id="autoCorners" class="sec">用示例布局</button>
+      <button id="warpBtn">➡️ 透视矫正</button>
+    </div>
+  </div>
+
+  <!-- Stage 2: warped + slots -->
+  <div class="stage" id="stage2">
+    <canvas id="warpCanvas"></canvas>
+    <div class="hint">检查 16 个蓝框是否各自罩住一张牌。可拖动蓝框微调，或用下方滑块调整整体大小/位置。</div>
+    <div class="ctrl"><span>槽大小</span><input id="sz" type="range" min="60" max="200" value="108"><span id="szv">108</span></div>
+    <div class="ctrl"><span>左右移</span><input id="ox" type="range" min="-200" max="200" value="0"><span>上下移</span><input id="oy" type="range" min="-200" max="200" value="0"></div>
+    <div class="ctrl"><span>间距</span><input id="sp" type="range" min="60" max="140" value="100"><span>边距</span><input id="ins" type="range" min="0" max="200" value="100"></div>
+    <div class="bar">
+      <button id="reconBtn">🔁 重选四角</button>
+      <button id="runBtn">🚀 识别全部 16 张</button>
+    </div>
+  </div>
+
+  <!-- Stage 3: results -->
+  <div class="stage" id="stage3">
+    <h3 style="margin:4px 0">识别结果（每格可手动修正，⚠ 为 6/9 易混请核对）</h3>
+    <div class="grid" id="grid"></div>
+    <div class="out">
+      <div class="bar">
+        <button id="expBtn" class="sec">📋 导出为分数文本</button>
+        <button id="copyBtn" class="sec">复制</button>
+      </div>
+      <textarea id="outText" readonly placeholder="点「导出为分数文本」生成可粘贴到计分器的内容"></textarea>
+    </div>
+    <div class="bar" style="margin-top:10px">
+      <button id="backBtn" class="sec">⬅ 返回调框</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- geometry: homography + warp (pure JS, validated in _cprime.js) ----------
+function solve(A, b){
+  const n=b.length;
+  for(let i=0;i<n;i++){
+    let p=i; for(let r=i+1;r<n;r++) if(Math.abs(A[r][i])>Math.abs(A[p][i])) p=r;
+    const tA=A[i];A[i]=A[p];A[p]=tA; const tb=b[i];b[i]=b[p];b[p]=tb;
+    const d=A[i][i]; for(let j=i;j<n;j++)A[i][j]/=d; b[i]/=d;
+    for(let r=0;r<n;r++){ if(r!==i){ const f=A[r][i]; if(!f) continue; for(let j=i;j<n;j++)A[r][j]-=f*A[i][j]; b[r]-=f*b[i]; } }
+  }
+  return b;
+}
+function computeH(from,to){
+  const A=[],b=[];
+  for(let i=0;i<4;i++){ const x=from[i][0],y=from[i][1],u=to[i][0],v=to[i][1];
+    A.push([x,y,1,0,0,0,-u*x,-u*y]); b.push(u);
+    A.push([0,0,0,x,y,1,-v*x,-v*y]); b.push(v); }
+  const h=solve(A,b);
+  return [[h[0],h[1],h[2]],[h[3],h[4],h[5]],[h[6],h[7],1]];
+}
+function applyH(H,x,y){
+  const X=H[0][0]*x+H[0][1]*y+H[0][2], Y=H[1][0]*x+H[1][1]*y+H[1][2], W=H[2][0]*x+H[2][1]*y+H[2][2];
+  return [X/W,Y/W];
+}
+function bilinear(src,x,y){
+  const w=src.width,h=src.height;
+  if(x<0)x=0; else if(x>w-1)x=w-1; if(y<0)y=0; else if(y>h-1)y=h-1;
+  const x0=Math.floor(x),y0=Math.floor(y),x1=Math.min(x0+1,w-1),y1=Math.min(y0+1,h-1);
+  const fx=x-x0,fy=y-y0,d=src.data;
+  const i00=(y0*w+x0)*4,i10=(y0*w+x1)*4,i01=(y1*w+x0)*4,i11=(y1*w+x1)*4,o=[0,0,0];
+  for(let c=0;c<3;c++) o[c]=d[i00+c]*(1-fx)*(1-fy)+d[i10+c]*fx*(1-fy)+d[i01+c]*(1-fx)*fy+d[i11+c]*fx*fy;
+  return o;
+}
+function warpToImageData(src,Hh,outW,outH){
+  const out=new ImageData(outW,outH);
+  for(let v=0;v<outH;v++)for(let u=0;u<outW;u++){
+    const [x,y]=applyH(Hh,u,v), p=bilinear(src,x,y), di=(v*outW+u)*4;
+    out.data[di]=p[0];out.data[di+1]=p[1];out.data[di+2]=p[2];out.data[di+3]=255;
+  }
+  return out;
+}
+
+// ---------- ink extraction (ported, returns black-on-white canvas or null) ----------
+function cc8(mask,W,H){
+  const lab=new Int32Array(W*H), parent={}, comps=[]; let n=0;
+  function find(a){ while(parent[a]!==a){ parent[a]=parent[parent[a]]; a=parent[a]; } return a; }
+  function union(a,b){ const ra=find(a),rb=find(b); if(ra!==rb) parent[ra]=rb; }
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const idx=y*W+x; if(!mask[idx]) continue;
+    n++; lab[idx]=n; parent[n]=n;
+    if(x>0&&mask[idx-1]) union(n,lab[idx-1]);
+    if(y>0&&mask[idx-W]) union(n,lab[idx-W]);
+    if(x>0&&y>0&&mask[idx-W-1]) union(n,lab[idx-W-1]);
+    if(x<W-1&&y>0&&mask[idx-W+1]) union(n,lab[idx-W+1]);
+  }
+  const map={};
+  for(let i=0;i<W*H;i++) if(lab[i]){ const r=find(lab[i]); (map[r]=map[r]||[]).push(i); }
+  for(const k in map) comps.push(map[k]);
+  return comps;
+}
+function extractInkCanvas(imgData, branch){
+  const W=imgData.width,H=imgData.height,data=imgData.data;
+  if(W<4||H<4) return null;
+  const N=W*H, L=new Float32Array(N);
+  for(let i=0;i<N;i++) L[i]=0.299*data[i*4]+0.587*data[i*4+1]+0.114*data[i*4+2];
+  const ink=new Uint8Array(N), thr=(branch==="bright")?200:60;
+  for(let i=0;i<N;i++) ink[i]=(branch==="bright")?(L[i]>thr?1:0):(L[i]<thr?1:0);
+  const pad=new Uint8Array((W+2)*(H+2));
+  for(let i=0;i<N;i++){ const x=i%W,y=(i/W)|0; if(ink[i]) pad[(y+1)*(W+2)+(x+1)]=1; }
+  const cleaned=new Uint8Array(N);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(!ink[y*W+x]) continue; let cnt=0;
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){ if(!dy&&!dx)continue; cnt+=pad[(y+1+dy)*(W+2)+(x+1+dx)]; }
+    if(cnt>=2) cleaned[y*W+x]=1;
+  }
+  let sum=0; for(let i=0;i<N;i++) sum+=cleaned[i]; if(sum<25) return null;
+  const comps=cc8(cleaned,W,H), kept=[];
+  for(const px of comps){
+    if(px.length<25) continue;
+    let x0=1e9,y0=1e9,x1=-1,y1=-1;
+    for(const idx of px){ const x=idx%W,y=(idx/W)|0; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    const bw=x1-x0+1,bh=y1-y0+1, touch=(x0<=0||y0<=0||x1>=W-1||y1>=H-1), fill=px.length/(bw*bh);
+    if(touch||fill<0.08) continue; kept.push([x0,y0,x1,y1]);
+  }
+  let kb=kept;
+  if(!kb.length){ const big=comps.slice().sort((a,b)=>b.length-a.length)[0]; if(!big) return null;
+    let x0=1e9,y0=1e9,x1=-1,y1=-1; for(const idx of big){ const x=idx%W,y=(idx/W)|0; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    kb=[[x0,y0,x1,y1]]; }
+  let X0=1e9,Y0=1e9,X1=-1,Y1=-1;
+  for(const k of kb){ X0=Math.min(X0,k[0]);Y0=Math.min(Y0,k[1]);X1=Math.max(X1,k[2]);Y1=Math.max(Y1,k[3]); }
+  const p2=6; X0=Math.max(0,X0-p2);Y0=Math.max(0,Y0-p2);X1=Math.min(W-1,X1+p2);Y1=Math.min(H-1,Y1+p2);
+  const cw=X1-X0+1, ch=Y1-Y0+1;
+  const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+  const cctx=cv.getContext('2d'), id=cctx.createImageData(cw,ch);
+  for(let yy=0;yy<ch;yy++)for(let xx=0;xx<cw;xx++){ const oi=(yy*cw+xx)*4;
+    if(cleaned[(Y0+yy)*W+(X0+xx)]){ id.data[oi]=0;id.data[oi+1]=0;id.data[oi+2]=0; } else { id.data[oi]=255;id.data[oi+1]=255;id.data[oi+2]=255; }
+    id.data[oi+3]=255; }
+  cctx.putImageData(id,0,0);
+  const s=80/ch; let nw=Math.max(1,Math.round(cw*s)); if(nw>400)nw=400;
+  const out=document.createElement('canvas'); out.width=nw; out.height=80;
+  const oc=out.getContext('2d'); oc.imageSmoothingEnabled=false; oc.drawImage(cv,0,0,nw,80);
+  return out;
+}
+function rotateCanvas(src,deg){
+  if(deg===0) return src;
+  const rad=deg*Math.PI/180, W=deg===90||deg===270?src.height:src.width, H=deg===90||deg===270?src.width:src.height;
+  const out=document.createElement('canvas'); out.width=W; out.height=H;
+  const ctx=out.getContext('2d'); ctx.translate(W/2,H/2); ctx.rotate(rad); ctx.drawImage(src,-src.width/2,-src.height/2);
+  return out;
+}
+function extractInk(srcImg){ return extractInkCanvas(srcImg,"bright")||extractInkCanvas(srcImg,"dark"); }
+
+// ---------- state ----------
+const S=1000;
+let srcImg=null;            // ImageData of original
+let corners=[[0.15,0.12],[0.85,0.12],[0.85,0.88],[0.15,0.88]]; // normalized 0..1 of source
+let warpCanvas, warpCtx, warpImg=null;
+let slots=[];               // {side,idx,x,y,w,h}
+let worker=null, busy=false;
+
+// ring model (normalized, defaults fitted to the demo; adjustable via sliders)
+const ring={ topY:0.0968, botY:0.9032, leftX:0.0926, rightX:0.9074,
+  edgeX:[0.3214,0.4402,0.5590,0.6778], edgeY:[0.3462,0.4499,0.5536,0.6573] };
+
+const $=id=>document.getElementById(id);
+function setStatus(t){ $('status').textContent=t||''; }
+
+// ---------- load image ----------
+function loadImageToStage(srcObj){
+  const c=$('srcCanvas'); const maxW=580;
+  const scale=Math.min(1, maxW/srcObj.width);
+  c.width=Math.round(srcObj.width*scale); c.height=Math.round(srcObj.height*scale);
+  const ctx=c.getContext('2d'); ctx.drawImage(srcObj,0,0,c.width,c.height);
+  // store full-res ImageData for warp (use natural size via offscreen)
+  const off=document.createElement('canvas'); off.width=srcObj.width; off.height=srcObj.height;
+  off.getContext('2d').drawImage(srcObj,0,0);
+  srcImg=off.getContext('2d').getImageData(0,0,srcObj.width,srcObj.height);
+  // default corners in normalized; if image is the demo, autoCorners handles exact
+  $('stage1').classList.add('on'); $('stage2').classList.remove('on'); $('stage3').classList.remove('on');
+  drawCorners();
+}
+$('fileInput').addEventListener('change',e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const img=new Image(); img.onload=()=>loadImageToStage(img); img.src=URL.createObjectURL(f);
+});
+$('fileBtn').onclick=()=>$('fileInput').click();
+$('demoBtn').onclick=()=>{ const img=new Image(); img.onload=()=>loadImageToStage(img); img.src='assets/cabo-table-demo.png'; };
+
+// ---------- corners ----------
+function drawCorners(){
+  const c=$('srcCanvas');
+  [...c.parentElement.querySelectorAll('.corner')].forEach(n=>n.remove());
+  const labels=['①','②','③','④'];
+  corners.forEach((cn,i)=>{
+    const d=document.createElement('div'); d.className='corner';
+    d.style.left=(cn[0]*c.width)+'px'; d.style.top=(cn[1]*c.height)+'px';
+    d.innerHTML=`<span>${labels[i]}</span>`;
+    c.parentElement.appendChild(d);
+    drag(d, (dx,dy)=>{ cn[0]=Math.min(1,Math.max(0,cn[0]+dx/c.width)); cn[1]=Math.min(1,Math.max(0,cn[1]+dy/c.height)); d.style.left=(cn[0]*c.width)+'px'; d.style.top=(cn[1]*c.height)+'px'; });
+  });
+}
+const dragState={};
+function drag(el, onMove){
+  el.addEventListener('pointerdown',e=>{ e.preventDefault(); el.setPointerCapture(e.pointerId); dragState[el]=true; el._px=e.clientX; el._py=e.clientY; });
+  el.addEventListener('pointermove',e=>{ if(!dragState[el]) return; const dx=e.clientX-el._px, dy=e.clientY-el._py; el._px=e.clientX; el._py=e.clientY; onMove(dx,dy); });
+  el.addEventListener('pointerup',e=>{ dragState[el]=false; });
+  el.addEventListener('pointercancel',e=>{ dragState[el]=false; });
+}
+$('autoCorners').onclick=()=>{
+  // demo exact corners (image is 1024x1024, corners derived from card ring)
+  corners=[[134/1024,73/1024],[890/1024,73/1024],[890/1024,951/1024],[134/1024,951/1024]];
+  drawCorners(); setStatus('已用示例布局（仅示例图有效，真实照片请手动拖黄点）');
+};
+$('warpBtn').onclick=()=>{
+  if(!srcImg){ setStatus('请先选图'); return; }
+  const W=srcImg.width,H=srcImg.height;
+  const sc=[ [corners[0][0]*W,corners[0][1]*H],[corners[1][0]*W,corners[1][1]*H],[corners[2][0]*W,corners[2][1]*H],[corners[3][0]*W,corners[3][1]*H] ];
+  const dst=[[0,0],[S,0],[S,S],[0,S]];
+  const Hm=computeH(dst,sc);
+  warpImg=warpToImageData(srcImg,Hm,S,S);
+  warpCanvas=$('warpCanvas'); warpCanvas.width=S; warpCanvas.height=S;
+  warpCtx=warpCanvas.getContext('2d'); warpCtx.putImageData(warpImg,0,0);
+  $('stage1').classList.remove('on'); $('stage2').classList.add('on'); $('stage3').classList.remove('on');
+  buildSlots(); drawSlots(); fitWarpDisplay();
+  setStatus('已透视拉正。拖动蓝框或调滑块让每框罩住一张牌，再点「识别全部」。');
+};
+function fitWarpDisplay(){
+  const maxW=580; const scale=Math.min(1,maxW/S);
+  warpCanvas.style.width=(S*scale)+'px'; warpCanvas.style.height=(S*scale)+'px';
+  document.querySelectorAll('.slot').forEach(s=>{ s.style.width=(s._w*scale)+'px'; s.style.height=(s._h*scale)+'px'; s.style.left=(s._x*scale)+'px'; s.style.top=(s._y*scale)+'px'; });
+}
+// ---------- slots (ring model) ----------
+function buildSlots(){
+  const sp=$('sp').value/100, ins=$('ins').value/100;
+  const ex=ring.edgeX.map(v=>0.5+(v-0.5)*sp), ey=ring.edgeY.map(v=>0.5+(v-0.5)*sp);
+  const tY=ring.topY*ins, bY=ring.botY*ins, lX=ring.leftX*ins, rX=ring.rightX*ins;
+  const sz=$('sz').value;
+  const arr=[];
+  ex.forEach((nx,i)=>arr.push({side:'A',idx:i,x:nx*S,y:tY*S,w:sz,h:sz}));
+  ey.forEach((ny,i)=>arr.push({side:'B',idx:i,x:rX*S,y:ny*S,w:sz,h:sz}));
+  ex.forEach((nx,i)=>arr.push({side:'C',idx:i,x:nx*S,y:bY*S,w:sz,h:sz}));
+  ey.forEach((ny,i)=>arr.push({side:'D',idx:i,x:lX*S,y:ny*S,w:sz,h:sz}));
+  // apply offset
+  const ox=+$('ox').value, oy=+$('oy').value;
+  arr.forEach(s=>{ s.x+=ox; s.y+=oy; });
+  slots=arr;
+}
+function drawSlots(){
+  const c=$('warpCanvas');
+  [...c.parentElement.querySelectorAll('.slot')].forEach(n=>n.remove());
+  const scale=parseFloat(c.style.width)/S || 0.58;
+  slots.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='slot';
+    d._x=s.x; d._y=s.y; d._w=s.w; d._h=s.h; d._i=i;
+    d.style.left=(s.x*scale)+'px'; d.style.top=(s.y*scale)+'px';
+    d.style.width=(s.w*scale)+'px'; d.style.height=(s.h*scale)+'px';
+    d.innerHTML=`<span>${s.side}${s.idx}</span>`;
+    c.parentElement.appendChild(d);
+    drag(d,(dx,dy)=>{ const sc=parseFloat(c.style.width)/S; s.x+=dx/sc; s.y+=dy/sc; d.style.left=(s.x*scale)+'px'; d.style.top=(s.y*scale)+'px'; });
+  });
+}
+['sz','ox','oy','sp','ins'].forEach(id=>$(id).addEventListener('input',()=>{
+  if(id==='sz')$('szv').textContent=$('sz').value;
+  if(warpImg){ buildSlots(); drawSlots(); }
+}));
+$('reconBtn').onclick=()=>{ $('stage2').classList.remove('on'); $('stage1').classList.add('on'); drawCorners(); };
+
+// ---------- OCR all ----------
+async function ensureWorker(){
+  if(worker) return;
+  setStatus('加载 OCR 引擎…');
+  worker=await Tesseract.createWorker('eng',1,{logger:()=>{}});
+}
+async function ocrSlot(slot){
+  const ctx=warpCanvas.getContext('2d');
+  const x=Math.max(0,Math.round(slot.x)), y=Math.max(0,Math.round(slot.y));
+  const w=Math.min(S-x,Math.round(slot.w)), h=Math.min(S-y,Math.round(slot.h));
+  if(w<8||h<8) return {v:null,conf:0};
+  const img=ctx.getImageData(x,y,w,h);
+  const ink=extractInk(img); if(!ink) return {v:null,conf:0};
+  let best=null;
+  for(let r=0;r<4;r++){
+    const rc=rotateCanvas(ink,r*90);
+    for(const psm of [8,6]){
+      await worker.setParameters({tessedit_pageseg_mode:psm, tessedit_char_whitelist:"0123456789"});
+      const res=await worker.recognize(rc);
+      const ws=(res.data.words||[]).filter(w=>/^\d+$/.test((w.text||'').trim())).map(w=>({v:parseInt(w.text,10),c:Math.round(w.confidence)}));
+      if(ws.length&&(!best||ws[0].c>best.c)) best={v:ws[0].v,c:ws[0].c,rot:r};
+    }
+  }
+  return best||{v:null,conf:0};
+}
+$('runBtn').onclick=async()=>{
+  if(busy) return; busy=true; $('runBtn').disabled=true;
+  await ensureWorker();
+  const results=[];
+  for(let i=0;i<slots.length;i++){
+    setStatus(`识别中 ${i+1}/16 …`);
+    const r=await ocrSlot(slots[i]); results.push(r);
+  }
+  $('runBtn').disabled=false; busy=false;
+  renderGrid(results);
+  $('stage3').classList.add('on'); setStatus('识别完成。请核对带 ⚠ 的 6/9，必要时手改每格。');
+};
+function renderGrid(results){
+  const g=$('grid'); g.innerHTML='';
+  const order=[...Array(16).keys()];
+  results.forEach((r,i)=>{
+    const s=slots[i];
+    const warn=(r.v===6||r.v===9);
+    const div=document.createElement('div'); div.className='cell'+(warn?' warn':'');
+    div.innerHTML=`<div class="who">${s.side}${s.idx}</div>
+      <input class="num" type="text" inputmode="numeric" value="${r.v==null?'':r.v}" data-i="${i}">
+      <div class="conf">置信 ${r.conf||0}${warn?' <span class="wb">⚠6/9</span>':''}</div>`;
+    g.appendChild(div);
+  });
+}
+$('backBtn').onclick=()=>{ $('stage3').classList.remove('on'); $('stage2').classList.add('on'); };
+// ---------- export ----------
+function collect(){
+  const nums=[...document.querySelectorAll('.cell .num')].map(inp=>inp.value.trim()||'?');
+  const bySide={A:[],B:[],C:[],D:[]};
+  nums.forEach((v,i)=>bySide[slots[i].side].push(v));
+  return {nums,bySide};
+}
+$('expBtn').onclick=()=>{
+  const {nums,bySide}=collect();
+  const lines=[ 'A '+bySide.A.join(' '), 'B '+bySide.B.join(' '), 'C '+bySide.C.join(' '), 'D '+bySide.D.join(' ') ];
+  $('outText').value=lines.join('\n')+'\n\n（共16张：'+nums.filter(n=>n!=='?').length+' 已识别）';
+};
+$('copyBtn').onclick=async()=>{ try{ await navigator.clipboard.writeText($('outText').value); setStatus('已复制'); }catch(e){ setStatus('复制失败，请手动选文本'); } };
+</script>
+</body>
+</html>
