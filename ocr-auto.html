@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>CABO 一拍出分（全自动）</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:#0f1420; color:#e7ecf3; }
+  .wrap { max-width:640px; margin:0 auto; padding:14px; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:#8aa0bd; font-size:13px; margin:0 0 14px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+  button { background:#2b6cff; color:#fff; border:0; border-radius:10px; padding:11px 15px; font-size:14px; font-weight:600; cursor:pointer; }
+  button.sec { background:#263247; }
+  button.big { flex:1; min-width:180px; padding:14px; font-size:16px; }
+  button:active { transform:translateY(1px); }
+  button:disabled { opacity:.45; cursor:default; }
+  .stage { background:#0a0e16; border-radius:14px; padding:10px; margin-bottom:14px; display:none; }
+  .stage.on { display:block; }
+  canvas { display:block; max-width:100%; border-radius:8px; background:#111; }
+  .hint { color:#8aa0bd; font-size:12.5px; margin:8px 2px 4px; }
+  .ctrl { display:flex; align-items:center; gap:8px; margin:8px 2px; font-size:13px; color:#bcd; flex-wrap:wrap; }
+  .ctrl input[type=range] { flex:1; min-width:130px; }
+  .sides { display:flex; flex-direction:column; gap:10px; margin-top:8px; }
+  .side { border:1px solid #2a3a55; border-radius:12px; padding:9px 10px; }
+  .side h4 { margin:0 0 7px; font-size:13px; color:#9fc0ff; display:flex; justify-content:space-between; align-items:center; }
+  .side h4 .tot { color:#ffd23f; font-weight:800; font-size:15px; }
+  .row { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
+  .cell { background:#121a29; border:1px solid #2a3a55; border-radius:10px; padding:6px 4px; text-align:center; }
+  .cell .num { font-size:25px; font-weight:800; color:#fff; width:100%; border:0; background:transparent; text-align:center; padding:0; }
+  .cell .num:focus { outline:none; background:#1b2740; border-radius:6px; }
+  .cell .conf { font-size:10.5px; color:#6f88a8; }
+  .cell.warn { border-color:#ffb020; box-shadow:0 0 0 1px #ffb020 inset; }
+  .cell.miss { border-color:#ff5d5d; box-shadow:0 0 0 1px #ff5d5d inset; }
+  .cell .wb { color:#ffb020; }
+  textarea { width:100%; height:110px; background:#0a0e16; color:#cfe; border:1px solid #2a3a55; border-radius:8px; padding:8px; font-family:ui-monospace,monospace; font-size:13px; margin-top:8px; }
+  .badge { display:inline-block; background:#1d2a40; color:#9fc0ff; border-radius:6px; padding:2px 8px; font-size:12px; margin-left:6px; }
+  #status { color:#9fc0ff; font-size:13px; min-height:20px; margin:4px 2px 10px; }
+  .warnbox { background:#2a1f0c; border:1px solid #6b4d10; color:#ffd68a; border-radius:10px; padding:9px 11px; font-size:12.5px; margin:8px 0; }
+  details { margin-top:10px; } summary { cursor:pointer; color:#8aa0bd; font-size:13px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>CABO 一拍出分 <span class="badge">全自动</span></h1>
+  <p class="sub">直接拍整桌照片，自动找到 16 张牌上的数字并读出来。不用框牌、不用点桌角。</p>
+
+  <div class="bar">
+    <button id="fileBtn" class="big">📷 拍照 / 选图</button>
+    <button id="demoBtn" class="sec">用示例图</button>
+    <input id="fileInput" type="file" accept="image/*" style="display:none">
+  </div>
+  <div id="status"></div>
+
+  <div class="stage" id="stage1">
+    <canvas id="prev"></canvas>
+    <div class="hint" id="detHint"></div>
+    <div class="bar" style="margin-top:10px">
+      <button id="runBtn" class="big">🚀 识别这 16 张牌</button>
+    </div>
+    <details>
+      <summary>识别不到牌？手动调亮度阈值</summary>
+      <div class="ctrl"><span>白字阈值</span><input id="thr" type="range" min="120" max="245" value="200"><span id="thrv">自动</span></div>
+      <div class="hint">数字是白色的：桌面/牌面越亮，阈值要调越高。改完会立刻重新框一遍。</div>
+    </details>
+  </div>
+
+  <div class="stage" id="stage2">
+    <h3 style="margin:4px 0 2px;font-size:15px">识别结果</h3>
+    <div class="hint">每格都能直接点着改。<span style="color:#ffb020">⚠</span> 是 6/9 容易读反，建议核对一眼。</div>
+    <div class="sides" id="sides"></div>
+    <div class="bar" style="margin-top:12px">
+      <button id="expBtn" class="sec">📋 生成分数文本</button>
+      <button id="copyBtn" class="sec">复制</button>
+      <button id="backBtn" class="sec">⬅ 重拍</button>
+    </div>
+    <textarea id="outText" readonly placeholder="点「生成分数文本」后可粘贴到计分器"></textarea>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+function setStatus(t){ $('status').textContent = t || ''; }
+
+/* ============================================================
+   Image ink helpers.
+   Ported verbatim from _chk/_cprime.js, which scored 16/16 on the
+   reference table photo. Tesseract only reads dark-on-light glyphs at
+   roughly 60-80px tall, so every crop is converted to black-on-white
+   and normalised to 80px before recognition.
+   ============================================================ */
+function cc8Small(mask, W, H){
+  const lab = new Int32Array(W*H), parent = {}, comps = []; let n = 0;
+  function find(a){ while(parent[a]!==a){ parent[a]=parent[parent[a]]; a=parent[a]; } return a; }
+  function union(a,b){ const ra=find(a), rb=find(b); if(ra!==rb) parent[ra]=rb; }
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    const idx=y*W+x; if(!mask[idx]) continue;
+    n++; lab[idx]=n; parent[n]=n;
+    if(x>0 && mask[idx-1]) union(n, lab[idx-1]);
+    if(y>0 && mask[idx-W]) union(n, lab[idx-W]);
+    if(x>0 && y>0 && mask[idx-W-1]) union(n, lab[idx-W-1]);
+    if(x<W-1 && y>0 && mask[idx-W+1]) union(n, lab[idx-W+1]);
+  }
+  const map = {};
+  for(let i=0;i<W*H;i++) if(lab[i]){ const r=find(lab[i]); (map[r]=map[r]||[]).push(i); }
+  for(const k in map) comps.push(map[k]);
+  return comps;
+}
+function extractInkCanvas(imgData, branch){
+  const W=imgData.width, H=imgData.height, data=imgData.data;
+  if(W<4||H<4) return null;
+  const N=W*H, L=new Float32Array(N);
+  for(let i=0;i<N;i++) L[i]=0.299*data[i*4]+0.587*data[i*4+1]+0.114*data[i*4+2];
+  const ink=new Uint8Array(N), thr=(branch==="bright")?INK_THR:60;
+  for(let i=0;i<N;i++) ink[i]=(branch==="bright")?(L[i]>thr?1:0):(L[i]<thr?1:0);
+  const pad=new Uint8Array((W+2)*(H+2));
+  for(let i=0;i<N;i++){ const x=i%W,y=(i/W)|0; if(ink[i]) pad[(y+1)*(W+2)+(x+1)]=1; }
+  const cleaned=new Uint8Array(N);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    if(!ink[y*W+x]) continue; let cnt=0;
+    for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ if(!dy&&!dx) continue; cnt+=pad[(y+1+dy)*(W+2)+(x+1+dx)]; }
+    if(cnt>=2) cleaned[y*W+x]=1;
+  }
+  let sum=0; for(let i=0;i<N;i++) sum+=cleaned[i];
+  if(sum<25) return null;
+  const comps=cc8Small(cleaned,W,H), kept=[];
+  for(const px of comps){
+    if(px.length<25) continue;
+    let x0=1e9,y0=1e9,x1=-1,y1=-1;
+    for(const idx of px){ const x=idx%W, y=(idx/W)|0; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    const bw=x1-x0+1, bh=y1-y0+1;
+    const touch=(x0<=0||y0<=0||x1>=W-1||y1>=H-1), fill=px.length/(bw*bh);
+    // The white outline ring around a card is centred too but nearly hollow,
+    // so a low fill ratio is what tells a real glyph from the border.
+    if(touch||fill<0.08) continue;
+    kept.push([x0,y0,x1,y1]);
+  }
+  let kb=kept;
+  if(!kb.length){
+    const big=comps.slice().sort((a,b)=>b.length-a.length)[0]; if(!big) return null;
+    let x0=1e9,y0=1e9,x1=-1,y1=-1;
+    for(const idx of big){ const x=idx%W,y=(idx/W)|0; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    kb=[[x0,y0,x1,y1]];
+  }
+  // Union of every surviving glyph keeps two-digit values (10-13) intact.
+  let X0=1e9,Y0=1e9,X1=-1,Y1=-1;
+  for(const k of kb){ X0=Math.min(X0,k[0]); Y0=Math.min(Y0,k[1]); X1=Math.max(X1,k[2]); Y1=Math.max(Y1,k[3]); }
+  const p2=6;
+  X0=Math.max(0,X0-p2); Y0=Math.max(0,Y0-p2); X1=Math.min(W-1,X1+p2); Y1=Math.min(H-1,Y1+p2);
+  const cw=X1-X0+1, ch=Y1-Y0+1;
+  const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+  const cctx=cv.getContext('2d'), id=cctx.createImageData(cw,ch);
+  for(let yy=0;yy<ch;yy++) for(let xx=0;xx<cw;xx++){
+    const oi=(yy*cw+xx)*4;
+    const on=cleaned[(Y0+yy)*W+(X0+xx)];
+    id.data[oi]=on?0:255; id.data[oi+1]=on?0:255; id.data[oi+2]=on?0:255; id.data[oi+3]=255;
+  }
+  cctx.putImageData(id,0,0);
+  const s=80/ch; let nw=Math.max(1,Math.round(cw*s)); if(nw>400) nw=400;
+  const out=document.createElement('canvas'); out.width=nw; out.height=80;
+  const oc=out.getContext('2d'); oc.imageSmoothingEnabled=false; oc.drawImage(cv,0,0,nw,80);
+  return out;
+}
+function rotateCanvas(src, deg){
+  if(deg===0) return src;
+  const swap = (deg===90||deg===270);
+  const W = swap?src.height:src.width, H = swap?src.width:src.height;
+  const out=document.createElement('canvas'); out.width=W; out.height=H;
+  const ctx=out.getContext('2d');
+  ctx.translate(W/2,H/2); ctx.rotate(deg*Math.PI/180);
+  ctx.drawImage(src, -src.width/2, -src.height/2);
+  return out;
+}
+
+/* ============================================================
+   Automatic card location: no corners, no grid, no manual boxes.
+   Find every bright glyph in the whole photo, group glyphs that touch
+   into one number, throw away the draw/discard pile in the middle,
+   then bucket the 16 survivors onto the four table edges.
+   ============================================================ */
+let INK_THR = 200;
+
+// Whole-image labelling needs a typed-array flood fill; the union-find above
+// is fine for tiny crops but crawls at a million pixels.
+function componentsBig(mask, W, H){
+  const N=W*H, lab=new Int32Array(N).fill(-1), stack=new Int32Array(N), out=[];
+  for(let s=0;s<N;s++){
+    if(!mask[s] || lab[s]!==-1) continue;
+    let sp=0; stack[sp++]=s; lab[s]=out.length;
+    const px=[];
+    while(sp>0){
+      const i=stack[--sp]; px.push(i);
+      const x=i%W, y=(i/W)|0;
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){
+        if(!dx&&!dy) continue;
+        const nx=x+dx, ny=y+dy;
+        if(nx<0||ny<0||nx>=W||ny>=H) continue;
+        const ni=ny*W+nx;
+        if(mask[ni] && lab[ni]===-1){ lab[ni]=out.length; stack[sp++]=ni; }
+      }
+    }
+    out.push(px);
+  }
+  return out;
+}
+function statsOf(px, W){
+  let x0=1e9,y0=1e9,x1=-1,y1=-1;
+  for(const i of px){ const x=i%W, y=(i/W)|0; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+  const bw=x1-x0+1, bh=y1-y0+1;
+  return { x0,y0,x1,y1,bw,bh, area:px.length, fill:px.length/(bw*bh), cx:(x0+x1)/2, cy:(y0+y1)/2 };
+}
+function detectCards(imgData, thr){
+  const W=imgData.width, H=imgData.height, N=W*H, data=imgData.data;
+  const cx=W/2, cy=H/2, S=Math.min(W,H);
+
+  const ink=new Uint8Array(N);
+  for(let i=0;i<N;i++){
+    const L=0.299*data[i*4]+0.587*data[i*4+1]+0.114*data[i*4+2];
+    if(L>thr) ink[i]=1;
+  }
+  const pad=new Uint8Array((W+2)*(H+2));
+  for(let i=0;i<N;i++) if(ink[i]) pad[(((i/W)|0)+1)*(W+2)+((i%W)+1)]=1;
+  const cleaned=new Uint8Array(N);
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){
+    if(!ink[y*W+x]) continue; let c=0;
+    for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ if(!dx&&!dy) continue; c+=pad[(y+1+dy)*(W+2)+(x+1+dx)]; }
+    if(c>=2) cleaned[y*W+x]=1;
+  }
+
+  // Glyph gate, sized relative to the image so any camera resolution behaves
+  // the same. Aspect is checked on the long/short axis because cards on the
+  // left and right edges lie sideways - assuming "taller than wide" silently
+  // drops half the table.
+  const glyphs = componentsBig(cleaned,W,H).map(p=>statsOf(p,W)).filter(s=>{
+    const minD=Math.min(s.bw,s.bh), maxD=Math.max(s.bw,s.bh), asp=maxD/minD;
+    return s.area>=S*S*0.00005 && s.area<=S*S*0.01 &&
+           maxD>=S*0.025 && maxD<=S*0.14 &&
+           s.fill>=0.15 && s.fill<=0.95 && asp>=0.8 && asp<=6;
+  });
+
+  // Merge touching glyphs so "12" stays one number. 0.6 of glyph height is
+  // wide enough to bridge the two strokes of "11" yet far below the gap
+  // between neighbouring cards, so separate cards never fuse.
+  const used=new Array(glyphs.length).fill(false), groups=[];
+  for(let i=0;i<glyphs.length;i++){
+    if(used[i]) continue;
+    const grp=[i]; used[i]=true;
+    let grew=true;
+    while(grew){
+      grew=false;
+      for(let j=0;j<glyphs.length;j++){
+        if(used[j]) continue;
+        for(const k of grp){
+          const a=glyphs[k], b=glyphs[j];
+          const h=Math.max(a.bh,b.bh,a.bw,b.bw);
+          const gapX=Math.max(0, Math.max(a.x0,b.x0)-Math.min(a.x1,b.x1));
+          const gapY=Math.max(0, Math.max(a.y0,b.y0)-Math.min(a.y1,b.y1));
+          if((gapX<h*0.6 && gapY<h*0.45) || (gapY<h*0.6 && gapX<h*0.45)){
+            grp.push(j); used[j]=true; grew=true; break;
+          }
+        }
+      }
+    }
+    let x0=1e9,y0=1e9,x1=-1,y1=-1,area=0;
+    for(const k of grp){ const s=glyphs[k]; x0=Math.min(x0,s.x0); y0=Math.min(y0,s.y0); x1=Math.max(x1,s.x1); y1=Math.max(y1,s.y1); area+=s.area; }
+    groups.push({ x0,y0,x1,y1, bw:x1-x0+1, bh:y1-y0+1, n:grp.length, area, cx:(x0+x1)/2, cy:(y0+y1)/2 });
+  }
+
+  // The draw and discard piles sit in the middle of the table and also carry
+  // white print, so anything near the centre (or glued to the frame) is out.
+  const cards = groups.filter(c=>{
+    const d=Math.hypot(c.cx-cx, c.cy-cy);
+    const border=(c.x0<=2||c.y0<=2||c.x1>=W-3||c.y1>=H-3);
+    return d>S*0.22 && !border;
+  });
+
+  // Each card belongs to whichever table edge it sits closest to.
+  const sides={A:[],B:[],C:[],D:[]};
+  for(const c of cards){
+    const d={ A:c.cy, B:W-c.cx, C:H-c.cy, D:c.cx };
+    let side='A';
+    for(const k of ['B','C','D']) if(d[k]<d[side]) side=k;
+    sides[side].push(c);
+  }
+  for(const k of ['A','B','C','D']){
+    // Real digits dwarf any leftover speckle, so size breaks ties.
+    if(sides[k].length>4){ sides[k].sort((a,b)=>b.area-a.area); sides[k]=sides[k].slice(0,4); }
+    sides[k].sort((a,b)=> (k==='A'||k==='C') ? a.cx-b.cx : a.cy-b.cy);
+  }
+  return { sides, total: sides.A.length+sides.B.length+sides.C.length+sides.D.length };
+}
+
+// Sweep thresholds and keep the one that lands closest to a full 4/4/4/4 table.
+function autoDetect(imgData){
+  const cands=[200,215,185,230,170,245,150,135];
+  let best=null, bestThr=200, bestScore=-1;
+  for(const t of cands){
+    const r=detectCards(imgData,t);
+    const balance=['A','B','C','D'].reduce((s,k)=>s+Math.min(r.sides[k].length,4),0);
+    const penalty=['A','B','C','D'].reduce((s,k)=>s+Math.max(0,r.sides[k].length-4),0);
+    const score=balance*10-penalty;
+    if(score>bestScore){ bestScore=score; best=r; bestThr=t; }
+    if(balance===16 && penalty===0) break;
+  }
+  return { res:best, thr:bestThr };
+}
+
+/* ---------- state / stage ---------- */
+let srcImg=null;          // ImageData used for detection
+let srcCanvas=null;       // canvas holding the (downscaled) photo
+let detected=null;        // { sides, total }
+let worker=null, busy=false;
+const SIDE_LABEL={ A:'上家', B:'右家', C:'下家（你）', D:'左家' };
+
+function loadImage(src){
+  const img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=()=>{
+    // Cap the working resolution: a 12MP phone photo would make whole-image
+    // labelling crawl, and digits stay comfortably large at this size.
+    const MAX=1500, sc=Math.min(1, MAX/Math.max(img.width,img.height));
+    const w=Math.round(img.width*sc), h=Math.round(img.height*sc);
+    srcCanvas=document.createElement('canvas'); srcCanvas.width=w; srcCanvas.height=h;
+    const ctx=srcCanvas.getContext('2d');
+    ctx.drawImage(img,0,0,w,h);
+    srcImg=ctx.getImageData(0,0,w,h);
+    $('stage1').classList.add('on'); $('stage2').classList.remove('on');
+    setStatus('正在自动寻找牌上的数字…');
+    setTimeout(()=>{
+      const { res, thr }=autoDetect(srcImg);
+      detected=res; INK_THR=thr;
+      $('thr').value=thr; $('thrv').textContent=thr;
+      paint();
+      setStatus('');
+    },30);
+  };
+  img.onerror=()=>setStatus('图片加载失败，换一张试试');
+  img.src=src;
+}
+
+function redetect(thr){
+  if(!srcImg) return;
+  INK_THR=thr;
+  detected=detectCards(srcImg,thr);
+  paint();
+}
+
+function paint(){
+  const cv=$('prev');
+  cv.width=srcCanvas.width; cv.height=srcCanvas.height;
+  const ctx=cv.getContext('2d');
+  ctx.drawImage(srcCanvas,0,0);
+  const colors={A:'#4dd07a',B:'#ffd23f',C:'#2b6cff',D:'#ff7ac0'};
+  let n=0;
+  for(const k of ['A','B','C','D']){
+    ctx.strokeStyle=colors[k]; ctx.lineWidth=Math.max(2,srcCanvas.width/400);
+    ctx.font=`bold ${Math.max(12,srcCanvas.width/50)}px sans-serif`; ctx.fillStyle=colors[k];
+    detected.sides[k].forEach((c,i)=>{
+      const p=Math.round(Math.max(c.bw,c.bh)*0.28);
+      ctx.strokeRect(c.x0-p, c.y0-p, c.bw+2*p, c.bh+2*p);
+      ctx.fillText(k+(i+1), c.x0-p, c.y0-p-4);
+      n++;
+    });
+  }
+  const counts=['A','B','C','D'].map(k=>k+':'+detected.sides[k].length).join('  ');
+  $('detHint').innerHTML = n===16
+    ? `✅ 找到 <b>16</b> 张牌（${counts}）。直接点下面识别。`
+    : `⚠️ 只找到 <b>${n}</b> 张（${counts}）。可以先识别，或展开下面调阈值再试。`;
+  $('runBtn').disabled = n===0;
+}
+
+/* ---------- OCR ---------- */
+async function ensureWorker(){
+  if(worker) return worker;
+  setStatus('首次识别要下载识别引擎（约几 MB），请稍候…');
+  worker=await Tesseract.createWorker('eng',1,{ logger:()=>{} });
+  await worker.setParameters({ tessedit_char_whitelist:'0123456789', preserve_interword_spaces:'0' });
+  return worker;
+}
+function cropCanvas(c){
+  const p=Math.round(Math.max(c.bw,c.bh)*0.28);
+  const x0=Math.max(0,Math.round(c.x0-p)), y0=Math.max(0,Math.round(c.y0-p));
+  const x1=Math.min(srcCanvas.width-1,Math.round(c.x1+p)), y1=Math.min(srcCanvas.height-1,Math.round(c.y1+p));
+  const w=x1-x0+1, h=y1-y0+1;
+  const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  cv.getContext('2d').drawImage(srcCanvas,x0,y0,w,h,0,0,w,h);
+  return cv;
+}
+const ROTS=[0,90,180,270];
+
+$('runBtn').onclick=async()=>{
+  if(busy||!detected) return;
+  busy=true; $('runBtn').disabled=true;
+  try{
+    const w=await ensureWorker();
+    const scan={};
+    let done=0;
+    const totalCards=['A','B','C','D'].reduce((s,k)=>s+detected.sides[k].length,0);
+
+    // Pass 1 - read every card at all four rotations and remember each result.
+    for(const side of ['A','B','C','D']){
+      scan[side]=[];
+      for(const c of detected.sides[side]){
+        const raw=cropCanvas(c), perRot={};
+        for(const rot of ROTS){
+          // Rotate before extracting: the 80px normalisation must be measured
+          // on an upright glyph, otherwise sideways cards get scaled by their
+          // width and come out unreadable.
+          const rc=rotateCanvas(raw,rot);
+          const rimg=rc.getContext('2d').getImageData(0,0,rc.width,rc.height);
+          const ink=extractInkCanvas(rimg,'bright') || extractInkCanvas(rimg,'dark');
+          if(!ink){ perRot[rot]={text:'',conf:0}; continue; }
+          let b={text:'',conf:0};
+          for(const psm of ['8','6']){
+            await w.setParameters({ tessedit_pageseg_mode:psm });
+            const { data:{ text, confidence } } = await w.recognize(ink);
+            const m=text.replace(/\D/g,'').match(/^(\d{1,2})/);
+            if(m){
+              const v=parseInt(m[1],10), conf=confidence||0;
+              if(v>=0 && v<=13 && conf>b.conf) b={ text:String(v), conf };
+            }
+          }
+          perRot[rot]=b;
+        }
+        scan[side].push({ c, perRot });
+        done++; setStatus(`识别中… ${done}/${totalCards}`);
+      }
+    }
+
+    // Pass 2 - every card on one edge faces the same player, so the four cards
+    // vote on a single rotation for the whole edge. This is what rescues the
+    // low-confidence reads that would otherwise land upside down.
+    const results={};
+    for(const side of ['A','B','C','D']){
+      const votes={};
+      for(const rot of ROTS) votes[rot]=scan[side].reduce((s,x)=>s+(x.perRot[rot].text?x.perRot[rot].conf:0),0);
+      let bestRot=ROTS[0];
+      for(const rot of ROTS) if(votes[rot]>votes[bestRot]) bestRot=rot;
+      results[side]=scan[side].map(({perRot})=>{
+        let hit=perRot[bestRot];
+        if(!hit.text) for(const rot of ROTS) if(perRot[rot].conf>hit.conf) hit=perRot[rot];
+        return { v: hit.text===''?null:parseInt(hit.text,10), conf: Math.round(hit.conf) };
+      });
+    }
+    renderSides(results);
+    $('stage2').classList.add('on');
+    setStatus('识别完成，核对一下带 ⚠ 的格子就能用了。');
+    $('stage2').scrollIntoView({ behavior:'smooth', block:'start' });
+  }catch(e){
+    setStatus('识别出错：'+e.message);
+  }
+  busy=false; $('runBtn').disabled=false;
+};
+
+function renderSides(results){
+  const box=$('sides'); box.innerHTML='';
+  for(const k of ['A','B','C','D']){
+    const wrap=document.createElement('div'); wrap.className='side';
+    const cells=results[k].map((r,i)=>{
+      const warn=(r.v===6||r.v===9);
+      const miss=(r.v===null);
+      return `<div class="cell${warn?' warn':''}${miss?' miss':''}">
+        <input class="num" type="text" inputmode="numeric" maxlength="2" data-side="${k}" value="${r.v===null?'':r.v}">
+        <div class="conf">${miss?'未读出':(r.conf+(warn?' <span class="wb">⚠</span>':''))}</div>
+      </div>`;
+    }).join('');
+    wrap.innerHTML=`<h4><span>${SIDE_LABEL[k]}（${k}）</span><span class="tot" data-tot="${k}">-</span></h4><div class="row">${cells}</div>`;
+    box.appendChild(wrap);
+  }
+  box.querySelectorAll('.num').forEach(inp=>inp.addEventListener('input',updateTotals));
+  updateTotals();
+}
+function updateTotals(){
+  for(const k of ['A','B','C','D']){
+    const vals=[...document.querySelectorAll(`.num[data-side="${k}"]`)].map(i=>parseInt(i.value,10));
+    const known=vals.filter(v=>!isNaN(v));
+    const sum=known.reduce((a,b)=>a+b,0);
+    const el=document.querySelector(`[data-tot="${k}"]`);
+    if(el) el.textContent = known.length===4 ? sum : `${sum} (${known.length}/4)`;
+  }
+}
+
+/* ---------- inputs / export ---------- */
+$('fileBtn').onclick=()=>$('fileInput').click();
+$('fileInput').onchange=e=>{
+  const f=e.target.files&&e.target.files[0]; if(!f) return;
+  const rd=new FileReader(); rd.onload=()=>loadImage(rd.result); rd.readAsDataURL(f);
+};
+$('demoBtn').onclick=()=>loadImage('assets/cabo-table-demo.png');
+$('thr').oninput=e=>{ const v=+e.target.value; $('thrv').textContent=v; redetect(v); };
+$('backBtn').onclick=()=>{ $('stage2').classList.remove('on'); $('stage1').scrollIntoView({behavior:'smooth'}); };
+$('expBtn').onclick=()=>{
+  const lines=['A','B','C','D'].map(k=>{
+    const vals=[...document.querySelectorAll(`.num[data-side="${k}"]`)].map(i=>i.value.trim()||'?');
+    const nums=vals.filter(v=>v!=='?').map(Number);
+    const sum=nums.reduce((a,b)=>a+b,0);
+    return `${SIDE_LABEL[k]}：${vals.join('  ')}   = ${sum}${vals.includes('?')?' (有未读出)':''}`;
+  });
+  $('outText').value=lines.join('\n');
+};
+$('copyBtn').onclick=async()=>{
+  if(!$('outText').value) $('expBtn').onclick();
+  try{ await navigator.clipboard.writeText($('outText').value); setStatus('已复制'); }
+  catch(e){ setStatus('复制失败，请手动选中文本'); }
+};
+</script>
+</body>
+</html>
