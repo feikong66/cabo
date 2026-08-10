@@ -810,7 +810,7 @@ const I18N = {
     "保存失败 ": "Save failed ",
     "📡 房间 ": "📡 Room ",
     "该房间仅限已登录用户加入。本地版没有账号，请改用在线版并登录后再加入": "This room is for logged-in users only. The local version has no account — switch to the online version, log in, then join.",
-    "<p class=\"room-lead\">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方）。本地版<b>无账号</b>，因此无法加入在线版开启了「仅登录用户」的房间——需要那种防护请用在线版登录后联机。</p> <button class=\"primary\" id=\"roomCreate\" style=\"width:100%;margin-bottom:16px\">➕ 创建房间</button>": "<p class=\"room-lead\">Want two phones to score together? <b>Create a room</b>, share the room code or QR with teammates, and scores <b>sync in real time</b> (millisecond-level — any change pushes to the other side instantly). The local version <b>has no account</b>, so it can't join an online room with 'logged-in users only' enabled — for that protection, use the online version and log in to play online.</p> <button class=\"primary\" id=\"roomCreate\" style=\"width:100%;margin-bottom:16px\">➕ Create room</button>",
+    "<p class=\"room-lead\">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方）。无需登录账号，进房即可改分；如需限制他人改分，请用<b>锁定房间</b>。</p> <button class=\"primary\" id=\"roomCreate\" style=\"width:100%;margin-bottom:16px\">➕ 创建房间</button>": "<p class=\"room-lead\">Want two phones to score together? <b>Create a room</b>, share the room code or QR with teammates, and scores <b>sync in real time</b> (millisecond-level — any change pushes to the other side instantly). The local version <b>has no account</b>, so it can't join an online room with 'logged-in users only' enabled — for that protection, use the online version and log in to play online.</p> <button class=\"primary\" id=\"roomCreate\" style=\"width:100%;margin-bottom:16px\">➕ Create room</button>",
     "修复：设置页音效、自动存档、输入后自动跳格、低分嘉奖四个开关因 class 缺失空格导致无法点击开关": "Fixed: settings toggles for sound, auto-save, auto-advance and low-bonus were unclickable due to missing space in the class attribute",
     "优化：语音播报改为队列播放，提交本局后按顺序依次朗读神风特攻队、CABO、得分满减事件及玩家分数变化，不再互相打断": "Improved: voice announcements now queue and play sequentially, reading Kamikaze, Cabo, 100-point halving and score changes in order without cutting each other off"
   }
@@ -1249,7 +1249,9 @@ function normalize(){
   /* 房间成员名单：members 由旧版「DEVICE_ID 字符串数组」升级为 [{id,name,login,at}]，向后兼容 */
   if(!state.lock || typeof state.lock !== "object") state.lock = {locked:false, loginOnly:false, owner:"", members:[], banned:[]};
   if(typeof state.lock.locked !== "boolean") state.lock.locked = false;
-  if(typeof state.lock.loginOnly !== "boolean") state.lock.loginOnly = false;
+  /* 「仅登录用户」机制已废弃：无账号体系时它会把所有人（含房主）锁成只读。
+     这里强制归零，顺带清掉历史房间数据里遗留的 true，避免老房间继续锁死。 */
+  state.lock.loginOnly = false;
   if(typeof state.lock.owner !== "string") state.lock.owner = "";
   if(!Array.isArray(state.lock.members)) state.lock.members = [];
   state.lock.members = state.lock.members.map(function(m){
@@ -3281,10 +3283,7 @@ async function roomJoin(code, creator){
         throw new Error(t("你已被房主移出该房间，无法再次加入"));
       }
     }
-    if(_lk.loginOnly && !isLoggedIn()){
-      room.code = null; room.rev = 0;
-      throw new Error(t("该房间仅限已登录用户加入。本地版没有账号，请改用在线版并登录后再加入"));
-    }
+    /* 「仅登录用户」准入已废弃：不再因为未登录而拒绝加入房间 */
     room.code = code; room.rev = d.rev || 0; room.err = null; state = d.state; normalize(); render();
     // 成员维护：未锁定则把本机登记为成员；锁定则非成员视为只读
     if(!state.lock.locked) memberSelfTouch();
@@ -3361,7 +3360,7 @@ function roomIsOwner(){ const L = lockObj(); if(L.owner) return L.owner === DEVI
 function roomMsgBlocked(byId, who){
   const L = lockObj(); who = who || {};
   if(isBanned(byId, who.name)) return true;
-  if(L.loginOnly && !who.login) return true;
+  /* 「仅登录用户」拦截已废弃：不再因为对方未登录而拒收其数据 */
   if(L.locked && !memberHas(byId)) return true;
   return false;
 }
@@ -3397,18 +3396,16 @@ function roomUnban(id){
   toast(t("已恢复：") + ((b && b.name) || (t("设备") + String(id).slice(-4))) + t("，对方可重新加入"));
   pushOpLog(t("恢复成员 ") + ((b && b.name) || id));
 }
+/* 「仅登录用户」功能已废弃并下线（无账号体系下会把所有人锁成只读）。
+   保留空实现兼容旧引用；若旧数据仍带 loginOnly=true，这里顺手清掉并同步出去。 */
 async function roomToggleLoginOnly(){
-  if(!roomIsOwner()){ toast(t("仅房主可以更改准入设置")); return; }
   const L = lockObj();
-  L.loginOnly = !L.loginOnly;
-  memberSelfTouch(); save(); render(); roomPush();
-  toast(L.loginOnly ? "🔐 已开启：仅登录用户可进房（本地版自身也会被挡）" : "🔓 已关闭登录限制");
-  pushOpLog(L.loginOnly ? t("opLogLoginOnlyOn") : t("opLogLoginOnlyOff"));
+  if(L.loginOnly){ L.loginOnly = false; memberSelfTouch(); save(); render(); roomPush(); }
 }
 function roomIsReadOnly(){
   if(isBanned(DEVICE_ID, myLoginName())) return true;              // 已被房主移出
   const L = lockObj();
-  if(L.loginOnly && !isLoggedIn()) return true;                    // 房间仅限登录用户
+  /* 「仅登录用户」只读判定已废弃（无账号体系下会把所有人锁死） */
   return !!(L.locked && !memberHas(DEVICE_ID));                    // 锁定后非成员只读
 }
 async function roomForceSync(){
@@ -3487,7 +3484,7 @@ function roomPanelHtml(){
       const raw = JSON.parse(localStorage.getItem(ROOM_KEY) || "null");
       if(raw && raw.code){ reconnectHtml = `${t(`<button class="ghost" id="roomReconnect" style="width:100%;margin-top:8px">🔄 重连房间`)}${raw.code}</button>`; }
     }catch(e){}
-    return _warn + `${t(`<p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方）。本地版<b>无账号</b>，因此无法加入在线版开启了「仅登录用户」的房间——需要那种防护请用在线版登录后联机。</p> <button class="primary" id="roomCreate" style="width:100%;margin-bottom:16px">➕ 创建房间</button>`)}${reconnectHtml}${t(`<div class="room-or"><span>已有房间码？</span></div> <input class="room-input" id="roomInput" maxlength="6" placeholder="ABC123" autocomplete="off" spellcheck="false" inputmode="latin"> <button class="ghost" id="roomJoinBtn" style="width:100%;margin-top:10px">🔑 加入房间</button>`)}`;
+    return _warn + `${t(`<p class="room-lead">两台手机想一起记分？<b>建一个房间</b>，把房间码或二维码给队友，双方的分数会<b>实时同步</b>（毫秒级，改一下立刻推给对方）。无需登录账号，进房即可改分；如需限制他人改分，请用<b>锁定房间</b>。</p> <button class="primary" id="roomCreate" style="width:100%;margin-bottom:16px">➕ 创建房间</button>`)}${reconnectHtml}${t(`<div class="room-or"><span>已有房间码？</span></div> <input class="room-input" id="roomInput" maxlength="6" placeholder="ABC123" autocomplete="off" spellcheck="false" inputmode="latin"> <button class="ghost" id="roomJoinBtn" style="width:100%;margin-top:10px">🔑 加入房间</button>`)}`;
   }
   const link = roomLink(room.code);
   const qr = (typeof CABOQR !== "undefined" && CABOQR.svg(link, 190)) || t('<div class="room-hint">二维码生成失败</div>');
@@ -3498,15 +3495,12 @@ function roomPanelHtml(){
   const lockBtn = owner
     ? `<button class="ghost" id="roomLock">${locked ? "🔓 解锁房间" : "🔒 锁定房间"}</button>`
     : `<div class="room-hint">${locked ? (readOnly ? "🔒 房间已锁定：您为只读" : "🔒 房间已锁定") : "🔓 房间未锁定"}</div>`;
-  const loginBtn = owner
-    ? `<button class="ghost" id="roomLoginOnly">${L.loginOnly ? "🔐 仅登录用户：开" : "🔓 仅登录用户：关"}</button>`
-    : `<div class="room-hint">${L.loginOnly ? "🔐 本房间仅限登录用户" : "🔓 本房间允许未登录设备"}</div>`;
+  /* 「仅登录用户」开关已下线：不再渲染任何入口 */
   return `${t(`<div class="room-hint" style="margin:0 0 2px">把房间码告诉队友，或让对方直接扫码加入</div> <div class="room-code">`)}${room.code}</div>
     <div class="room-qr">${qr}${t(`</div> <div style="text-align:center"><span class="room-status" id="roomStat">🟢 实时已连接（毫秒级）</span></div> <div class="room-link">`)}${escapeHtml(link)}${t(`</div> <div class="action-row" style="margin-top:14px"> <button class="ghost" id="roomCopyCode">📋 复制房间码</button> <button class="ghost" id="roomCopy">📋 复制链接</button> </div> <div class="action-row"> <button class="ghost" id="roomSyncNow">⬇ 强制同步</button>`)}${lockBtn}
     </div>
-    <div class="action-row">${loginBtn}</div>
     ${roomMembersHtml()}
-    ${readOnly ? '<div class="room-hint" style="color:var(--danger);text-align:center">⚠ 你当前没有改分权限（只读）：可能已被房主移出、本房间仅限登录用户（本地版无账号）、或房间已锁定且你不在成员名单。</div>' : ''}${t(`<button class="ghost" id="roomLeave" style="width:100%;margin-top:10px;color:var(--danger)">🚪 退出房间</button>`)}`;
+    ${readOnly ? '<div class="room-hint" style="color:var(--danger);text-align:center">⚠ 你当前没有改分权限（只读）：可能已被房主移出，或房间已锁定且你不在成员名单。</div>' : ''}${t(`<button class="ghost" id="roomLeave" style="width:100%;margin-top:10px;color:var(--danger)">🚪 退出房间</button>`)}`;
 }
 function openRoom(){
   overlay.innerHTML = `${t(`<div class="modal"> <h2>📡 联机房间</h2> <div id="roomBody">`)}${roomPanelHtml()}${t(`</div> <div class="modal-actions"><button class="primary" id="roomClose">关闭</button></div> </div>`)}`;
@@ -3553,8 +3547,7 @@ function bindRoomPanel(){
   if(rlk) rlk.onclick = async ()=>{ await roomToggleLock(); redraw(); };
   const rcn = document.querySelector("#roomReconnect");
   if(rcn) rcn.onclick = async ()=>{ rcn.disabled = true; rcn.textContent = t("重连中…"); await roomReconnect(); redraw(); };
-  const lo = document.querySelector("#roomLoginOnly");
-  if(lo) lo.onclick = async ()=>{ await roomToggleLoginOnly(); redraw(); };
+  /* 「仅登录用户」按钮已下线，无需绑定 */
   // 踢人：行内二次确认，避免误触（不用弹窗，弹窗会顶掉房间面板）
   const kicks = document.querySelectorAll("[data-kick]");
   for(let i=0;i<kicks.length;i++){
