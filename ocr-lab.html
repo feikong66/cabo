@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2bb673">
+<title>OCR 试验室 · 卡波计分</title>
+<style>
+:root{
+ --bg:#eef2f0; --card:#ffffff; --accent:#2bb673; --accent-2:#1f9d5e;
+ --text:#16201c; --muted:#69786f; --danger:#e05a4d; --line:#e4eae6;
+ --gold:#f5b50a; --radius:16px;
+ --shadow:0 1px 2px rgba(20,40,30,.05), 0 8px 24px rgba(20,40,30,.06);
+ --input-bg:#f7faf8;
+}
+:root[data-theme="dark"]{
+ --bg:#0d1411; --card:#161f1b; --accent:#34d27f; --accent-2:#28b86b;
+ --text:#e8efeb; --muted:#8ea29a; --danger:#ff7a6b; --line:#26302b;
+ --gold:#ffce4d;
+ --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.35);
+ --input-bg:#1d2823;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  background-image:radial-gradient(1100px 460px at 50% -220px, rgba(43,182,115,.10), transparent 70%);
+  -webkit-text-size-adjust:100%;
+}
+.app{max-width:600px;margin:0 auto;padding:16px 14px 70px}
+header{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+header h1{font-size:19px;margin:0;flex:1;letter-spacing:.3px}
+.badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--accent);color:#fff;font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card h2{font-size:14px;margin:0 0 10px;display:flex;align-items:center;gap:6px;font-weight:700}
+.hint{font-size:12px;color:var(--muted);line-height:1.6;margin:6px 0 0}
+button{
+  font:inherit;font-weight:600;cursor:pointer;border-radius:10px;
+  border:1px solid var(--line);background:var(--input-bg);color:var(--text);
+  padding:9px 14px;transition:.15s;
+}
+button:active{transform:scale(.97)}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(43,182,115,.22)}
+button.primary:disabled{opacity:.5;box-shadow:none;cursor:not-allowed}
+button.wide{width:100%}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>button{flex:1;min-width:120px}
+label.fld{display:block;font-size:12px;color:var(--muted);font-weight:600;margin:10px 0 4px}
+select,input[type=text],textarea{
+  width:100%;font:inherit;padding:8px 10px;border:1px solid var(--line);
+  border-radius:9px;background:var(--input-bg);color:var(--text);
+}
+textarea{min-height:92px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px;line-height:1.6}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--line)}
+.sw:last-child{border-bottom:0}
+.sw .lab{font-size:13px;font-weight:600}
+.sw .sub{font-size:11px;color:var(--muted);margin-top:2px}
+.toggle{position:relative;width:46px;height:26px;flex:0 0 46px}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle span{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:.2s}
+.toggle span::before{content:"";position:absolute;width:20px;height:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.toggle input:checked+span{background:var(--accent)}
+.toggle input:checked+span::before{transform:translateX(20px)}
+.stage{position:relative;margin-top:10px;border-radius:12px;overflow:hidden;background:#0006;line-height:0;touch-action:none;user-select:none}
+.stage img{width:100%;display:block}
+.selbox{position:absolute;border:2px solid var(--accent);background:rgba(43,182,115,.16);pointer-events:none;box-shadow:0 0 0 9999px rgba(0,0,0,.32)}
+.tabs{display:flex;gap:6px;margin-bottom:8px}
+.tabs button{flex:1;padding:7px 6px;font-size:12px;border-radius:8px}
+.tabs button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+canvas.prev{width:100%;display:block;border-radius:12px;background:#fff;image-rendering:pixelated}
+.bar{height:7px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:999px;transition:width .25s}
+.stat{font-size:12px;color:var(--muted);margin-top:7px;min-height:17px}
+.kv{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 0}
+.kv .chip{font-size:11px;padding:4px 9px;border-radius:999px;background:var(--input-bg);border:1px solid var(--line);font-weight:600}
+.kv .chip b{color:var(--accent)}
+.nums{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.nums .n{
+  min-width:46px;text-align:center;padding:9px 11px;border-radius:10px;
+  background:var(--accent);color:#fff;font-weight:800;font-size:17px;
+  font-variant-numeric:tabular-nums;
+}
+.nums .n.low{background:var(--gold);color:#3a2c00}
+.warn{color:var(--danger);font-size:12px;margin-top:8px;font-weight:600}
+.ok{color:var(--accent);font-size:12px;margin-top:8px;font-weight:600}
+details{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+summary{font-size:12px;color:var(--muted);cursor:pointer;font-weight:600}
+.words{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.words span{font-size:11px;padding:3px 7px;border-radius:6px;background:var(--input-bg);border:1px solid var(--line);font-variant-numeric:tabular-nums}
+.words span.lo{border-color:var(--danger);color:var(--danger)}
+.foot{text-align:center;font-size:11px;color:var(--muted);margin-top:18px;line-height:1.8}
+.foot a{color:var(--accent);text-decoration:none;font-weight:600}
+.hide{display:none !important}
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);
+  background:rgba(20,30,25,.94);color:#fff;padding:10px 18px;border-radius:999px;
+  font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.22s;z-index:99;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <h1>📷 OCR 试验室</h1>
+  <span class="badge">v1</span>
+  <button id="themeBtn" style="padding:7px 10px" title="切换主题">🌗</button>
+</header>
+
+<div class="card">
+  <h2>① 选择照片</h2>
+  <div class="row">
+    <button class="primary" id="camBtn">📸 拍照</button>
+    <button id="fileBtn">🖼 从相册选</button>
+  </div>
+  <button class="wide" id="demoBtn" style="margin-top:8px">🧪 用示例图自检（先跑通再拍照）</button>
+  <input type="file" id="camIn" accept="image/*" capture="environment" class="hide">
+  <input type="file" id="fileIn" accept="image/*" class="hide">
+  <p class="hint">拍记分板、纸上分数、或手机截图都行。拍完可在下图<b>拖动框选</b>只识别分数那一块——框选能大幅提升准确率。<br>
+  没图也能先点<b>示例图自检</b>，它会生成一张带噪点和轻微倾斜的模拟记分板，正确结果应是 <b>12 / 7 / 25 / 3</b>。</p>
+  <div class="stage hide" id="stage">
+    <img id="srcImg" alt="">
+    <div class="selbox hide" id="selBox"></div>
+  </div>
+  <div class="row hide" id="cropRow" style="margin-top:9px">
+    <button id="clearCrop">↺ 取消框选</button>
+    <button id="rotBtn">🔄 旋转 90°</button>
+  </div>
+</div>
+
+<div class="card hide" id="prepCard">
+  <h2>② 图像预处理</h2>
+  <div class="tabs">
+    <button data-view="proc" class="on">处理后（送给 OCR）</button>
+    <button data-view="src">原图区域</button>
+  </div>
+  <canvas class="prev" id="prevCv"></canvas>
+
+  <label class="fld">放大倍数 <b id="scaleV">2.0×</b>（小字建议 2~3×）</label>
+  <input type="range" id="scale" min="1" max="4" step="0.5" value="2">
+
+  <div class="sw">
+    <div><div class="lab">灰度 + 对比度增强</div><div class="sub">去掉彩色干扰，字更实</div></div>
+    <label class="toggle"><input type="checkbox" id="gray" checked><span></span></label>
+  </div>
+  <div class="sw">
+    <div><div class="lab">二值化（黑白化）</div><div class="sub">纸质/反光场景通常明显更准</div></div>
+    <label class="toggle"><input type="checkbox" id="bin" checked><span></span></label>
+  </div>
+  <div class="sw" id="otsuRow">
+    <div><div class="lab">自动阈值 Otsu</div><div class="sub">默认 128 更稳；照片明暗不均时再开</div></div>
+    <label class="toggle"><input type="checkbox" id="otsu"><span></span></label>
+  </div>
+  <div id="thrRow">
+    <label class="fld">手动阈值 <b id="thrV">128</b></label>
+    <input type="range" id="thr" min="40" max="220" step="1" value="128">
+  </div>
+  <div class="sw">
+    <div><div class="lab">反色</div><div class="sub">深底浅字（如黑板、深色 App）时打开</div></div>
+    <label class="toggle"><input type="checkbox" id="inv"><span></span></label>
+  </div>
+</div>
+
+<div class="card hide" id="cfgCard">
+  <h2>③ 识别参数</h2>
+  <label class="fld">识别内容</label>
+  <select id="mode">
+    <option value="digits">只认数字（推荐·计分场景最准）</option>
+    <option value="digitsName">数字 + 英文名</option>
+    <option value="all">全部字符（含中文名，慢且需下载中文包）</option>
+  </select>
+
+  <label class="fld">版面模式 PSM</label>
+  <select id="psm">
+    <option value="6">6 · 单块文本（记分板推荐）</option>
+    <option value="4">4 · 单列可变字号</option>
+    <option value="11">11 · 稀疏文本（分散的数字）</option>
+    <option value="7">7 · 单行文本</option>
+    <option value="3">3 · 全自动</option>
+  </select>
+
+  <label class="fld">语言模型</label>
+  <select id="langp">
+    <option value="fast">fast · 约 2MB（快，够用）</option>
+    <option value="std">standard · 约 11MB（更准，首次慢）</option>
+  </select>
+  <p class="hint" id="dlHint">语言包首次下载后会缓存在浏览器，之后离线也能用。</p>
+
+  <button class="primary wide" id="runBtn" style="margin-top:12px">🔍 开始识别</button>
+  <div class="bar"><i id="barI"></i></div>
+  <div class="stat" id="stat"></div>
+</div>
+
+<div class="card hide" id="resCard">
+  <h2>④ 识别结果</h2>
+  <div class="kv" id="kv"></div>
+  <label class="fld">识别文本（可手动改错字）</label>
+  <textarea id="outText" spellcheck="false"></textarea>
+  <div class="row" style="margin-top:9px">
+    <button id="reparse">↻ 重新解析</button>
+    <button class="primary" id="copyBtn">📋 复制文本</button>
+  </div>
+
+  <label class="fld" style="margin-top:14px">按计分规则解析出的分数（前 <span id="pcShow">4</span> 位）</label>
+  <div class="nums" id="nums"></div>
+  <div id="parseMsg"></div>
+  <label class="fld">玩家人数</label>
+  <select id="pcount">
+    <option>2</option><option>3</option><option selected>4</option>
+    <option>5</option><option>6</option><option>7</option><option>8</option>
+  </select>
+  <p class="hint">解析逻辑与计分页「快捷录入」完全一致：复制上面的文本，粘贴进计分页的快捷录入框点「应用」即可批量填分。</p>
+
+  <details>
+    <summary>逐词置信度（红色 = 低于 70，重点核对）</summary>
+    <div class="words" id="words"></div>
+  </details>
+</div>
+
+<div class="foot">
+  这是独立试验页，不影响正式计分页的稳定性。<br>
+  <a href="./">← 回首页</a> ·
+  <a href="./CABO_v0.7.4.1.html">进入计分（云端版）</a>
+</div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============ 基础 ============ */
+var $ = function(s){ return document.querySelector(s); };
+var toastT = null;
+function toast(msg){
+  var el = $("#toast");
+  el.textContent = msg; el.classList.add("on");
+  clearTimeout(toastT);
+  toastT = setTimeout(function(){ el.classList.remove("on"); }, 1900);
+}
+
+/* 主题：跟随系统 + 手动切换（记忆） */
+(function initTheme(){
+  var saved = null;
+  try{ saved = localStorage.getItem("ocrlab-theme"); }catch(e){}
+  var dark = saved ? (saved === "dark")
+                   : (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+})();
+$("#themeBtn").onclick = function(){
+  var cur = document.documentElement.getAttribute("data-theme");
+  var next = cur === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  try{ localStorage.setItem("ocrlab-theme", next); }catch(e){}
+};
+
+/* ============ 状态 ============ */
+var srcImg = $("#srcImg");      // 仅用于显示 + 框选坐标参照
+var origImg = null;             // 原始图（永不变，旋转始终以它为基准）
+var objUrl = null;              // 当前 objectURL，换图时释放，防内存泄漏
+var imgLoaded = false;
+var rotation = 0;               // 0/90/180/270
+var crop = null;                // {x,y,w,h} 归一化 0~1（相对旋转后的图）
+var baseCanvas = null;          // 旋转后的原图 canvas
+var view = "proc";
+
+/* ============ 选图 ============ */
+$("#camBtn").onclick = function(){ $("#camIn").click(); };
+$("#fileBtn").onclick = function(){ $("#fileIn").click(); };
+$("#camIn").onchange = function(e){ handleFile(e.target.files[0]); };
+$("#fileIn").onchange = function(e){ handleFile(e.target.files[0]); };
+
+function handleFile(f){
+  if(!f) return;
+  var url = URL.createObjectURL(f);
+  var im = new Image();
+  im.onload = function(){
+    if(objUrl) URL.revokeObjectURL(objUrl);   // 释放上一张，避免连续选图泄漏
+    objUrl = url;
+    origImg = im;
+    adoptImage("图片已载入，可拖动框选区域");
+  };
+  im.onerror = function(){ URL.revokeObjectURL(url); toast("图片读取失败"); };
+  im.src = url;
+}
+
+/* 载入 origImg 后统一走这里 */
+function adoptImage(msg){
+  imgLoaded = true;
+  rotation = 0; crop = null;
+  $("#stage").classList.remove("hide");
+  $("#cropRow").classList.remove("hide");
+  $("#prepCard").classList.remove("hide");
+  $("#cfgCard").classList.remove("hide");
+  $("#selBox").classList.add("hide");
+  buildBase();
+  syncDisplay();
+  renderPreview();
+  if(msg) toast(msg);
+}
+
+/* ---- 示例图：canvas 现画一张「有点脏」的记分板，用来自检整条链路 ---- */
+// 示例图只放「分数列」：教会用户正确姿势——框选只拍分数列最准。
+var DEMO_SCORES = ["12","7","25","3"];
+function makeDemoCanvas(){
+  var W = 300, H = 420;
+  var cv = document.createElement("canvas");
+  cv.width = W; cv.height = H;
+  var cx = cv.getContext("2d");
+
+  cx.fillStyle = "#f7f5ef"; cx.fillRect(0, 0, W, H);
+  var gd = cx.createLinearGradient(0, 0, W, H);
+  gd.addColorStop(0, "rgba(0,0,0,0.00)");
+  gd.addColorStop(1, "rgba(0,0,0,0.10)");
+  cx.fillStyle = gd; cx.fillRect(0, 0, W, H);
+
+  // 整体轻微倾斜 + 轻微缩放，模拟手持
+  cx.save();
+  cx.translate(W/2, H/2);
+  cx.rotate(-1.2 * Math.PI / 180);
+  cx.translate(-W/2, -H/2);
+
+  // 画一列大分数，字高、间距宽
+  cx.fillStyle = "#15150f";
+  cx.font = 'bold 54px Georgia,"Times New Roman",serif';
+  var startY = 88, gap = 82;
+  for(var i=0;i<DEMO_SCORES.length;i++){
+    var y = startY + i * gap;
+    cx.textAlign = "center";
+    cx.fillText(DEMO_SCORES[i], W/2 + (Math.random()*3|0), y);
+    cx.strokeStyle = "rgba(20,20,15,.22)";
+    cx.lineWidth = 1;
+    cx.beginPath(); cx.moveTo(36, y + 22); cx.lineTo(W-36, y + 22); cx.stroke();
+  }
+  cx.restore();
+
+  // 噪点 + 轻微模糊
+  var im = cx.getImageData(0, 0, W, H), d = im.data;
+  for(var k=0;k<d.length;k+=4){
+    var nz = (Math.random() - 0.5) * 30;
+    d[k]   = clamp255(d[k] + nz);
+    d[k+1] = clamp255(d[k+1] + nz);
+    d[k+2] = clamp255(d[k+2] + nz);
+  }
+  cx.putImageData(im, 0, 0);
+  return cv;
+}
+function clamp255(v){ return v < 0 ? 0 : (v > 255 ? 255 : v); }
+
+$("#demoBtn").onclick = function(){
+  var cv = makeDemoCanvas();
+  var im = new Image();
+  im.onload = function(){
+    if(objUrl){ URL.revokeObjectURL(objUrl); objUrl = null; }
+    origImg = im;
+    adoptImage("示例图已生成，直接点「开始识别」");
+  };
+  im.src = cv.toDataURL("image/png");
+};
+
+/* 旋转后的基础画布：始终以 origImg 为基准，避免多次旋转累积出错 */
+function buildBase(){
+  if(!origImg) return;
+  var w = origImg.naturalWidth || origImg.width;
+  var h = origImg.naturalHeight || origImg.height;
+  if(!w || !h) return;
+  var cv = document.createElement("canvas");
+  var swap = (rotation === 90 || rotation === 270);
+  cv.width  = swap ? h : w;
+  cv.height = swap ? w : h;
+  var cx = cv.getContext("2d");
+  cx.save();
+  cx.translate(cv.width/2, cv.height/2);
+  cx.rotate(rotation * Math.PI / 180);
+  cx.drawImage(origImg, -w/2, -h/2, w, h);
+  cx.restore();
+  baseCanvas = cv;
+}
+
+/* 显示图与 baseCanvas 保持一致，框选坐标才对得上 */
+function syncDisplay(){
+  if(!baseCanvas) return;
+  srcImg.src = baseCanvas.toDataURL("image/png");
+}
+
+$("#rotBtn").onclick = function(){
+  if(!imgLoaded) return;
+  rotation = (rotation + 90) % 360;   // 以 origImg 为基准累积，不会错乱
+  crop = null;
+  $("#selBox").classList.add("hide");
+  buildBase();
+  syncDisplay();
+  renderPreview();
+};
+
+/* ============ 拖拽框选 ============ */
+(function bindCrop(){
+  var stage = $("#stage"), box = $("#selBox");
+  var sx = 0, sy = 0, dragging = false;
+
+  function pos(e){
+    var r = stage.getBoundingClientRect();
+    var p = e.touches ? e.touches[0] : e;
+    return {
+      x: Math.min(Math.max(p.clientX - r.left, 0), r.width),
+      y: Math.min(Math.max(p.clientY - r.top, 0), r.height),
+      w: r.width, h: r.height
+    };
+  }
+  function down(e){
+    if(!imgLoaded) return;
+    e.preventDefault();
+    var p = pos(e); sx = p.x; sy = p.y; dragging = true;
+    box.classList.remove("hide");
+    box.style.left = sx+"px"; box.style.top = sy+"px";
+    box.style.width = "0px"; box.style.height = "0px";
+  }
+  function move(e){
+    if(!dragging) return;
+    e.preventDefault();
+    var p = pos(e);
+    var x = Math.min(sx, p.x), y = Math.min(sy, p.y);
+    var w = Math.abs(p.x - sx), h = Math.abs(p.y - sy);
+    box.style.left = x+"px"; box.style.top = y+"px";
+    box.style.width = w+"px"; box.style.height = h+"px";
+  }
+  function up(e){
+    if(!dragging) return;
+    dragging = false;
+    var r = stage.getBoundingClientRect();
+    var x = parseFloat(box.style.left), y = parseFloat(box.style.top);
+    var w = parseFloat(box.style.width), h = parseFloat(box.style.height);
+    if(w < 12 || h < 12){          // 视为误触，取消
+      crop = null; box.classList.add("hide");
+    }else{
+      crop = { x: x/r.width, y: y/r.height, w: w/r.width, h: h/r.height };
+    }
+    renderPreview();
+  }
+  stage.addEventListener("mousedown", down);
+  stage.addEventListener("mousemove", move);
+  window.addEventListener("mouseup", up);
+  stage.addEventListener("touchstart", down, {passive:false});
+  stage.addEventListener("touchmove", move, {passive:false});
+  stage.addEventListener("touchend", up);
+})();
+
+$("#clearCrop").onclick = function(){
+  crop = null;
+  $("#selBox").classList.add("hide");
+  renderPreview();
+};
+
+/* ============ 预处理 ============ */
+function otsu(hist, total){
+  var sum = 0, i;
+  for(i=0;i<256;i++) sum += i * hist[i];
+  var sumB = 0, wB = 0, maxVar = -1, thr = 128;
+  for(i=0;i<256;i++){
+    wB += hist[i];
+    if(wB === 0) continue;
+    var wF = total - wB;
+    if(wF === 0) break;
+    sumB += i * hist[i];
+    var mB = sumB / wB, mF = (sum - sumB) / wF;
+    var between = wB * wF * (mB - mF) * (mB - mF);
+    if(between > maxVar){ maxVar = between; thr = i; }
+  }
+  return thr;
+}
+
+/* 生成送给 OCR 的画布 */
+function buildProcessed(){
+  if(!baseCanvas) return null;
+  var bw = baseCanvas.width, bh = baseCanvas.height;
+  var rx = 0, ry = 0, rw = bw, rh = bh;
+  if(crop){
+    rx = Math.round(crop.x * bw); ry = Math.round(crop.y * bh);
+    rw = Math.round(crop.w * bw); rh = Math.round(crop.h * bh);
+    if(rw < 8 || rh < 8){ rx = 0; ry = 0; rw = bw; rh = bh; }
+  }
+  var scale = parseFloat($("#scale").value);
+  // 控制上限，避免手机上超大图 OOM
+  var maxSide = 2600;
+  var outW = Math.round(rw * scale), outH = Math.round(rh * scale);
+  if(Math.max(outW, outH) > maxSide){
+    var k = maxSide / Math.max(outW, outH);
+    outW = Math.round(outW * k); outH = Math.round(outH * k);
+  }
+
+  var cv = document.createElement("canvas");
+  cv.width = outW; cv.height = outH;
+  var cx = cv.getContext("2d", { willReadFrequently:true });
+  cx.imageSmoothingEnabled = true;
+  cx.imageSmoothingQuality = "high";
+  cx.drawImage(baseCanvas, rx, ry, rw, rh, 0, 0, outW, outH);
+
+  var useGray = $("#gray").checked;
+  var useBin  = $("#bin").checked;
+  var useInv  = $("#inv").checked;
+  if(!useGray && !useBin && !useInv) return cv;
+
+  var img = cx.getImageData(0, 0, outW, outH);
+  var d = img.data, n = d.length, i;
+  var hist = new Array(256).fill(0);
+  var total = outW * outH;
+
+  // 1) 灰度（亮度加权）
+  for(i=0;i<n;i+=4){
+    var g = (0.299*d[i] + 0.587*d[i+1] + 0.114*d[i+2]) | 0;
+    d[i] = d[i+1] = d[i+2] = g;
+    hist[g]++;
+  }
+  // 2) 对比度拉伸（去掉极端 1% 后线性映射）
+  if(useGray){
+    var lo = 0, hi = 255, acc = 0, cut = total * 0.01;
+    for(i=0;i<256;i++){ acc += hist[i]; if(acc > cut){ lo = i; break; } }
+    acc = 0;
+    for(i=255;i>=0;i--){ acc += hist[i]; if(acc > cut){ hi = i; break; } }
+    if(hi - lo > 12){
+      var span = hi - lo;
+      for(i=0;i<n;i+=4){
+        var v = (d[i] - lo) * 255 / span;
+        v = v < 0 ? 0 : (v > 255 ? 255 : v);
+        d[i] = d[i+1] = d[i+2] = v | 0;
+      }
+      // 重算直方图供 Otsu 用
+      hist = new Array(256).fill(0);
+      for(i=0;i<n;i+=4) hist[d[i]]++;
+    }
+  }
+  // 3) 二值化
+  if(useBin){
+    var t = $("#otsu").checked ? otsu(hist, total) : parseInt($("#thr").value, 10);
+    $("#thrV").textContent = t;
+    if($("#otsu").checked) $("#thr").value = t;
+    // 注意用 > 而非 >=：Otsu 返回的 t 是「暗类（字）的最大灰度」，
+    // 用 >= 会把最暗一档的笔画误判成白底，细笔画会被吃掉。
+    for(i=0;i<n;i+=4){
+      var b = d[i] > t ? 255 : 0;
+      d[i] = d[i+1] = d[i+2] = b;
+    }
+  }
+  // 4) 反色
+  if(useInv){
+    for(i=0;i<n;i+=4){
+      d[i] = 255 - d[i]; d[i+1] = 255 - d[i+1]; d[i+2] = 255 - d[i+2];
+    }
+  }
+  cx.putImageData(img, 0, 0);
+  return cv;
+}
+
+/* 原图区域（不做处理），用于对比 */
+function buildRaw(){
+  if(!baseCanvas) return null;
+  var bw = baseCanvas.width, bh = baseCanvas.height;
+  var rx = 0, ry = 0, rw = bw, rh = bh;
+  if(crop){
+    rx = Math.round(crop.x*bw); ry = Math.round(crop.y*bh);
+    rw = Math.round(crop.w*bw); rh = Math.round(crop.h*bh);
+    if(rw < 8 || rh < 8){ rx=0; ry=0; rw=bw; rh=bh; }
+  }
+  var cv = document.createElement("canvas");
+  cv.width = rw; cv.height = rh;
+  cv.getContext("2d").drawImage(baseCanvas, rx, ry, rw, rh, 0, 0, rw, rh);
+  return cv;
+}
+
+var previewTimer = null;
+function renderPreview(){
+  clearTimeout(previewTimer);
+  previewTimer = setTimeout(function(){
+    var cv = (view === "proc") ? buildProcessed() : buildRaw();
+    if(!cv) return;
+    var out = $("#prevCv");
+    out.width = cv.width; out.height = cv.height;
+    out.getContext("2d").drawImage(cv, 0, 0);
+  }, 30);
+}
+
+/* 参数联动 */
+$("#scale").oninput = function(){
+  $("#scaleV").textContent = parseFloat(this.value).toFixed(1) + "×";
+  renderPreview();
+};
+$("#thr").oninput = function(){ $("#thrV").textContent = this.value; renderPreview(); };
+["gray","bin","inv"].forEach(function(id){
+  $("#"+id).onchange = renderPreview;
+});
+$("#otsu").onchange = function(){
+  $("#thrRow").classList.toggle("hide", this.checked);
+  renderPreview();
+};
+$("#bin").addEventListener("change", function(){
+  var on = this.checked;
+  $("#otsuRow").classList.toggle("hide", !on);
+  $("#thrRow").classList.toggle("hide", !on || $("#otsu").checked);
+  if(on && !$("#otsu").checked) $("#thrRow").classList.remove("hide");
+});
+// 初始化一次 UI 状态（因为 Otsu 默认未勾选，thrRow 应显示）
+$("#bin").dispatchEvent(new Event("change"));
+document.querySelectorAll(".tabs button").forEach(function(b){
+  b.onclick = function(){
+    document.querySelectorAll(".tabs button").forEach(function(x){ x.classList.remove("on"); });
+    b.classList.add("on");
+    view = b.dataset.view;
+    renderPreview();
+  };
+});
+
+/* ============ Tesseract 动态加载（多 CDN 兜底） ============ */
+var TJ_VER = "5.1.1";
+var CDNS = [
+  "https://cdn.jsdelivr.net/npm/tesseract.js@" + TJ_VER + "/dist/tesseract.min.js",
+  "https://unpkg.com/tesseract.js@" + TJ_VER + "/dist/tesseract.min.js",
+  "https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/" + TJ_VER + "/tesseract.min.js"
+];
+var LANG_PATHS = {
+  fast: "https://tessdata.projectnaptha.com/4.0.0_fast",
+  std:  "https://tessdata.projectnaptha.com/4.0.0"
+};
+
+function loadScript(src){
+  return new Promise(function(res, rej){
+    var s = document.createElement("script");
+    s.src = src; s.async = true;
+    s.onload = function(){ res(src); };
+    s.onerror = function(){ rej(new Error("load fail: " + src)); };
+    document.head.appendChild(s);
+  });
+}
+function loadTesseract(){
+  if(window.Tesseract) return Promise.resolve();
+  var chain = Promise.reject();
+  CDNS.forEach(function(u){
+    chain = chain.catch(function(){
+      setStat("正在加载识别引擎…（" + u.split("/")[2] + "）");
+      return loadScript(u);
+    });
+  });
+  return chain.then(function(){
+    if(!window.Tesseract) throw new Error("Tesseract 未就绪");
+  });
+}
+
+/* 首次下载体积提示（实测值），让用户对流量心里有数 */
+var PKG_MB = { "eng|fast":2.0, "eng|std":10.9, "chi|fast":3.7, "chi|std":20.9 };
+function updateDlHint(){
+  var zh = ($("#mode").value === "all");
+  var key = (zh ? "chi" : "eng") + "|" + $("#langp").value;
+  var mb = PKG_MB[key];
+  $("#dlHint").innerHTML =
+    "首次需下载约 <b>" + mb.toFixed(1) + " MB</b> 语言模型" +
+    (zh ? "（含中文包）" : "") +
+    "，之后浏览器会缓存，离线也能用。" +
+    (mb > 10 ? '<br><span style="color:var(--danger);font-weight:600">流量较大，建议连 Wi-Fi。计分只认数字的话用 fast 就够。</span>' : "");
+}
+$("#mode").onchange = updateDlHint;
+$("#langp").onchange = updateDlHint;
+updateDlHint();
+
+/* ============ 识别 ============ */
+var worker = null, workerKey = "";
+
+function setBar(p){ $("#barI").style.width = Math.round(p*100) + "%"; }
+function setStat(s){ $("#stat").textContent = s; }
+
+var STATUS_CN = {
+  "loading tesseract core": "加载识别内核",
+  "initializing tesseract": "初始化引擎",
+  "loading language traineddata": "下载语言模型",
+  "initializing api": "准备识别接口",
+  "recognizing text": "识别中"
+};
+
+async function getWorker(langCode, langPath){
+  var key = langCode + "|" + langPath;
+  if(worker && workerKey === key) return worker;
+  if(worker){ try{ await worker.terminate(); }catch(e){} worker = null; workerKey = ""; }
+  worker = await Tesseract.createWorker(langCode, 1, {
+    langPath: langPath,
+    logger: function(m){
+      if(typeof m.progress === "number") setBar(m.progress);
+      var cn = STATUS_CN[m.status] || m.status || "";
+      setStat(cn + (typeof m.progress === "number" ? " " + Math.round(m.progress*100) + "%" : ""));
+    }
+  });
+  workerKey = key;
+  return worker;
+}
+
+$("#runBtn").onclick = async function(){
+  if(!imgLoaded){ toast("请先选一张图"); return; }
+  var btn = this;
+  btn.disabled = true;
+  setBar(0);
+  var t0 = performance.now();
+
+  try{
+    await loadTesseract();
+
+    var mode = $("#mode").value;
+    var langCode = (mode === "all") ? "chi_sim+eng" : "eng";
+    var langPath = LANG_PATHS[$("#langp").value];
+
+    var w = await getWorker(langCode, langPath);
+
+    var params = { tessedit_pageseg_mode: $("#psm").value };
+    if(mode === "digits"){
+      params.tessedit_char_whitelist = "0123456789-+";
+    }else if(mode === "digitsName"){
+      params.tessedit_char_whitelist =
+        "0123456789-+:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    }else{
+      params.tessedit_char_whitelist = "";
+    }
+    await w.setParameters(params);
+
+    var cv = buildProcessed();
+    setStat("识别中…");
+    var r = await w.recognize(cv);
+    var ms = Math.round(performance.now() - t0);
+
+    var text = (r.data.text || "").replace(/[ \t]+\n/g, "\n").trim();
+    $("#outText").value = text;
+
+    var conf = Math.round(r.data.confidence || 0);
+    $("#kv").innerHTML =
+      '<span class="chip">耗时 <b>' + ms + ' ms</b></span>' +
+      '<span class="chip">平均置信度 <b>' + conf + '</b></span>' +
+      '<span class="chip">送检尺寸 <b>' + cv.width + '×' + cv.height + '</b></span>' +
+      '<span class="chip">' + (crop ? '已框选区域' : '整图识别') + '</span>';
+
+    // 逐词置信度
+    var words = (r.data.words || []).filter(function(x){ return x.text && x.text.trim(); });
+    $("#words").innerHTML = words.length
+      ? words.map(function(x){
+          var c = Math.round(x.confidence);
+          return '<span class="' + (c < 70 ? 'lo' : '') + '">' +
+                 esc(x.text) + ' · ' + c + '</span>';
+        }).join("")
+      : '<span style="color:var(--muted)">无分词数据</span>';
+
+    $("#resCard").classList.remove("hide");
+    doParse();
+    setBar(1);
+    setStat("完成 · " + ms + " ms");
+    $("#resCard").scrollIntoView({ behavior:"smooth", block:"start" });
+
+  }catch(err){
+    console.error(err);
+    setStat("");
+    setBar(0);
+    toast("识别失败：" + (err && err.message ? err.message : err));
+  }finally{
+    btn.disabled = false;
+  }
+};
+
+function esc(s){
+  return String(s).replace(/[&<>"]/g, function(c){
+    return ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" })[c];
+  });
+}
+
+/* ============ 分数解析（与计分页 parsePastedScores 完全一致） ============ */
+function parsePastedScores(text, n){
+  if(!text) return null;
+  text = text.replace(/[，、]/g, ',');
+  var lines = text.split(/\n/).map(function(s){ return s.trim(); }).filter(Boolean);
+  var scores = [];
+  for(var i=0;i<lines.length;i++){
+    var m = lines[i].match(/^[^\d\-]*?([\-+]?\d+)/);
+    if(m) scores.push(parseInt(m[1], 10));
+  }
+  if(scores.length >= n) return scores.slice(0, n);
+  var nums = text.split(/[,\s]+/).map(function(s){ return parseInt(s,10); })
+                 .filter(function(x){ return !isNaN(x); });
+  return nums.length >= n ? nums.slice(0, n) : null;
+}
+
+function doParse(){
+  var n = parseInt($("#pcount").value, 10);
+  $("#pcShow").textContent = n;
+  var arr = parsePastedScores($("#outText").value, n);
+  var box = $("#nums"), msg = $("#parseMsg");
+  if(!arr){
+    box.innerHTML = "";
+    msg.innerHTML = '<div class="warn">✗ 没能凑够 ' + n +
+      ' 个数字。试试：框选更小的区域、放大到 3×、或把「版面模式」换成 11（稀疏文本）。也可以直接在上面的文本框里手动补。</div>';
+    return;
+  }
+  var min = Math.min.apply(null, arr);
+  box.innerHTML = arr.map(function(v){
+    return '<span class="n' + (v === min ? ' low' : '') + '">' + v + '</span>';
+  }).join("");
+  msg.innerHTML = '<div class="ok">✓ 解析出 ' + arr.length +
+    ' 个分数，本局最低 ' + min + ' 分（金色标记）</div>';
+}
+
+$("#reparse").onclick = doParse;
+$("#outText").addEventListener("input", doParse);
+$("#pcount").onchange = doParse;
+
+$("#copyBtn").onclick = function(){
+  var v = $("#outText").value;
+  if(!v){ toast("还没有内容"); return; }
+  function fallback(){
+    var ta = document.createElement("textarea");
+    ta.value = v;
+    ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); toast("已复制，去计分页粘贴到快捷录入框"); }
+    catch(e){ toast("复制失败，请长按文本手动复制"); }
+    document.body.removeChild(ta);
+  }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(v).then(function(){
+      toast("已复制，去计分页粘贴到快捷录入框");
+    }, fallback);
+  }else fallback();
+};
+</script>
+</body>
+</html>
