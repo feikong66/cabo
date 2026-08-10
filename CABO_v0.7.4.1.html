@@ -282,6 +282,20 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .card4-row{display:flex;gap:6px}
 .c4{width:54px;padding:10px 0;border:1px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:16px;text-align:center}
 .c4:focus{border-color:var(--accent)}
+.c4-wrap{position:relative;display:inline-flex;align-items:center}
+.c4-caret{position:absolute;right:8px;pointer-events:none;color:var(--muted);font-size:12px}
+.np-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:80;padding:0}
+.np-overlay.hidden{display:none}
+.np-sheet{width:100%;max-width:460px;background:var(--card);border-radius:20px 20px 0 0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.25);animation:npUp .2s ease both}
+@keyframes npUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.np-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.np-title{font-weight:700;font-size:16px}
+.np-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.np-cell{height:52px;border:1px solid var(--line);border-radius:12px;background:var(--input-bg);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .06s, background .15s}
+.np-cell:active{transform:scale(.94)}
+.np-cell.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.np-cell.zero{grid-column:1 / -1;height:42px;font-size:14px;color:var(--muted);font-weight:600}
+.np-tip{margin-top:12px;font-size:12px;color:var(--muted);text-align:center}
 .cards-mini{display:inline-block;margin-left:6px;font-size:11px;color:var(--muted);background:var(--input-bg);border-radius:6px;padding:1px 6px}
 .er-c4{display:flex;gap:6px}
 .er-c4i{width:52px;padding:9px 0;border:1px solid var(--line);border-radius:10px;background:var(--input-bg);color:var(--text);font-size:15px;text-align:center}
@@ -349,9 +363,7 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 /* 快捷录入 */
 .qi-panel{margin-top:10px;padding:12px;background:var(--input-bg);border:1px solid var(--line);border-radius:12px}
 .qi-title{font-size:13px;font-weight:700;color:var(--muted);margin-bottom:8px}
-.qi-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.qi-btn{font-size:13px;padding:7px 11px;border-radius:9px;background:var(--card);border:1px solid var(--line);color:var(--text);font-weight:600;min-height:auto}
-.qi-btn:active{background:var(--accent);color:#fff}
+/* -10/-5 快捷数字按钮已移除（改用 4 张小框 + 点开选 1-13） */
 .qi-paste{display:flex;gap:8px;margin-bottom:10px}
 .qi-paste textarea{flex:1;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--text);font-size:13px;resize:vertical;min-height:48px;font-family:inherit}
 .qi-tmpl{display:flex;gap:8px;flex-wrap:wrap}
@@ -374,6 +386,7 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
   <div class="footer">Cabo Scorer ${APP_VER}</div>
 </div>
 <div id="overlay" class="overlay hidden"></div>
+<div id="numPicker" class="np-overlay hidden"></div>
 <script src="xlsx.full.min.js"></script>
 <script>
 const KEY = "cabo-scorer-v2";
@@ -407,7 +420,7 @@ const I18N = {
     lowWin:"低分胜", highWin:"高分胜", ruleCustom:"规则自定义",
     callerWins:"喊者胜", bothZero:"均 0 分",
     clearLocal:"清空本地存档", clearAuto:"清空自动存档", autoBadge:"自动", noSaves:"还没有保存的对局。", noMatchingSaves:"没有匹配的存档。",
-    darkMode:"深色模式", language:"语言", voiceAnnounce:"语音播报", volume:"音量", voiceRate:"语速", voiceRateHint:"AI 配音语速（−50% 到 +50%，0 为正常速度）", voiceTotalNow:"{name} 现在总分 {n} 分", voiceNearWin:"{name} 快胜利了，加油！", voiceEggRemind:"{name} 还没用过百分减半，快凑到 100 分减半吧", devFuture:"未来需要增加的内容", futureOcr:"📷 拍照自动录入分数：内置 AI 识别场上纸牌或记分板照片，自动提取每位玩家分数并录入（规划中）", demoLink:"🎧 试听 14 种 AI 音色", voiceName:"AI 音色", voiceDefault:"系统默认（自动优选高品质）", voiceAutoHint:"从 14 种 Edge 神经语音中选择，留空则用系统嗓音",voiceServiceUrl:"AI 配音服务地址",voiceServiceUrlHint:"填入部署好的配音服务地址即可用 AI 神经语音播报；留空则用系统嗓音",voiceModel:"AI 音色",voiceModelHint:"14 种内置音色可选，服务连上后也可拉取服务端音色",mNanami:"奈奈美（女声·带索引）",mLwjhh:"LWJHH",mDaboluo:"大菠萝",cl66a:"新增：语音播报可接入 RVC 语音服务，使用你训练的角色音色（奈奈美 / LWJHH / 大菠萝）",cl66b:"新增：设置页新增「RVC 语音服务地址」与「RVC 音色」两项，填地址并选音色即可",testConnection:"测试连接",connecting:"连接测试中…",rvcNotConn:"配音服务未连接，已用系统嗓音",rvcSync:"配音服务地址已同步到其他设备",adminSettings:"管理员设置",adminHint:"这里配置「群组拥有者」的 GitHub 账号，所有子账号数据都存到这个账号名下的私有 Gist。只需设置一次，之后全部设备与好友自动复用。",adminUser:"GitHub 用户名",adminToken:"Personal Access Token（需 gist 权限）",adminSaved:"管理员凭据已保存，已连通 GitHub Gist",voicePickHint:"选择 AI 配音音色",systemVoice:"系统嗓音",quickInput:"快捷录入",pasteScores:"粘贴分数",pasteScoresHint:"从截图 OCR 结果复制多行，或写「玩家名:分数」/逗号分隔，粘贴后自动填入",apply:"应用",scoreTemplate:"计分模板",saveTemplate:"保存为模板",templateSaved:"模板已保存",noTemplates:"暂无模板",quickNums:"快捷数字",
+    darkMode:"深色模式", language:"语言", voiceAnnounce:"语音播报", volume:"音量", voiceRate:"语速", voiceRateHint:"AI 配音语速（−50% 到 +50%，0 为正常速度）", voiceTotalNow:"{name} 现在总分 {n} 分", voiceNearWin:"{name} 快胜利了，加油！", voiceEggRemind:"{name} 还没用过百分减半，快凑到 100 分减半吧", devFuture:"未来需要增加的内容", futureOcr:"📷 拍照自动录入分数：内置 AI 识别场上纸牌或记分板照片，自动提取每位玩家分数并录入（规划中）", demoLink:"🎧 试听 14 种 AI 音色", voiceName:"AI 音色", voiceDefault:"系统默认（自动优选高品质）", voiceAutoHint:"从 14 种 Edge 神经语音中选择，留空则用系统嗓音",voiceServiceUrl:"AI 配音服务地址",voiceServiceUrlHint:"填入部署好的配音服务地址即可用 AI 神经语音播报；留空则用系统嗓音",voiceModel:"AI 音色",voiceModelHint:"14 种内置音色可选，服务连上后也可拉取服务端音色",mNanami:"奈奈美（女声·带索引）",mLwjhh:"LWJHH",mDaboluo:"大菠萝",cl66a:"新增：语音播报可接入 RVC 语音服务，使用你训练的角色音色（奈奈美 / LWJHH / 大菠萝）",cl66b:"新增：设置页新增「RVC 语音服务地址」与「RVC 音色」两项，填地址并选音色即可",testConnection:"测试连接",connecting:"连接测试中…",rvcNotConn:"配音服务未连接，已用系统嗓音",rvcSync:"配音服务地址已同步到其他设备",adminSettings:"管理员设置",adminHint:"这里配置「群组拥有者」的 GitHub 账号，所有子账号数据都存到这个账号名下的私有 Gist。只需设置一次，之后全部设备与好友自动复用。",adminUser:"GitHub 用户名",adminToken:"Personal Access Token（需 gist 权限）",adminSaved:"管理员凭据已保存，已连通 GitHub Gist",voicePickHint:"选择 AI 配音音色",systemVoice:"系统嗓音",quickInput:"快捷录入",pasteScores:"粘贴分数",pasteScoresHint:"从截图 OCR 结果复制多行，或写「玩家名:分数」/逗号分隔，粘贴后自动填入",apply:"应用",scoreTemplate:"计分模板",saveTemplate:"保存为模板",templateSaved:"模板已保存",noTemplates:"暂无模板",quickNums:"快捷数字",pickCard:"选择牌点（1-13）",npTip:"点数字直接选，或点「清空」擦掉；选完自动跳下一格",npClear:"清空",
     changelog:"更新日志", changelogTitle:"更新日志",
     exportTitle:"📦 导出 / 导入本局", exportJson:"⬇ 导出 JSON", exportExcel:"⬇ 导出 Excel", exportPdf:"🖨 导出 PDF / 打印", importJson:"⬆ 导入 JSON", shareLink:"🔗 分享链接",
     login:"登录", register:"注册", skipLogin:"暂不登录，本地试用", username:"用户名", password:"密码",
@@ -463,7 +476,7 @@ const I18N = {
     lowWin:"Lowest wins", highWin:"Highest wins", ruleCustom:"Custom rules",
     callerWins:"Caller wins", bothZero:"Both 0",
     clearLocal:"Clear local saves", clearAuto:"Clear auto-save", autoBadge:"Auto", noSaves:"No saved games yet.", noMatchingSaves:"No matching saves.",
-    darkMode:"Dark mode", language:"Language", voiceAnnounce:"Voice announce", volume:"Volume", voiceRate:"Speech rate", voiceRateHint:"AI voice speed (−50% to +50%, 0 is normal)", voiceTotalNow:"{name} now total {n}", voiceNearWin:"{name} is about to win, keep going!", voiceEggRemind:"{name} hasn't used the 100-halving yet — push toward 100 to halve!", devFuture:"Planned features", futureOcr:"📷 Photo auto-score: built-in AI reads a photo of the scoreboard/cards and enters each player's score automatically (planned)", demoLink:"🎧 Listen to 14 AI voices", voiceName:"AI voice", voiceDefault:"System default (auto-pick quality)", voiceAutoHint:"Choose from 14 Edge neural voices, or leave empty for system voice",voiceServiceUrl:"AI voice service URL",voiceServiceUrlHint:"Enter your deployed voice service URL for AI neural speech; leave empty to use the system voice",voiceModel:"AI voice",voiceModelHint:"14 built-in voices available; service voices load when connected",mNanami:"Nanami (female, indexed)",mLwjhh:"LWJHH",mDaboluo:"Daboluo",cl66a:"New: voice announce can use your RVC voice service for a custom character voice (Nanami / LWJHH / Daboluo)",cl66b:"New: settings now have an RVC voice service URL field and an RVC voice picker",testConnection:"Test connection",connecting:"Testing…",rvcNotConn:"Voice service not connected, using system voice",rvcSync:"Voice service URL synced to other devices",adminSettings:"Admin settings",adminHint:"Configure the host's GitHub account. All member data is stored in a private Gist under this account. Set once, then all devices and friends reuse it automatically.",adminUser:"GitHub username",adminToken:"Personal Access Token (needs gist scope)",adminSaved:"Admin credentials saved and GitHub Gist connected",voicePickHint:"Choose an AI voice",systemVoice:"System voice",quickInput:"Quick input",pasteScores:"Paste scores",pasteScoresHint:"Copy multi-line scores from OCR, or write 'name:score' / comma-separated, then apply",apply:"Apply",scoreTemplate:"Score template",saveTemplate:"Save as template",templateSaved:"Template saved",noTemplates:"No templates",quickNums:"Quick numbers",
+    darkMode:"Dark mode", language:"Language", voiceAnnounce:"Voice announce", volume:"Volume", voiceRate:"Speech rate", voiceRateHint:"AI voice speed (−50% to +50%, 0 is normal)", voiceTotalNow:"{name} now total {n}", voiceNearWin:"{name} is about to win, keep going!", voiceEggRemind:"{name} hasn't used the 100-halving yet — push toward 100 to halve!", devFuture:"Planned features", futureOcr:"📷 Photo auto-score: built-in AI reads a photo of the scoreboard/cards and enters each player's score automatically (planned)", demoLink:"🎧 Listen to 14 AI voices", voiceName:"AI voice", voiceDefault:"System default (auto-pick quality)", voiceAutoHint:"Choose from 14 Edge neural voices, or leave empty for system voice",voiceServiceUrl:"AI voice service URL",voiceServiceUrlHint:"Enter your deployed voice service URL for AI neural speech; leave empty to use the system voice",voiceModel:"AI voice",voiceModelHint:"14 built-in voices available; service voices load when connected",mNanami:"Nanami (female, indexed)",mLwjhh:"LWJHH",mDaboluo:"Daboluo",cl66a:"New: voice announce can use your RVC voice service for a custom character voice (Nanami / LWJHH / Daboluo)",cl66b:"New: settings now have an RVC voice service URL field and an RVC voice picker",testConnection:"Test connection",connecting:"Testing…",rvcNotConn:"Voice service not connected, using system voice",rvcSync:"Voice service URL synced to other devices",adminSettings:"Admin settings",adminHint:"Configure the host's GitHub account. All member data is stored in a private Gist under this account. Set once, then all devices and friends reuse it automatically.",adminUser:"GitHub username",adminToken:"Personal Access Token (needs gist scope)",adminSaved:"Admin credentials saved and GitHub Gist connected",voicePickHint:"Choose an AI voice",systemVoice:"System voice",quickInput:"Quick input",pickCard:"Pick card (1-13)",npTip:"Tap a number to choose, or tap Clear to erase; auto-advances to the next slot",npClear:"Clear",pasteScores:"Paste scores",pasteScoresHint:"Copy multi-line scores from OCR, or write 'name:score' / comma-separated, then apply",apply:"Apply",scoreTemplate:"Score template",saveTemplate:"Save as template",templateSaved:"Template saved",noTemplates:"No templates",quickNums:"Quick numbers",
     changelog:"Changelog", changelogTitle:"Changelog",
     exportTitle:"📦 Export / Import game", exportJson:"⬇ Export JSON", exportExcel:"⬇ Export Excel", exportPdf:"🖨 Export PDF / Print", importJson:"⬆ Import JSON", shareLink:"🔗 Share link",
     login:"Log in", register:"Register", skipLogin:"Skip, use locally", username:"Username", password:"Password",
@@ -1181,7 +1194,7 @@ function defaultState(){
       caboPenalty:10,
       tieRule:"callerWins",
       hundredEgg:"half",
-      cardInput:"total",
+      cardInput:"cards",
       autoAdvance:true,
       lowBonus:{enabled:true, amount:10}
     }
@@ -1684,9 +1697,30 @@ function applyScoreArray(arr){
     }
   });
 }
-function qiButtonsHtml(i){
-  const nums = [-10,-5,-1,1,5,10,50];
-  return `<div class="qi-btns">${nums.map(d=>`<button class="qi-btn" data-i="${i}" data-d="${d}">${d>=0?'+':''}${d}</button>`).join('')}</div>`;
+function openCardPicker(targetId, i, j){
+  const el = document.getElementById(targetId);
+  if(!el) return;
+  const cur = parseInt(el.value, 10);
+  const cells = [];
+  for(let n=1; n<=13; n++) cells.push(`<button class="np-cell${n===cur?' on':''}" data-n="${n}">${n}</button>`);
+  cells.push(`<button class="np-cell zero" data-n="0">${t("npClear")}</button>`);
+  const box = document.getElementById("numPicker");
+  box.innerHTML = `<div class="np-sheet"><div class="np-head"><div class="np-title">${t("pickCard")}</div></div><div class="np-grid">${cells.join('')}</div><div class="np-tip">${t("npTip")}</div></div>`;
+  box.classList.remove("hidden");
+  box.querySelectorAll(".np-cell").forEach(b=> b.onclick = ()=>{
+    const n = +b.dataset.n;
+    const t = document.getElementById(targetId);
+    if(t) t.value = n ? String(n) : '';
+    box.classList.add("hidden");
+    if(n && state.rules.autoAdvance){
+      const prefix = targetId.indexOf("er-c4i") === 0 ? "er-c4i-" : "c";
+      let ni = i, nj = j + 1;
+      if(nj > 3){ nj = 0; ni = i + 1; }
+      const nextId = prefix + ni + "-" + nj;
+      if(document.getElementById(nextId)) openCardPicker(nextId, ni, nj);
+    }
+  });
+  box.onclick = (e)=>{ if(e.target === box) box.classList.add("hidden"); };
 }
 
 function renderGame(){
@@ -1711,8 +1745,8 @@ function renderGame(){
         </div>
         <div class="pc-inputs">
           ${state.rules.cardInput==='cards'
-            ? `${t(`<div class="card4"><span class="lab">本局 4 张牌（自动求和）</span><div class="card4-row">`)}${[0,1,2,3].map(j=>`<input type="number" class="c4" id="c${i}-${j}" inputmode="numeric" placeholder="0" max="13">`).join('')}</div></div>${qiButtonsHtml(i)}`
-            : `${t(`<div><span class="lab">本局牌点</span><input type="number" id="pts-`)}${i}" inputmode="numeric" placeholder="0"></div>${qiButtonsHtml(i)}`}
+            ? `${t(`<div class="card4"><span class="lab">本局 4 张牌（点小框选 1-13，自动求和）</span><div class="card4-row">`)}${[0,1,2,3].map(j=>`<span class="c4-wrap"><input type="number" readonly class="c4" id="c${i}-${j}" inputmode="numeric" placeholder="0" max="13"><span class="c4-caret">▾</span></span>`).join('')}</div></div>`
+            : `${t(`<div><span class="lab">本局牌点</span><input type="number" id="pts-`)}${i}" inputmode="numeric" placeholder="0"></div>`}
         </div>
       </div>`);
   });
@@ -1720,6 +1754,10 @@ function renderGame(){
     document.querySelector("#pcName-"+i).onclick = ()=> editName(i);
     const adjBtn = document.querySelector("#adj-"+i);
     if(adjBtn) adjBtn.onclick = ()=> openAdjust(i);
+  });
+  document.querySelectorAll(".player-card .c4").forEach(el=>{
+    const m = el.id.match(/c(\d+)-(\d+)/);
+    if(m) el.onclick = ()=> openCardPicker(el.id, +m[1], +m[2]);
   });
   renderSpecialPanel();
   document.querySelector("#qiApply").onclick = ()=>{
@@ -1748,9 +1786,7 @@ function renderGame(){
     const tm = getPlayerTemplates()[idx];
     if(tm && tm.scores) applyScoreArray(tm.scores);
   });
-  document.querySelectorAll(".qi-btn").forEach(b=> b.onclick = ()=>{
-    applyQuickNumber(+b.dataset.i, +b.dataset.d);
-  });
+  /* -10/-5 快捷数字按钮已移除，改为点小框弹 1-13 选择 */
   document.querySelector("#submitBtn").onclick = submitRound;
   if(roomIsReadOnly()){
     const sb = document.querySelector("#submitBtn");
@@ -2295,7 +2331,7 @@ function openRoundEditor(k){
           const pv = (has(r.pts)&&has(r.pts[i]))?r.pts[i]:0;
           const cv = (has(r.cards)&&has(r.cards[i]))?r.cards[i]:[pv,0,0,0];
           return state.rules.cardInput==='cards'
-            ? `<div class="er-row er-cards"><span class="er-name">${escapeHtml(p.name)}</span><div class="er-c4">${[0,1,2,3].map(j=>`<input type="number" class="er-c4i" data-i="${i}" data-j="${j}" value="${cv[j]||0}" inputmode="numeric" max="13">`).join('')}</div></div>`
+            ? `<div class="er-row er-cards"><span class="er-name">${escapeHtml(p.name)}</span><div class="er-c4">${[0,1,2,3].map(j=>`<span class="c4-wrap"><input type="number" readonly class="er-c4i c4" data-i="${i}" data-j="${j}" value="${cv[j]||0}" inputmode="numeric" max="13"><span class="c4-caret">▾</span></span>`).join('')}</div></div>`
             : `<div class="er-row"><span class="er-name">${escapeHtml(p.name)}</span><input type="number" class="er-pts" data-i="${i}" value="${pv}" inputmode="numeric"></div>`;
         }).join("")}
       </div>
@@ -2305,6 +2341,10 @@ function openRoundEditor(k){
       <div class="special-row">
         <label class="ev-check"><input type="checkbox" id="eKami" ${kami!=null?'checked':''}${t(`> 🚀 触发神风特攻队</label> <select id="eSelKami" class="ev-sel"`)}${kami==null?'disabled':''}>${opts(kami==null?0:kami)}${t(`</select> </div> <div class="modal-actions"> <button class="danger" id="erDel">删除本局</button> <button class="ghost" id="erCancel">取消</button> <button class="primary" id="erSave">保存修改</button> </div> </div>`)}`;
   overlay.classList.remove("hidden");
+  document.querySelectorAll(".er-c4i").forEach(el=>{
+    const i = +el.dataset.i, j = +el.dataset.j;
+    el.onclick = ()=> openCardPicker(el.id, i, j);
+  });
   const eCabo = document.querySelector("#eCabo"), eSelCabo = document.querySelector("#eSelCabo");
   eCabo.onchange = ()=>{ eSelCabo.disabled = !eCabo.checked; };
   eSelCabo.onchange = ()=>{};
@@ -2722,7 +2762,7 @@ function openSettings(){
       <div class="rules-block">
         <label>${t("ruleCustom")}${t(`</label> <div class="rule-row"> <div class="desc">Cabo 失败惩罚</div> <div class="seg mini-seg" id="setPenalty"> <button data-v="5" class="`)}${r.caboPenalty==5?'active':''}">+5</button>
             <button data-v="10" class="${r.caboPenalty==10?'active':''}${t(`">+10</button> </div> </div> <div class="rule-row"> <div class="desc">平局判定（Cabo 平最低）<small>官方：喊 Cabo 者与他人并列最低时，喊话者获胜记 0 分</small></div> <div class="seg mini-seg" id="setTie"> <button data-v="callerWins" class="`)}${r.tieRule==='callerWins'?'active':''}">${t("callerWins")}</button>
-            <button data-v="bothZero" class="${r.tieRule==='bothZero'?'active':''}">${t("bothZero")}${t(`</button> </div> </div> <div class="rule-row"> <div class="desc">得分满减<small>总分<b>恰好 100</b> 才触发（超过不触发）· 每位玩家各限 1 次</small></div> <div class="seg mini-seg" id="setEgg"> <button data-v="off" class="`)}${r.hundredEgg==='off'?'active':''}${t(`">关闭</button> <button data-v="half" class="`)}${r.hundredEgg==='half'?'active':''}${t(`">减半到 50</button> <button data-v="none" class="`)}${r.hundredEgg==='none'?'active':''}${t(`">无效果</button> </div> </div> <div class="rule-row"> <div class="desc">本局牌点录入方式<small>「4 张小框」可直接写每张牌，自动求和</small></div> <div class="seg mini-seg" id="setCardInput"> <button data-v="total" class="`)}${r.cardInput==='total'?'active':''}${t(`">数字总分</button> <button data-v="cards" class="`)}${r.cardInput==='cards'?'active':''}${t(`">4 张小框</button> </div> </div> <div class="rule-row"> <div class="desc">低分嘉奖：获胜者 -<input type="number" id="setBonus" value="`)}${r.lowBonus.amount}${t(`" min="0"> 分</div> <button class="toggle `)}${r.lowBonus.enabled?'on':''}" data-r="lowBonus">${r.lowBonus.enabled?t("on"):t("off")}${t(`</button> </div> <div class="rule-row"> <div class="desc">音效</div> <button class="toggle `)}${state.sound?'on':''}" data-snd="1">${state.sound?t("on"):t("off")}${t(`</button> </div> <div class="rule-row"> <div class="desc">自动存档<small>每次提交本局自动存入「我的存档」</small></div> <button class="toggle `)}${autoSaveOn()?'on':''}" data-auto="1">${autoSaveOn()?t("on"):t("off")}${t(`</button> </div> <div class="rule-row"> <div class="desc">输入后自动跳格<small>4 张小框输完自动跳到下一格</small></div> <button class="toggle `)}${state.rules.autoAdvance?'on':''}" data-adv="1">${state.rules.autoAdvance?t("on"):t("off")}</button>
+            <button data-v="bothZero" class="${r.tieRule==='bothZero'?'active':''}">${t("bothZero")}${t(`</button> </div> </div> <div class="rule-row"> <div class="desc">得分满减<small>总分<b>恰好 100</b> 才触发（超过不触发）· 每位玩家各限 1 次</small></div> <div class="seg mini-seg" id="setEgg"> <button data-v="off" class="`)}${r.hundredEgg==='off'?'active':''}${t(`">关闭</button> <button data-v="half" class="`)}${r.hundredEgg==='half'?'active':''}${t(`">减半到 50</button> <button data-v="none" class="`)}${r.hundredEgg==='none'?'active':''}${t(`">无效果</button> </div> </div> <div class="rule-row"> <div class="desc">本局牌点录入方式<small>「4 张小框」可输入每张牌，或点小框弹出 1-13 选择，自动求和</small></div> <div class="seg mini-seg" id="setCardInput"> <button data-v="total" class="`)}${r.cardInput==='total'?'active':''}${t(`">数字总分</button> <button data-v="cards" class="`)}${r.cardInput==='cards'?'active':''}${t(`">4 张小框</button> </div> </div> <div class="rule-row"> <div class="desc">低分嘉奖：获胜者 -<input type="number" id="setBonus" value="`)}${r.lowBonus.amount}${t(`" min="0"> 分</div> <button class="toggle `)}${r.lowBonus.enabled?'on':''}" data-r="lowBonus">${r.lowBonus.enabled?t("on"):t("off")}${t(`</button> </div> <div class="rule-row"> <div class="desc">音效</div> <button class="toggle `)}${state.sound?'on':''}" data-snd="1">${state.sound?t("on"):t("off")}${t(`</button> </div> <div class="rule-row"> <div class="desc">自动存档<small>每次提交本局自动存入「我的存档」</small></div> <button class="toggle `)}${autoSaveOn()?'on':''}" data-auto="1">${autoSaveOn()?t("on"):t("off")}${t(`</button> </div> <div class="rule-row"> <div class="desc">输入后自动跳格<small>4 张小框输完自动跳到下一格</small></div> <button class="toggle `)}${state.rules.autoAdvance?'on':''}" data-adv="1">${state.rules.autoAdvance?t("on"):t("off")}</button>
         </div>
       </div>
       <div class="rules-block" style="margin-top:14px">
