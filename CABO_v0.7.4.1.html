@@ -1597,25 +1597,9 @@ function renderHeader(){
   const h = document.querySelector("header");
   h.innerHTML = `<h1>${t("appName")} <span class="badge">Cabo</span><span class="ver">${APP_VER}</span></h1>
     <div class="header-actions">
-      <button class="icon-btn ghost" id="menuBtn" title="菜单">☰</button>
-      <button class="icon-btn ghost" id="langBtn" title="${t("switchLang")}">🌐</button>
-      <button class="icon-btn ghost" id="themeBtn" title="${t("toggleTheme")}">🌙</button>
-      ${IS_CLOUD ? `<button class="icon-btn ghost" id="admBtn" title="${t("adminSettings")}">🛡️</button>` : ''}
-      ${isAccount() ? `<button class="icon-btn ghost" id="acctBtn" title="当前账号">👤 ${escapeHtml(acctName())}</button><button class="icon-btn ghost" id="logoutBtn" title="退出登录">🚪</button>` : `<button class="icon-btn ghost" id="loginBtn" title="登录 / 注册">👤</button>`}
-      <button class="icon-btn ghost" id="donateBtn" title="赞助我们">💝</button>
-      <button class="icon-btn ghost" id="setBtn" title="${t("settings")}">⚙️</button>
+      <button class="icon-btn ghost" id="menuBtn" title="${t("settings")}">⚙️</button>
     </div>`;
-  document.querySelector("#setBtn").onclick = openSettings;
   const menuBtn = document.querySelector("#menuBtn"); if(menuBtn) menuBtn.onclick = openNavMenu;
-  const admBtn = document.querySelector("#admBtn"); if(admBtn) admBtn.onclick = ()=> location.href = 'admin.html';
-  const loginBtn = document.querySelector("#loginBtn"); if(loginBtn) loginBtn.onclick = ()=> location.href = "login.html";
-  const logoutBtn = document.querySelector("#logoutBtn"); if(logoutBtn) logoutBtn.onclick = accountLogout;
-  const donateBtn = document.querySelector("#donateBtn"); if(donateBtn) donateBtn.onclick = ()=> location.href = "donate.html";
-  document.querySelector("#langBtn").onclick = ()=>{ state.lang = (state.lang==='en')?'zh':'en'; save(); applyLang(); renderHeader(); render(); };
-  document.querySelector("#themeBtn").onclick = ()=>{
-    state.theme = (state.theme === "dark") ? "light" : "dark";
-    save(); applyTheme();
-  };
   applyTheme();
 }
 
