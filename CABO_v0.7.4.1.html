@@ -1621,6 +1621,7 @@ function renderNavMenu(){
   m.innerHTML = `
     <button data-act="home"><span class="mi">🏠</span> 返回主页</button>
     <button data-act="donate"><span class="mi">💝</span> 赞助我们</button>
+    <button data-act="voices"><span class="mi">🎧</span> 试听 14 种 AI 音色</button>
     ${IS_CLOUD ? `<button data-act="admin"><span class="mi">🛡️</span> 管理后台</button>` : ''}
     <div class="sep"></div>
     <button data-act="settings"><span class="mi">⚙️</span> 设置</button>
@@ -1630,6 +1631,7 @@ function renderNavMenu(){
   `;
   m.querySelector('[data-act="home"]').onclick = ()=>{ closeNavMenu(); location.href = 'index.html'; };
   m.querySelector('[data-act="donate"]').onclick = ()=>{ closeNavMenu(); location.href = 'donate.html'; };
+  m.querySelector('[data-act="voices"]').onclick = ()=>{ closeNavMenu(); location.href = 'voice-demo/index.html'; };
   const adm = m.querySelector('[data-act="admin"]'); if(adm) adm.onclick = ()=>{ closeNavMenu(); location.href = 'admin.html'; };
   m.querySelector('[data-act="settings"]').onclick = ()=>{ closeNavMenu(); openSettings(); };
   m.querySelector('[data-act="lang"]').onclick = ()=>{ closeNavMenu(); state.lang = (state.lang==='en')?'zh':'en'; save(); applyLang(); renderHeader(); render(); };
