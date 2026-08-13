@@ -39,6 +39,15 @@ h1{font-size:19px;margin:0;display:flex;align-items:center;gap:8px;font-weight:7
 h1 .badge{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-radius:8px;padding:3px 9px;font-size:12px;font-weight:700;letter-spacing:.5px}
 h1 .ver{font-size:11px;color:var(--muted);font-weight:600;border:1px solid var(--line);border-radius:7px;padding:1px 6px;margin-left:2px}
 .header-actions{display:flex;gap:8px}
+.nav-menu-mask{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:90;display:flex;justify-content:flex-end;align-items:flex-start}
+.nav-menu-mask.hidden{display:none}
+.nav-menu{margin:60px 12px 0;background:var(--card);border:1px solid var(--line);border-radius:14px;min-width:212px;padding:8px;box-shadow:var(--shadow-lg);animation:nmIn .12s ease}
+@keyframes nmIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+.nav-menu button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:transparent;border:0;color:var(--text);font-size:15px;padding:12px 14px;border-radius:10px;cursor:pointer;box-shadow:none}
+.nav-menu button:hover{background:var(--cabo-bg)}
+.nav-menu .mi{font-size:18px;width:22px;text-align:center}
+.nav-menu .sep{height:1px;background:var(--line);margin:6px 6px}
+.nav-menu .who{font-size:12px;color:var(--muted);padding:10px 14px 4px;display:flex;align-items:center;gap:8px}
 button{font-family:inherit;font-size:15px;cursor:pointer;border:none;border-radius:12px;padding:12px 14px;background:var(--card);color:var(--text);box-shadow:var(--shadow);transition:transform .06s ease, filter .15s, background .2s, box-shadow .2s}
 button:active{transform:scale(.97)}
 button.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;font-weight:700;font-size:17px;padding:15px;border:none;box-shadow:0 6px 18px rgba(31,157,94,.28)}
@@ -79,9 +88,9 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .rank-badge{font-size:11px;font-weight:800;color:#fff;background:var(--muted);border-radius:7px;padding:1px 6px;flex:0 0 auto}
 .player-card.lead .rank-badge{background:var(--gold);color:#5a3d00}
 .pc-name .crown{margin-left:2px}
-.half-badge{font-size:10px;font-weight:700;border-radius:6px;padding:2px 6px;white-space:nowrap}
-.half-badge.used{color:#fff;background:#2e7d32}
-.half-badge.unused{color:#fff;background:#9e9e9e}
+.half-badge{font-size:10px;font-weight:700;border-radius:6px;padding:2px 6px;white-space:nowrap;display:inline-block;line-height:1.4;letter-spacing:.3px}
+.half-badge.used{color:#fff;background:#2e7d32;border:1px solid #2e7d32;box-shadow:0 0 0 2px rgba(46,125,50,.18);text-shadow:0 1px 1px rgba(0,0,0,.25)}
+.half-badge.unused{color:#9e9e9e;background:transparent;border:1px dashed #9e9e9e;opacity:.85}
 .pc-total{font-size:30px;font-weight:800;color:var(--accent);transition:color .3s;white-space:nowrap}
 .pc-total small{font-size:12px;color:var(--muted);font-weight:600;margin-right:4px}
 .pc-inputs{display:flex;gap:10px;align-items:flex-end}
@@ -963,6 +972,7 @@ function processSpeakQueue(){
   const url = v.serviceUrl || "";
   // 不写死 nanami：没选过就交给服务端用它自己的默认音色（tts 模式下 nanami 并不存在）
   if(url){ speakRemote(text, url, v.model || "", processSpeakQueue); }
+  else if(isAccount()){ speakRemote(text, API_BASE() + "/api", "", processSpeakQueue); }  // 后端 TTS：任何设备/浏览器零配置出声（失败自动回退本地）
   else { speakLocal(text, processSpeakQueue); }
 }
 
@@ -1237,6 +1247,7 @@ function save(){
     var ok = roomMqttPublish();
     if(!mqttConnected || !ok) room._dirty = true;   // 本地有未同步改动，等重连后回推
   }
+  syncScoresToServer();   // 登录后把计分状态同步到云端（换设备可续）
 }
 function defaultState(){
   return {
@@ -1586,13 +1597,20 @@ function renderHeader(){
   const h = document.querySelector("header");
   h.innerHTML = `<h1>${t("appName")} <span class="badge">Cabo</span><span class="ver">${APP_VER}</span></h1>
     <div class="header-actions">
+      <button class="icon-btn ghost" id="menuBtn" title="菜单">☰</button>
       <button class="icon-btn ghost" id="langBtn" title="${t("switchLang")}">🌐</button>
       <button class="icon-btn ghost" id="themeBtn" title="${t("toggleTheme")}">🌙</button>
       ${IS_CLOUD ? `<button class="icon-btn ghost" id="admBtn" title="${t("adminSettings")}">🛡️</button>` : ''}
+      ${isAccount() ? `<button class="icon-btn ghost" id="acctBtn" title="当前账号">👤 ${escapeHtml(acctName())}</button><button class="icon-btn ghost" id="logoutBtn" title="退出登录">🚪</button>` : `<button class="icon-btn ghost" id="loginBtn" title="登录 / 注册">👤</button>`}
+      <button class="icon-btn ghost" id="donateBtn" title="赞助我们">💝</button>
       <button class="icon-btn ghost" id="setBtn" title="${t("settings")}">⚙️</button>
     </div>`;
   document.querySelector("#setBtn").onclick = openSettings;
-  const admBtn = document.querySelector("#admBtn"); if(admBtn) admBtn.onclick = openAdmin;
+  const menuBtn = document.querySelector("#menuBtn"); if(menuBtn) menuBtn.onclick = openNavMenu;
+  const admBtn = document.querySelector("#admBtn"); if(admBtn) admBtn.onclick = ()=> location.href = 'admin.html';
+  const loginBtn = document.querySelector("#loginBtn"); if(loginBtn) loginBtn.onclick = ()=> location.href = "login.html";
+  const logoutBtn = document.querySelector("#logoutBtn"); if(logoutBtn) logoutBtn.onclick = accountLogout;
+  const donateBtn = document.querySelector("#donateBtn"); if(donateBtn) donateBtn.onclick = ()=> location.href = "donate.html";
   document.querySelector("#langBtn").onclick = ()=>{ state.lang = (state.lang==='en')?'zh':'en'; save(); applyLang(); renderHeader(); render(); };
   document.querySelector("#themeBtn").onclick = ()=>{
     state.theme = (state.theme === "dark") ? "light" : "dark";
@@ -1600,6 +1618,43 @@ function renderHeader(){
   };
   applyTheme();
 }
+
+/* 导航菜单：上级菜单浮层，进入计分系统后一键返回主页 / 去赞助 / 进管理后台 / 设置等 */
+function ensureNavMenu(){
+  if(document.getElementById('navMenuMask')) return;
+  const mask = document.createElement('div');
+  mask.id = 'navMenuMask';
+  mask.className = 'nav-menu-mask hidden';
+  mask.innerHTML = '<div class="nav-menu" id="navMenu"></div>';
+  mask.addEventListener('click', (e)=>{ if(e.target === mask) closeNavMenu(); });
+  document.body.appendChild(mask);
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') closeNavMenu(); });
+}
+function renderNavMenu(){
+  ensureNavMenu();
+  const m = document.getElementById('navMenu');
+  const acct = isAccount();
+  m.innerHTML = `
+    <button data-act="home"><span class="mi">🏠</span> 返回主页</button>
+    <button data-act="donate"><span class="mi">💝</span> 赞助我们</button>
+    ${IS_CLOUD ? `<button data-act="admin"><span class="mi">🛡️</span> 管理后台</button>` : ''}
+    <div class="sep"></div>
+    <button data-act="settings"><span class="mi">⚙️</span> 设置</button>
+    <button data-act="lang"><span class="mi">🌐</span> 切换语言</button>
+    <button data-act="theme"><span class="mi">🌙</span> 切换主题</button>
+    ${acct ? `<div class="sep"></div><div class="who">👤 ${escapeHtml(acctName())}</div><button data-act="logout"><span class="mi">🚪</span> 退出登录</button>` : `<button data-act="login"><span class="mi">👤</span> 登录 / 注册</button>`}
+  `;
+  m.querySelector('[data-act="home"]').onclick = ()=>{ closeNavMenu(); location.href = 'index.html'; };
+  m.querySelector('[data-act="donate"]').onclick = ()=>{ closeNavMenu(); location.href = 'donate.html'; };
+  const adm = m.querySelector('[data-act="admin"]'); if(adm) adm.onclick = ()=>{ closeNavMenu(); location.href = 'admin.html'; };
+  m.querySelector('[data-act="settings"]').onclick = ()=>{ closeNavMenu(); openSettings(); };
+  m.querySelector('[data-act="lang"]').onclick = ()=>{ closeNavMenu(); state.lang = (state.lang==='en')?'zh':'en'; save(); applyLang(); renderHeader(); render(); };
+  m.querySelector('[data-act="theme"]').onclick = ()=>{ closeNavMenu(); state.theme = (state.theme==='dark')?'light':'dark'; save(); applyTheme(); };
+  const lg = m.querySelector('[data-act="login"]'); if(lg) lg.onclick = ()=>{ closeNavMenu(); location.href = 'login.html'; };
+  const lo = m.querySelector('[data-act="logout"]'); if(lo) lo.onclick = ()=>{ closeNavMenu(); accountLogout(); };
+}
+function openNavMenu(){ renderNavMenu(); document.getElementById('navMenuMask').classList.remove('hidden'); }
+function closeNavMenu(){ const el = document.getElementById('navMenuMask'); if(el) el.classList.add('hidden'); }
 
 /* 云端版管理员面板：配置 AI 配音服务地址与查看未来规划，需管理员密码解锁（普通用户设置页不暴露） */
 function adminPwdHash(p){
@@ -1928,7 +1983,7 @@ function renderGame(){
     pl.insertAdjacentHTML("beforeend", `
       <div class="player-card ${lead?'lead':''}" style="border-left:5px solid ${p.color}">
         <div class="pc-top">
-          <div class="pc-name" id="pcName-${i}${t(`" title="点击修改名字">`)}${escapeHtml(p.name)}<span class="rank-badge">#${rankOf[i]}</span>${lead?'<span class="crown">👑</span>':''}${state.rules.hundredEgg !== 'off' ? `<span class="half-badge ${state.hundredUsed[i]?'used':'unused'}">${state.hundredUsed[i]?t('halfUsed'):t('halfUnused')}</span>` : ''}</div>
+          <div class="pc-name" id="pcName-${i}${t(`" title="点击修改名字">`)}${escapeHtml(p.name)}<span class="rank-badge">#${rankOf[i]}</span>${lead?'<span class="crown">👑</span>':''}${state.rules.hundredEgg !== 'off' ? `<span class="half-badge ${state.hundredUsed[i]?'used':'unused'}">${state.hundredUsed[i]?'✦ '+t('halfUsed'):t('halfUnused')}</span>` : ''}</div>
           <div class="pc-right">
             <button class="pc-adj" id="adj-${i}${t(`" title="手动补扣分数">±`)}${state.adjust[i]||0}${t(`</button> <div class="pc-total"><small>总分</small>`)}${ts[i]}</div>
           </div>
@@ -4124,7 +4179,37 @@ function openExportImport(){
   document.querySelector("#eiFile").onchange = e=>{ if(e.target.files[0]) importStateFromFile(e.target.files[0]); };
 }
 
+/* ===== 账号与云端同步：注册/登录后计分状态存服务器，换设备可续；语音走后端 TTS 让任何设备出声 ===== */
+function API_BASE(){ try{ return localStorage.getItem('cabo-api') || ''; }catch(e){ return ''; } }
+function getToken(){ try{ return localStorage.getItem('cabo-token') || ''; }catch(e){ return ''; } }
+function isAccount(){ return !!getToken(); }
+function acctName(){ try{ const u=JSON.parse(localStorage.getItem('cabo-user')||'{}'); return u.username || ''; }catch(e){ return ''; } }
+function accountLogout(){ try{ localStorage.removeItem('cabo-token'); localStorage.removeItem('cabo-user'); }catch(e){} location.href = 'index.html'; }
+var accountReady = false;
+function syncScoresToServer(){
+  if(!accountReady) return;            // 等账号数据加载完，避免用本地空状态覆盖云端
+  const tok = getToken(); if(!tok) return;
+  const data = JSON.stringify(state);
+  fetch(API_BASE() + '/api/scores', { method:'PUT', headers:{'Content-Type':'application/json', Authorization:'Bearer '+tok}, body: JSON.stringify({data:data}) }).catch(()=>{});
+}
+function accountBoot(){
+  const tok = getToken(); if(!tok){ return; }
+  fetch(API_BASE() + '/api/me', { headers:{ Authorization:'Bearer '+tok } }).then(r=>{
+    if(r.status !== 200){ try{ localStorage.removeItem('cabo-token'); localStorage.removeItem('cabo-user'); }catch(e){} renderHeader(); accountReady = true; return null; }
+    accountReady = true;
+    return fetch(API_BASE() + '/api/scores', { headers:{ Authorization:'Bearer '+tok } });
+  }).then(r=>{
+    if(!r) return;
+    return r.json();
+  }).then(d=>{
+    if(d && d.data){
+      try{ const obj = JSON.parse(d.data); if(obj && typeof obj === 'object'){ state = obj; normalize(); save(); } }catch(e){}
+    }
+    renderHeader(); render();
+  }).catch(()=>{ accountReady = true; renderHeader(); });
+}
 renderHeader();
+accountBoot();
 applyLang(); initVoice();
 // 跨设备同步 RVC 语音服务地址：管理员在一台设备填过，其他设备（手机）自动拿到
 voiceCfgLoad().then(cfg=>{
