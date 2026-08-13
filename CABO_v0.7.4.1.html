@@ -431,7 +431,7 @@ const EDGE_VOICES = [
 /* ===== 多语言 i18n (v0.7.4.1) ===== */
 const I18N = {
   zh: {
-    appName:"卡波计分", settings:"设置", switchLang:"切换语言", toggleTheme:"切换深色 / 浅色",
+    appName:"卡波计分", settings:"设置", menu:"菜单", switchLang:"切换语言", toggleTheme:"切换深色 / 浅色",
     save:"保存", resetAll:"重置全部", close:"关闭", cancel:"取消", confirm:"确认",
     account:"账号", playerNames:"玩家名字", endScore:"结束分数线", winRule:"胜负规则",
     lowWin:"低分胜", highWin:"高分胜", ruleCustom:"规则自定义",
@@ -488,7 +488,7 @@ const I18N = {
     "优化：本地版保留 AI 配音服务地址在设置页；云端版高级配置仅管理员可见":"Improved: local version keeps AI service URL in Settings; cloud version hides it behind Admin"
   },
   en: {
-    appName:"Cabo Scorer", settings:"Settings", switchLang:"Switch language", toggleTheme:"Toggle dark / light",
+    appName:"Cabo Scorer", settings:"Settings", menu:"Menu", switchLang:"Switch language", toggleTheme:"Toggle dark / light",
     save:"Save", resetAll:"Reset all", close:"Close", cancel:"Cancel", confirm:"Confirm",
     account:"Account", playerNames:"Player names", endScore:"End score", winRule:"Win rule",
     lowWin:"Lowest wins", highWin:"Highest wins", ruleCustom:"Custom rules",
@@ -1597,7 +1597,7 @@ function renderHeader(){
   const h = document.querySelector("header");
   h.innerHTML = `<h1>${t("appName")} <span class="badge">Cabo</span><span class="ver">${APP_VER}</span></h1>
     <div class="header-actions">
-      <button class="icon-btn ghost" id="menuBtn" title="${t("settings")}">⚙️</button>
+      <button class="icon-btn ghost" id="menuBtn" title="${t("menu") || "菜单"}">☰</button>
     </div>`;
   const menuBtn = document.querySelector("#menuBtn"); if(menuBtn) menuBtn.onclick = openNavMenu;
   applyTheme();
