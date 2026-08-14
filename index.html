@@ -1,87 +1,96 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>卡波计分 Cabo Scorer</title>
-  <style>
-    :root{
-      --bg:#f3f7f5; --card:#ffffff; --line:#e3eae6; --text:#16302a; --muted:#6b7c75;
-      --accent:#2bb673; --accent-2:#1f9e63; --shadow:0 10px 30px rgba(20,60,45,.10);
-    }
-    *{box-sizing:border-box}
-    body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
-      background:radial-gradient(1200px 600px at 50% -10%, #e7f5ee 0%, var(--bg) 60%);
-      color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
-      padding:24px}
-    .wrap{width:100%;max-width:560px;text-align:center}
-    .logo{font-size:46px;line-height:1}
-    h1{font-size:26px;margin:14px 0 4px;letter-spacing:.5px}
-    .sub{color:var(--muted);font-size:14px;margin:0 0 26px}
-    .modes{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    @media(max-width:480px){.modes{grid-template-columns:1fr}}
-    .mode{display:block;text-decoration:none;color:inherit;background:var(--card);
-      border:1px solid var(--line);border-radius:18px;padding:22px 18px;text-align:left;
-      box-shadow:var(--shadow);transition:transform .15s ease,border-color .15s ease}
-    .mode:hover{transform:translateY(-3px);border-color:var(--accent)}
-    .mode .ic{font-size:30px}
-    .mode h2{font-size:18px;margin:10px 0 6px}
-    .mode p{font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 14px}
-    .mode .go{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--accent-2);font-size:14px}
-    .badge{display:inline-block;font-size:11px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--accent),var(--accent-2));
-      padding:3px 9px;border-radius:20px;margin-left:8px;vertical-align:middle}
-    .foot{margin-top:24px;color:var(--muted);font-size:12px;line-height:1.7}
-    .foot b{color:var(--text)}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>卡波计分 · Cabo Scorer</title>
+<style>
+  :root{
+    --bg:#0f1420; --bg2:#161d2e; --card:#1c2536; --line:#2a3550;
+    --txt:#e8edf7; --sub:#9fb0cc; --brand:#4f8cff; --brand2:#36d399;
+    --warn:#ffb454; --shadow:0 8px 28px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#1b2740 0%,var(--bg) 60%);
+    color:var(--txt);-webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 56px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand2));
+    display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:var(--shadow)}
+  .brand{font-size:20px;font-weight:700;letter-spacing:.5px}
+  .brand small{display:block;font-size:12px;color:var(--sub);font-weight:400;letter-spacing:1px}
+  .hero{margin:26px 0 30px;text-align:center}
+  .hero h1{font-size:34px;line-height:1.25;margin:0 0 12px;
+    background:linear-gradient(90deg,#fff,#bcd2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p{color:var(--sub);font-size:15px;line-height:1.7;margin:0 auto;max-width:560px}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:26px 0 36px}
+  .btn{flex:1 1 160px;max-width:240px;text-decoration:none;text-align:center;padding:14px 18px;border-radius:12px;
+    font-size:15px;font-weight:600;transition:transform .12s ease,box-shadow .12s ease;cursor:pointer;border:1px solid var(--line)}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;border:none;box-shadow:0 6px 18px rgba(79,140,255,.4)}
+  .btn-ghost{background:var(--card);color:var(--txt)}
+  .btn-ghost:hover{background:#222d42}
+  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:8px}
+  .feat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px}
+  .feat .ic{font-size:22px;margin-bottom:8px}
+  .feat h3{margin:0 0 6px;font-size:15px}
+  .feat p{margin:0;color:var(--sub);font-size:13px;line-height:1.6}
+  .note{margin-top:34px;text-align:center;color:var(--sub);font-size:12px;line-height:1.8}
+  .note a{color:var(--brand)}
+  footer{margin-top:30px;text-align:center;color:#5e6c88;font-size:12px}
+  .announce{background:linear-gradient(135deg,#22304e,#1c2740);border:1px solid var(--line);border-radius:12px;
+    padding:12px 16px;margin:0 0 22px;font-size:14px;line-height:1.6;color:#cfe0ff}
+  .announce b{color:#fff}
+  @media(max-width:480px){ .hero h1{font-size:27px} .btn{flex:1 1 100%;max-width:none} }
+</style>
 </head>
 <body>
-  <div class="wrap">
+<div class="wrap">
+  <div id="announce" class="announce hidden"></div>
+  <header>
     <div class="logo">🃏</div>
-    <h1>卡波计分 <span class="badge">Cabo</span></h1>
-    <p class="sub">选择使用模式 · 两个版本数据互不干扰，可随时切换</p>
+    <div class="brand">卡波计分<small>CABO SCORER</small></div>
+  </header>
 
-    <p class="foot" style="margin:0 0 22px"><b>v0.7.4 新增</b>：AI 内置配音——14 种神经语音（含东北话、陕西话、粤语、台湾腔），在设置页选一个就能听到真人感的报分（本地版、云端版均支持）。</p>
+  <section class="hero">
+    <h1>卡波纸牌 · 一键计分与语音播报</h1>
+    <p>注册账号即可云端保存对局，换手机也能接着打；AI 语音自动报分，支持「减半」特殊规则；还能赞助作者、由管理后台查看用户。</p>
+  </section>
 
-    <p class="foot" style="margin:0 0 18px"><a href="voice-demo/" style="color:var(--accent,#27a);font-weight:600;text-decoration:none">🎧 试听 14 种 AI 音色 →</a> · <a href="ocr-auto.html" style="color:var(--accent,#27a);font-weight:600;text-decoration:none">📸 一拍出分（全自动）→</a> · <a href="ocr-lab.html" style="color:var(--accent,#27a);font-weight:600;text-decoration:none">📷 单张框选版 →</a> · <a href="admin.html" style="color:var(--accent,#27a);font-weight:600;text-decoration:none">🛡️ 管理后台（管理员）</a></p>
+  <nav class="cta">
+    <a class="btn btn-primary" href="CABO_v0.7.4.1.html">🎮 进入计分器</a>
+    <a class="btn btn-ghost" href="register.html">✍️ 注册账号</a>
+    <a class="btn btn-ghost" href="login.html">🔑 登录</a>
+    <a class="btn btn-ghost" href="donate.html">💝 赞助我们</a>
+    <a class="btn btn-ghost" href="admin.html">🛡️ 管理后台</a>
+  </nav>
 
-    <div class="modes" style="grid-template-columns:1fr">
-      <a class="mode" href="ocr-auto.html">
-        <div class="ic">📸</div>
-        <h2>一拍出分 <span class="badge" style="font-size:10px">全自动</span></h2>
-        <p>摊牌后直接拍一张整桌照片，自动找到 16 张牌上的数字并读出来，按上/下/左/右四家分好组。<b>不用框牌、不用点桌角</b>，读完每格还能手动改。</p>
-        <span class="go">打开一拍出分 →</span>
-      </a>
-    </div>
+  <section class="features">
+    <div class="feat"><div class="ic">☁️</div><h3>账号云同步</h3><p>登录后分数与历史存云端，多端无缝衔接，再也不怕换手机丢数据。</p></div>
+    <div class="feat"><div class="ic">🔊</div><h3>AI 语音播报</h3><p>自动语音播报当前分数与名次，老人小孩都能听清，零配置开声。</p></div>
+    <div class="feat"><div class="ic">✂️</div><h3>减半计分</h3><p>内置「减半 / 免减半」特殊规则与视觉标识，规则一目了然。</p></div>
+    <div class="feat"><div class="ic">📊</div><h3>对局存档</h3><p>一键保存多局对战，随时载入继续，历史成绩随时回看。</p></div>
+    <div class="feat"><div class="ic">💝</div><h3>赞助支持</h3><p>微信 / 支付宝收款码，支持作者持续维护与功能更新。</p></div>
+    <div class="feat"><div class="ic">🛡️</div><h3>管理后台</h3><p>管理员可查看注册用户、导出数据、管理收款码配置。</p></div>
+  </section>
 
-    <div class="modes" style="grid-template-columns:1fr;margin-top:12px">
-      <a class="mode" href="ocr-lab.html">
-        <div class="ic">📷</div>
-        <h2>单张框选版 <span class="badge" style="font-size:10px">BETA</span></h2>
-        <p>一次识一张牌：手动框住数字即可，朝向随意。适合只想补录某一张、或整桌自动识别没认全时兜底。</p>
-        <span class="go">打开框选版 →</span>
-      </a>
-    </div>
-
-    <div class="modes" style="margin-top:16px">
-      <a class="mode" href="CABO_v0.7.4.html">
-        <div class="ic">📱</div>
-        <h2>本地模式</h2>
-        <p>离线可用，<b>无需登录</b>。数据存在这部手机的浏览器里，打开即用，最适合当面记分。</p>
-        <span class="go">进入本地版 v0.7.4 →</span>
-      </a>
-
-      <a class="mode" href="CABO_v0.7.4.1.html">
-        <div class="ic">🐙</div>
-        <h2>云端模式</h2>
-        <p>支持 <b>GitHub 云</b> 或 <b>本机账号</b> 登录；登录同一账号可<b>双设备实时同步</b>。</p>
-        <span class="go">进入云端版 v0.7.4.1 →</span>
-      </a>
-    </div>
-
-    <p class="foot">
-      本地模式与云端模式是<b>两个独立文件</b>：本地版的对局不会自动进云端，云端版需联网登录。<br>
-      想用哪个就点哪个，之后也能从入口随时切回去。
-    </p>
+  <div class="note">
+    本站为纯前端 + 腾讯云开发（CloudBase）部署，数据存于文档型云数据库。<br>
+    使用中有任何问题或建议，欢迎通过赞助页联系作者。
   </div>
+
+  <footer>© Cabo Scorer · 卡波计分</footer>
+</div>
+<script>
+(function(){
+  var API=(function(){try{var c=localStorage.getItem('cabo-api');if(c)return c;}catch(e){}
+    var h=location.hostname;if(h.endsWith('.tcloudbaseapp.com'))return 'https://'+h.split('.')[0]+'.ap-shanghai.app.tcloudbase.com';return '';})();
+  fetch(API+'/api/config').then(function(r){return r.json();}).then(function(d){
+    var el=document.getElementById('announce');
+    if(d&&d.announce){el.innerHTML='📢 <b>'+d.announce.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];})+'</b>';el.classList.remove('hidden');}
+  }).catch(function(){});
+})();
+</script>
 </body>
 </html>
