@@ -957,6 +957,7 @@ function voiceRateLabel(){
 }
 let speakQueue = [];
 let speaking = false;
+let caboTtsEnabled = null; // null=未知(维持后端TTS兼容)；false=云端无TTS，登录用户改用浏览器语音
 
 function speak(text){
   if(!voiceOn) return;
@@ -972,8 +973,8 @@ function processSpeakQueue(){
   const url = v.serviceUrl || "";
   // 不写死 nanami：没选过就交给服务端用它自己的默认音色（tts 模式下 nanami 并不存在）
   if(url){ speakRemote(text, url, v.model || "", processSpeakQueue); }
-  else if(isAccount()){ speakRemote(text, API_BASE() + "/api", "", processSpeakQueue); }  // 后端 TTS：任何设备/浏览器零配置出声（失败自动回退本地）
-  else { speakLocal(text, processSpeakQueue); }
+  else if(isAccount() && caboTtsEnabled !== false){ speakRemote(text, API_BASE() + "/api", (v.model || ""), processSpeakQueue); }  // 后端 TTS：任何设备/浏览器零配置出声，沿用所选 AI 嗓音（失败自动回退本地）
+  else { speakLocal(text, processSpeakQueue); } // 含云端版（ttsEnabled=false）：直接用浏览器内置语音
 }
 
 function speakLocal(text, cb){
@@ -4166,7 +4167,22 @@ function openExportImport(){
 }
 
 /* ===== 账号与云端同步：注册/登录后计分状态存服务器，换设备可续；语音走后端 TTS 让任何设备出声 ===== */
-function API_BASE(){ try{ return localStorage.getItem('cabo-api') || ''; }catch(e){ return ''; } }
+function API_BASE(){
+  try{
+    const explicit = localStorage.getItem('cabo-api');
+    if(explicit) return explicit;            // 例：https://abc.ap-shanghai.app.tcloudbase.com（不含 /api）
+  }catch(e){}
+  try{
+    const h = location.hostname;
+    // CloudBase 静态托管域名 *.tcloudbaseapp.com 下，/api 挂在云接入网关域名 *.ap-shanghai.app.tcloudbase.com，
+    // 自动推导，免去控制台为静态域名再配一次 /api 路由（region 写死 ap-shanghai）
+    if(h.endsWith('.tcloudbaseapp.com')){
+      const env = h.split('.')[0];           // cabo-x666-d2gjwxo2of930b7da-1468132660（完整环境ID）
+      return 'https://' + env + '.ap-shanghai.app.tcloudbase.com';
+    }
+  }catch(e){}
+  return '';                                 // 同源相对路径（自托管 Node 后端 / 本地）
+}
 function getToken(){ try{ return localStorage.getItem('cabo-token') || ''; }catch(e){ return ''; } }
 function isAccount(){ return !!getToken(); }
 function acctName(){ try{ const u=JSON.parse(localStorage.getItem('cabo-user')||'{}'); return u.username || ''; }catch(e){ return ''; } }
@@ -4178,7 +4194,16 @@ function syncScoresToServer(){
   const data = JSON.stringify(state);
   fetch(API_BASE() + '/api/scores', { method:'PUT', headers:{'Content-Type':'application/json', Authorization:'Bearer '+tok}, body: JSON.stringify({data:data}) }).catch(()=>{});
 }
+function fetchConfig(){
+  // 读取后端能力开关（如云端版 ttsEnabled=false 表示无后端TTS，登录用户改用浏览器语音）
+  try{
+    fetch(API_BASE() + '/api/config').then(r=> r && r.ok ? r.json() : null).then(c=>{
+      if(c && typeof c.ttsEnabled === 'boolean') caboTtsEnabled = c.ttsEnabled;
+    }).catch(()=>{});
+  }catch(e){}
+}
 function accountBoot(){
+  fetchConfig();
   const tok = getToken(); if(!tok){ return; }
   fetch(API_BASE() + '/api/me', { headers:{ Authorization:'Bearer '+tok } }).then(r=>{
     if(r.status !== 200){ try{ localStorage.removeItem('cabo-token'); localStorage.removeItem('cabo-user'); }catch(e){} renderHeader(); accountReady = true; return null; }
