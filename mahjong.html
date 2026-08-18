@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>麻将计分 · Cabo Scorer</title>
+<style>
+  :root{
+    --bg:#0f1420; --bg2:#161d2e; --card:#1c2536; --line:#2a3550;
+    --txt:#e8edf7; --sub:#9fb0cc; --brand:#4f8cff; --brand2:#36d399;
+    --warn:#ffb454; --shadow:0 8px 28px rgba(0,0,0,.35); --muted:#6b7a99; --input-bg:#0f1626;
+  }
+  :root[data-theme="light"]{
+    --bg:#eef2f8; --bg2:#e3e9f2; --card:#ffffff; --line:#d6deea;
+    --txt:#16203a; --sub:#5a6b8c; --brand:#3a7bf0; --brand2:#1faf7a;
+    --warn:#d98300; --shadow:0 8px 28px rgba(20,40,80,.12); --muted:#7a89a8; --input-bg:#f1f5fb;
+  }
+  .theme-btn{margin-left:12px;background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:6px 11px;font-size:15px;cursor:pointer}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#1b2740 0%,var(--bg) 60%);color:var(--txt);
+    -webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand2));
+    display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow)}
+  .brand{font-size:18px;font-weight:700}.brand small{display:block;font-size:11px;color:var(--sub);font-weight:400;letter-spacing:1px}
+  .back{margin-left:auto;color:var(--sub);text-decoration:none;font-size:13px;border:1px solid var(--line);padding:6px 12px;border-radius:9px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}
+  .panel h2{margin:0 0 14px;font-size:15px;color:var(--sub);font-weight:600;letter-spacing:.5px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+  input,select{width:100%;background:var(--input-bg);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 12px;font-size:15px;outline:none}
+  input:focus{border-color:var(--brand)}
+  .prow{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+  .prow .dot{width:14px;height:14px;border-radius:50%;flex:none}
+  .seg{display:flex;gap:8px}
+  .seg button{flex:1;background:var(--input-bg);border:1px solid var(--line);color:var(--sub);border-radius:10px;padding:11px;font-size:14px;cursor:pointer}
+  .seg button.active{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;border:none}
+  .btn{display:block;width:100%;text-align:center;padding:14px;border-radius:12px;font-size:15px;font-weight:600;border:none;cursor:pointer;margin-top:6px}
+  .btn-primary{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;box-shadow:0 6px 18px rgba(79,140,255,.35)}
+  .btn-ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+  .btn-warn{background:#2a2030;color:#ff9aa6;border:1px solid #5a2a3a}
+  .pick-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+  .pick-grid button{padding:13px;border-radius:11px;border:1px solid var(--line);background:var(--input-bg);color:var(--txt);font-size:15px;cursor:pointer;text-align:left}
+  .pick-grid button.active{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;border:none}
+  .card{padding:14px;margin-bottom:10px;border-radius:12px}
+  .card .top{display:flex;justify-content:space-between;align-items:baseline}
+  .card .total{font-size:26px;font-weight:800}
+  .card.lead{box-shadow:0 0 0 2px var(--brand2) inset}
+  .bar{height:8px;border-radius:6px;background:var(--input-bg);overflow:hidden;margin-top:8px}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2))}
+  .rank{font-size:12px;color:var(--muted)}
+  .hist{margin-top:8px}
+  .hist .h{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-top:1px solid var(--line);color:var(--sub)}
+  .hidden{display:none!important}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#000a;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .tip{font-size:12px;color:var(--muted);margin-top:6px}
+  .toggle-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub);margin-top:14px}
+  .switch{position:relative;width:46px;height:26px;background:var(--input-bg);border:1px solid var(--line);border-radius:20px;cursor:pointer;flex:none}
+  .switch.on{background:var(--brand2);border-color:var(--brand2)}
+  .switch i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+  .switch.on i{left:22px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🀄</div>
+    <div class="brand">麻将计分<small>MAHJONG</small></div>
+    <button class="theme-btn" id="themeBtn" title="切换深色 / 浅色">🌙</button>
+    <a class="back" href="index.html">← 首页</a>
+  </header>
+
+  <div class="panel" id="setup">
+    <h2>对局设置</h2>
+    <div class="field">
+      <label>玩家人数</label>
+      <div class="seg" id="countSeg">
+        <button data-n="2">2</button><button data-n="3">3</button>
+        <button data-n="4" class="active">4</button>
+      </div>
+    </div>
+    <div class="field" id="nameList"></div>
+    <button class="btn btn-primary" id="startBtn">开始计分</button>
+  </div>
+
+  <div class="panel hidden" id="game">
+    <h2 id="gameTitle">麻将计分</h2>
+    <div class="field">
+      <label>本局赢家</label>
+      <div class="pick-grid" id="winPick"></div>
+    </div>
+    <div class="field">
+      <label>结算方式</label>
+      <div class="seg" id="modeSeg">
+        <button data-m="zimo" class="active">🀙 自摸（赢家向每人收分）</button>
+        <button data-m="dianpao">🀐 点炮（仅点炮者赔付）</button>
+      </div>
+      <div class="tip" id="modeTip">自摸：赢家 +分×(人数-1)，其余各 -分</div>
+    </div>
+    <div class="field" id="payerField">
+      <label>点炮者</label>
+      <div class="pick-grid" id="payerPick"></div>
+    </div>
+    <div class="field">
+      <label>本局番数 / 分数</label>
+      <input type="number" id="pts" value="1" min="1">
+    </div>
+    <button class="btn btn-primary" id="submitBtn">结算本局</button>
+
+    <h2 style="margin-top:22px">总分排行（高分胜）</h2>
+    <div id="totals"></div>
+
+    <div style="margin-top:18px;display:flex;gap:10px">
+      <button class="btn btn-ghost" id="undoBtn">↩ 撤销上一局</button>
+      <button class="btn btn-warn" id="resetBtn">🧹 重置全部</button>
+    </div>
+    <div class="toggle-row">
+      <div class="switch" id="voiceSw"><i></i></div>
+      <span>语音播报（自动念总分）</span>
+    </div>
+    <button class="btn btn-ghost" id="backSetup" style="margin-top:14px">← 返回设置</button>
+
+    <h2 style="margin-top:22px">对局记录</h2>
+    <div class="hist" id="histList"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var COLORS=['#4f8cff','#36d399','#ffb454','#ff6b8a','#a78bfa','#22d3ee'];
+  var players=[], totals=[], rounds=[], n=4, winIdx=-1, mode='zimo', payerIdx=-1, voiceOn=false;
+
+  function $(id){return document.getElementById(id);}
+  function applyGlobalTheme(){ try{ var g=localStorage.getItem('cabo-theme'); if(g==='light'||g==='dark') document.documentElement.dataset.theme=g; }catch(e){} }
+  applyGlobalTheme();
+  (function(){ var tb=document.getElementById('themeBtn'); if(!tb) return;
+    function syncIcon(){ tb.textContent = document.documentElement.dataset.theme==='light' ? '🌙' : '☀️'; }
+    syncIcon();
+    tb.onclick=function(){ var cur=document.documentElement.dataset.theme==='light'?'dark':'light'; document.documentElement.dataset.theme=cur; syncIcon(); try{ localStorage.setItem('cabo-theme',cur); }catch(e){} };
+  })();
+  function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},1600);}
+  function save(){try{localStorage.setItem('mj-scorer',JSON.stringify({players:players,totals:totals,rounds:rounds,voiceOn:voiceOn}));}catch(e){}}
+  function load(){try{var s=JSON.parse(localStorage.getItem('mj-scorer')||'null');if(s&&s.players&&s.players.length){players=s.players;totals=s.totals;rounds=s.rounds;voiceOn=!!s.voiceOn;return true;}}catch(e){}return false;}
+  function escapeHtml(s){return (s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+
+  function renderNameList(){
+    var box=$('nameList');box.innerHTML='';
+    for(var i=0;i<n;i++){
+      var v=players[i]?players[i].name:('玩家'+(i+1));
+      var row=document.createElement('div');row.className='prow';
+      row.innerHTML='<span class="dot" style="background:'+COLORS[i%COLORS.length]+'"></span><input value="'+escapeHtml(v)+'" data-i="'+i+'">';
+      box.appendChild(row);
+    }
+    box.querySelectorAll('input').forEach(function(inp){inp.oninput=function(){players[+inp.dataset.i]=players[+inp.dataset.i]||{};players[+inp.dataset.i].name=inp.value;};});
+  }
+  $('countSeg').querySelectorAll('button').forEach(function(b){b.onclick=function(){
+    $('countSeg').querySelectorAll('button').forEach(function(x){x.classList.remove('active');});b.classList.add('active');n=+b.dataset.n;renderNameList();};});
+
+  $('startBtn').onclick=function(){
+    var names=[];for(var i=0;i<n;i++){var inp=$('nameList').querySelector('input[data-i="'+i+'"]');names.push(inp?inp.value.trim()||('玩家'+(i+1)):('玩家'+(i+1)));}
+    players=names.map(function(nn,i){return {name:nn};});totals=players.map(function(){return 0;});rounds=[];
+    $('setup').classList.add('hidden');$('game').classList.remove('hidden');
+    $('gameTitle').textContent='麻将计分 · '+n+' 人';
+    winIdx=-1;payerIdx=-1;mode='zimo';$('modeSeg').querySelector('[data-m="zimo"]').classList.add('active');$('modeSeg').querySelector('[data-m="dianpao"]').classList.remove('active');
+    $('payerField').classList.add('hidden');
+    renderWinPick();renderTotals();renderHist();save();
+  };
+  $('backSetup').onclick=function(){$('game').classList.add('hidden');$('setup').classList.remove('hidden');};
+
+  function renderWinPick(){
+    var box=$('winPick');box.innerHTML='';
+    players.forEach(function(p,i){var b=document.createElement('button');b.textContent=p.name;b.className=(i===winIdx?'active':'');
+      b.onclick=function(){winIdx=i;if(payerIdx===i)payerIdx=-1;renderWinPick();renderPayerPick();};box.appendChild(b);});
+  }
+  function renderPayerPick(){
+    var box=$('payerPick');box.innerHTML='';
+    players.forEach(function(p,i){if(i===winIdx)return;var b=document.createElement('button');b.textContent=p.name;b.className=(i===payerIdx?'active':'');
+      b.onclick=function(){payerIdx=i;renderPayerPick();};box.appendChild(b);});
+  }
+  $('modeSeg').querySelectorAll('button').forEach(function(b){b.onclick=function(){
+    $('modeSeg').querySelectorAll('button').forEach(function(x){x.classList.remove('active');});b.classList.add('active');mode=b.dataset.m;
+    if(mode==='dianpao'){$('payerField').classList.remove('hidden');$('modeTip').textContent='点炮：赢家 +分，仅点炮者 -分，其余不变';if(payerIdx<0&&players.length>1)payerIdx=players.findIndex(function(_,i){return i!==winIdx;});renderPayerPick();}
+    else{$('payerField').classList.add('hidden');$('modeTip').textContent='自摸：赢家 +分×(人数-1)，其余各 -分';}
+  };});
+
+  $('submitBtn').onclick=function(){
+    if(winIdx<0){toast('请先选赢家');return;}
+    var pts=Math.max(1,parseInt($('pts').value,10)||1);
+    var delta=totals.map(function(){return 0;});
+    if(mode==='zimo'){
+      for(var i=0;i<players.length;i++){if(i===winIdx)delta[i]+=pts*(players.length-1);else delta[i]-=pts;}
+    }else{
+      if(payerIdx<0){toast('请选点炮者');return;}
+      delta[winIdx]+=pts;delta[payerIdx]-=pts;
+    }
+    for(var j=0;j<players.length;j++)totals[j]+=delta[j];
+    rounds.push({winIdx:winIdx,payerIdx:payerIdx,mode:mode,pts:pts,delta:delta.slice(),at:Date.now()});
+    winIdx=-1;payerIdx=-1;$('payerField').classList.add('hidden');renderWinPick();renderTotals();renderHist();save();speak();toast('已结算本局');
+  };
+  $('undoBtn').onclick=function(){if(!rounds.length){toast('没有可撤销的局');return;}var last=rounds.pop();for(var i=0;i<players.length;i++)totals[i]-=last.delta[i];renderTotals();renderHist();save();toast('已撤销上一局');};
+  $('resetBtn').onclick=function(){if(!confirm('确定重置全部？所有分数会清空。'))return;totals=players.map(function(){return 0;});rounds=[];renderTotals();renderHist();save();toast('已重置');};
+
+  function renderTotals(){
+    var order=players.map(function(_,i){return i;}).sort(function(a,b){return totals[b]-totals[a];});
+    var max=Math.max.apply(null,totals.map(function(v){return Math.abs(v);}).concat([1]));
+    var box=$('totals');box.innerHTML='';
+    order.forEach(function(i,pos){var lead=(pos===0);var c=document.createElement('div');c.className='card'+(lead?' lead':'');
+      c.innerHTML='<div class="top"><div><b>'+escapeHtml(players[i].name)+'</b>'+(lead?' 🏆':'')+'</div><div class="total">'+totals[i]+'</div></div>'+
+        '<div class="bar"><i style="width:'+Math.round(Math.abs(totals[i])/max*100)+'%"></i></div><div class="rank">第 '+(pos+1)+' 名</div>';
+      box.appendChild(c);});
+  }
+  function renderHist(){
+    var box=$('histList');box.innerHTML='';
+    if(!rounds.length){box.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:14px">还没有对局记录</div>';return;}
+    rounds.slice().reverse().forEach(function(r,ri){var idx=rounds.length-ri;var h=document.createElement('div');h.className='h';
+      var detail=r.delta.map(function(v,i){return escapeHtml(players[i].name)+' '+(v>=0?'+':'')+v;}).join('，');
+      var tag=r.mode==='zimo'?'自摸':'点炮'+(players[r.payerIdx]?'('+players[r.payerIdx].name+')':'');
+      h.innerHTML='<span>第'+idx+'局 · '+escapeHtml(players[r.winIdx].name)+' 赢（'+tag+'，'+r.pts+'分）<br><small style="color:var(--muted)">'+detail+'</small></span>';
+      box.appendChild(h);});
+  }
+
+  $('voiceSw').onclick=function(){voiceOn=!voiceOn;this.classList.toggle('on',voiceOn);save();};
+  function speak(){if(!voiceOn||!('speechSynthesis' in window))return;try{
+    var order=players.map(function(_,i){return i;}).sort(function(a,b){return totals[b]-totals[a];});
+    var txt=order.map(function(i,pos){return (pos+1)+'. '+players[i].name+' '+totals[i]+'分';}).join('，');
+    var u=new SpeechSynthesisUtterance(txt);u.lang='zh-CN';u.rate=1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+
+  if(load()){n=players.length;$('setup').classList.add('hidden');$('game').classList.remove('hidden');$('gameTitle').textContent='麻将计分 · '+n+' 人';
+    $('voiceSw').classList.toggle('on',voiceOn);renderWinPick();renderTotals();renderHist();
+  }else{renderNameList();}
+})();
+</script>
+</body>
+</html>
