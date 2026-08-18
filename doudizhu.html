@@ -3,108 +3,536 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>斗地主计分 · 跳转中…</title>
+<title>扑克计分 · 斗地主/跑得快/炸金花/牛牛</title>
 <style>
+  :root{
+    --bg:#0f1420; --bg2:#161d2e; --card:#1c2536; --line:#2a3550;
+    --txt:#e8edf7; --sub:#9fb0cc; --brand:#4f8cff; --brand2:#36d399;
+    --warn:#ffb454; --danger:#ff7a90; --shadow:0 8px 28px rgba(0,0,0,.35); --muted:#6b7a99; --input-bg:#0f1626;
+  }
+  :root[data-theme="light"]{
+    --bg:#eef2f8; --bg2:#e3e9f2; --card:#ffffff; --line:#d6deea;
+    --txt:#16203a; --sub:#5a6b8c; --brand:#3a7bf0; --brand2:#1faf7a;
+    --warn:#d98300; --danger:#e05a70; --shadow:0 8px 28px rgba(20,40,80,.12); --muted:#7a89a8; --input-bg:#f1f5fb;
+  }
+  *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-    background:#0f1420;color:#e8edf7;min-height:100vh;display:flex;align-items:center;justify-content:center}
-  .box{max-width:420px;text-align:center;padding:24px}
-  .spin{font-size:48px;animation:rot 1.2s linear infinite;display:inline-block}
-  @keyframes rot{to{transform:rotate(360deg)}}
-  h1{margin:14px 0 8px;font-size:18px}
-  p{margin:6px 0;color:#9fb0cc;font-size:14px;line-height:1.6}
-  a{color:#4f8cff;text-decoration:none;border:1px solid #2a3550;padding:8px 16px;border-radius:9px;display:inline-block;margin-top:14px;font-size:14px}
+    background:radial-gradient(1200px 600px at 50% -10%,#1b2740 0%,var(--bg) 60%);color:var(--txt);
+    -webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand2));
+    display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow)}
+  .brand{font-size:18px;font-weight:700}.brand small{display:block;font-size:11px;color:var(--sub);font-weight:400;letter-spacing:1px}
+  .back{margin-left:auto;color:var(--sub);text-decoration:none;font-size:13px;border:1px solid var(--line);padding:6px 12px;border-radius:9px}
+  .theme-btn{margin-left:8px;background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:6px 11px;font-size:15px;cursor:pointer}
+  .tabs{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+  .tabs button{flex:1;min-width:76px;background:var(--card);border:1px solid var(--line);color:var(--sub);border-radius:11px;padding:11px 6px;font-size:14px;cursor:pointer}
+  .tabs button.active{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;border-color:transparent;font-weight:700}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}
+  .panel h2{margin:0 0 14px;font-size:15px;color:var(--sub);font-weight:600;letter-spacing:.5px}
+  .field{margin-bottom:14px}
+  .field>label{display:block;font-size:13px;color:var(--sub);margin-bottom:6px}
+  input,select{width:100%;background:var(--input-bg);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 12px;font-size:15px;outline:none}
+  input:focus{border-color:var(--brand)}
+  /* 玩家卡 */
+  .pcard{display:flex;align-items:center;gap:10px;padding:12px 14px;margin-bottom:10px;border-radius:12px;background:var(--bg2);border:1px solid var(--line)}
+  .pcard .dot{width:12px;height:12px;border-radius:50%;flex:none}
+  .pcard .nm{flex:1;font-size:15px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pcard .nm .tag{font-size:11px;color:var(--warn);margin-left:6px}
+  .pcard .sc{font-size:20px;font-weight:800}
+  .pcard .sc.neg{color:var(--danger)}
+  .pcard .sc.pos{color:var(--brand2)}
+  .pcard .edit{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:4px}
+  .rank-badge{display:inline-block;font-size:11px;color:#fff;background:var(--brand);border-radius:8px;padding:1px 7px;margin-right:6px}
+  .rank-badge.gold{background:#f0b429}
+  /* 结算面板通用 */
+  .ddz-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .ddz-lab{font-weight:700;color:var(--sub);min-width:64px;font-size:13px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;background:var(--input-bg);border:1px solid var(--line);color:var(--sub);border-radius:9px;padding:9px 10px;font-size:13px;cursor:pointer}
+  .seg button.active{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;border-color:transparent}
+  .pick{display:flex;gap:6px;flex-wrap:wrap}
+  .pick button{padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:var(--bg2);color:var(--txt);cursor:pointer;font-size:13px}
+  .pick button.on{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .stepper{display:inline-flex;align-items:center;gap:0;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .stepper button{width:34px;height:34px;border:none;background:var(--bg2);color:var(--txt);font-size:17px;cursor:pointer}
+  .stepper input{width:52px;height:34px;border:none;text-align:center;background:var(--input-bg);color:var(--txt);font-size:15px}
+  .checks{display:flex;gap:16px;flex-wrap:wrap}
+  .checks .ck{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--txt)}
+  .checks input{width:auto}
+  .remain-item{display:flex;align-items:center;gap:5px;font-size:13px}
+  .remain-item input{width:52px;height:32px;text-align:center;padding:4px}
+  .winner-tag{font-weight:700;color:var(--brand2)}
+  .summary{margin-top:4px;padding:12px;border-radius:10px;background:var(--bg);color:var(--txt);font-size:13px;line-height:1.6;border:1px dashed var(--line)}
+  .summary b{color:var(--warn)}
+  .btn{display:block;width:100%;text-align:center;padding:14px;border-radius:12px;font-size:15px;font-weight:600;border:none;cursor:pointer;margin-top:6px}
+  .btn-primary{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;box-shadow:0 6px 18px rgba(79,140,255,.35)}
+  .btn-ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+  .btn-warn{background:#2a2030;color:#ff9aa6;border:1px solid #5a2a3a}
+  .hist{margin-top:8px}
+  .hist .h{display:flex;justify-content:space-between;font-size:13px;padding:7px 0;border-top:1px solid var(--line);color:var(--sub)}
+  .hist .h small{display:block;color:var(--muted);margin-top:2px}
+  .toggle-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub);margin-top:14px}
+  .switch{position:relative;width:46px;height:26px;background:var(--input-bg);border:1px solid var(--line);border-radius:20px;cursor:pointer;flex:none}
+  .switch.on{background:var(--brand2);border-color:var(--brand2)}
+  .switch i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+  .switch.on i{left:22px}
+  .hidden{display:none!important}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#000a;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .tip{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
+  .count-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .count-row label{font-size:13px;color:var(--sub)}
 </style>
 </head>
 <body>
-<div class="box">
-  <div class="spin">🃏</div>
-  <h1>斗地主已升级到完整版</h1>
-  <p>新版本包含：局内改名、随时切换地主/农民、炸弹/火箭/春天/反春天倍数、欢乐斗地主叫抢规则，以及跑得快 / 炸金花 / 牛牛等扑克模式。</p>
-  <p>正在迁移你的旧数据并跳转…</p>
-  <a id="manual" href="CABO_v0.7.5.1.html?game=doudizhu">点此手动跳转</a>
+<div class="wrap">
+  <header>
+    <div class="logo">🎴</div>
+    <div class="brand">扑克计分<small>POKER SCORER</small></div>
+    <button class="theme-btn" id="themeBtn" title="切换深色 / 浅色">🌙</button>
+    <a class="back" href="index.html">← 首页</a>
+  </header>
+
+  <div class="tabs" id="modeTabs">
+    <button data-mode="ddz">斗地主</button>
+    <button data-mode="pdk">跑得快</button>
+    <button data-mode="zjh">炸金花</button>
+    <button data-mode="nn">牛牛</button>
+  </div>
+
+  <div class="panel" id="playersPanel">
+    <h2>玩家</h2>
+    <div class="count-row" id="countRow">
+      <label>人数</label>
+      <div class="stepper"><button id="countMinus">−</button><input id="countVal" type="number" min="2" max="6"><button id="countPlus">+</button></div>
+      <span class="tip" id="countTip"></span>
+    </div>
+    <div id="playerCards"></div>
+  </div>
+
+  <div class="panel" id="settlePanel">
+    <h2 id="settleTitle">本局结算</h2>
+    <div id="settleBody"></div>
+    <button class="btn btn-primary" id="commitBtn">结算本局</button>
+  </div>
+
+  <div class="panel">
+    <h2>总分排行（高分胜）</h2>
+    <div id="board"></div>
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn btn-ghost" id="undoBtn">↩ 撤销上一局</button>
+      <button class="btn btn-warn" id="resetBtn">🧹 重置全部</button>
+    </div>
+    <div class="toggle-row">
+      <div class="switch" id="voiceSw"><i></i></div>
+      <span>语音播报（自动念总分）</span>
+    </div>
+    <h2 style="margin-top:20px">对局记录</h2>
+    <div class="hist" id="histList"></div>
+  </div>
 </div>
+<div class="toast" id="toast"></div>
+
 <script>
 (function(){
-  // 旧 doudizhu.html 的数据格式 → 新主应用 doudizhu 模式的数据格式
-  // 旧: {players:["地主",...], totals:[10,-5,-5], rounds:[{winIsLand,per,mult,delta,at}], landlord, base, voiceOn}
-  // 新: state = {players:[{name,color}], rounds:[{pts,ddz:{landlord,landlordWin,bidM,bombs,rocket,spring,anti}}], ddz:{subMode,base}, adjust, ...}
-  function migrate(){
+  'use strict';
+  /* ================= 模式与独立存档 key ================= */
+  var MODES = {
+    ddz: { label:'斗地主', key:'poker-ddz', min:3, max:3, defN:3, fixed:true  },
+    pdk: { label:'跑得快', key:'poker-pdk', min:3, max:6, defN:3, fixed:false },
+    zjh: { label:'炸金花', key:'poker-zjh', min:2, max:6, defN:3, fixed:false },
+    nn:  { label:'牛牛',   key:'poker-nn',  min:3, max:6, defN:4, fixed:false }
+  };
+  var DEF_NAMES = {
+    ddz:['地主','农民1','农民2'],
+    pdk:['玩家1','玩家2','玩家3'],
+    zjh:['玩家1','玩家2','玩家3'],
+    nn:['玩家1','玩家2','玩家3','玩家4']
+  };
+  var COLORS = ['#ffb454','#4f8cff','#36d399','#a78bfa','#f472b6','#34d399'];
+  /* 牛牛牛型表：strength 比大小，mult 倍率 */
+  var NIU_DEFS = [
+    {name:'无牛',  strength:0,  mult:1},
+    {name:'牛一',  strength:1,  mult:1},
+    {name:'牛二',  strength:2,  mult:1},
+    {name:'牛三',  strength:3,  mult:1},
+    {name:'牛四',  strength:4,  mult:1},
+    {name:'牛五',  strength:5,  mult:1},
+    {name:'牛六',  strength:6,  mult:1},
+    {name:'牛七',  strength:7,  mult:2},
+    {name:'牛八',  strength:8,  mult:2},
+    {name:'牛九',  strength:9,  mult:2},
+    {name:'牛牛',  strength:10, mult:3},
+    {name:'五花牛',strength:11, mult:4},
+    {name:'炸弹牛',strength:12, mult:5}
+  ];
+
+  var curMode = 'ddz';
+  var S = null;   // 当前模式完整状态 {players,totals,rounds,ddz,zjh,nn,voiceOn}
+  var CUR = null; // 当前局结算参数（按模式）
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},1600); }
+  function signed(v){ return (v>0?'+':'')+v; }
+
+  /* ================= 存档（每模式独立 key） ================= */
+  function keyOf(mode){ return MODES[mode].key; }
+  function defaultState(mode){
+    var m = MODES[mode];
+    var players = (DEF_NAMES[mode]||['玩家1','玩家2']).slice(0, m.defN);
+    while(players.length < m.defN) players.push('玩家'+(players.length+1));
+    return {
+      players: players,
+      totals: players.map(function(){return 0;}),
+      rounds: [],
+      ddz: { base: 1 },
+      zjh: { stake: 1 },
+      nn:  { stake: 1 },
+      voiceOn: false
+    };
+  }
+  function save(){
+    try{ localStorage.setItem(keyOf(curMode), JSON.stringify(S)); }catch(e){}
+  }
+  function load(mode){
     try{
-      var raw = localStorage.getItem('ddz-scorer');
-      if(!raw) return false;
-      var old = JSON.parse(raw);
-      if(!old || !Array.isArray(old.players) || old.players.length < 3) return false;
-
-      // 颜色（按旧 HTML 的 CSS 变量顺序：地主=warn, 农民1=brand, 农民2=brand2）
-      var colors = ['#ffb454','#4f8cff','#36d399','#a78bfa','#f472b6','#34d399'];
-      var players = old.players.map(function(name,idx){
-        return { name: name || ('玩家'+(idx+1)), color: colors[idx % colors.length] };
-        });
-      // 兼容 2/4 人：补齐 / 截断
-      while(players.length < 2) players.push({name:'玩家'+(players.length+1), color: colors[players.length % colors.length]});
-      if(players.length > 6) players = players.slice(0,6);
-
-      var rounds = [];
-      var sumDelta = [0,0,0,0,0,0];
-      (old.rounds || []).forEach(function(r){
-        var delta = Array.isArray(r.delta) ? r.delta : [];
-        // bidM 推算：per = base*mult；旧 mult 是已乘过的总倍数。简化：bidM=mult，bombs/rocket/spring/anti=0
-        var bidM = (typeof r.mult === 'number' && r.mult > 0) ? r.mult : 1;
-        var pts = players.map(function(_,i){ return +delta[i] || 0; });
-        pts.forEach(function(v,i){ sumDelta[i] += v; });
-        rounds.push({
-          pts: pts,
-          ddz: {
-            subMode: 'ddz',
-            landlord: (typeof r.landlord === 'number') ? r.landlord : (old.landlord || 0),
-            landlordWin: !!r.winIsLand,
-            bidM: bidM,
-            bombs: 0,
-            rocket: false,
-            spring: false,
-            anti: false
-          }
-        });
-      });
-      // adjust = 当前总分 - 各局累计分（这样新引擎的 totals() 才能算出旧 totals）
-      var adjust = players.map(function(_,i){
-        var t = (old.totals && old.totals[i]) || 0;
-        return t - sumDelta[i];
-        });
-
-      var state = {
-        started: true,
-        players: players,
-        rounds: rounds,
-        adjust: adjust,
-        opLog: [],
-        bonusApplied: false,
-        archived: false,
-        ddz: { subMode: 'ddz', base: Math.max(1, +old.base || 1) },
-        hundredUsed: players.map(function(){ return false; }),
-        sound: true,
-        theme: (document.documentElement && document.documentElement.dataset && document.documentElement.dataset.theme) || 'dark',
-        lang: 'zh',
-        voice: { on: !!old.voiceOn, volume: 1, lang: null, voiceName: null, serviceUrl: '', rate: '0%', mode: 'concise' },
-        rules: { caboPenalty: 10, tieRule: 'callerWins', hundredEgg: 'half', cardInput: 'cards', cardEntry: 'picker', autoAdvance: true, lowBonus: { enabled: true, amount: 10 } },
-        endScore: 100,
-        winRule: 'high'
-      };
-      // 只在尚无新存档时才覆盖，避免破坏用户已在主应用里玩的数据
-      var newKey = 'cabo-scorer-v2:doudizhu';
-      if(!localStorage.getItem(newKey)){
-        localStorage.setItem(newKey, JSON.stringify(state));
-        return true;
-      }
-      return false;
-    }catch(e){ return false; }
+      var raw = localStorage.getItem(keyOf(mode));
+      if(raw){ var s = JSON.parse(raw); if(s && Array.isArray(s.players) && s.players.length){ return s; } }
+    }catch(e){}
+    return defaultState(mode);
+  }
+  function resetCUR(){
+    var n = S.players.length;
+    if(curMode==='ddz'){ CUR = { base:(S.ddz&&S.ddz.base)||1, landlord:0, landlordWin:true, bidM:1, bombs:0, rocket:false, spring:false, anti:false }; }
+    else if(curMode==='pdk'){ CUR = { base:(S.ddz&&S.ddz.base)||1, winner:0, remain:S.players.map(function(){return 0;}), pdkSpring:false }; }
+    else if(curMode==='zjh'){ CUR = { stake:(S.zjh&&S.zjh.stake)||1, winner:0 }; }
+    else { CUR = { stake:(S.nn&&S.nn.stake)||1, banker:0, types:S.players.map(function(){return 0;}) }; }
   }
 
-  var migrated = migrate();
-  setTimeout(function(){
-    // 始终跳到主应用斗地主模式（含跑得快/炸金花/牛牛 + 局内改名/选地主）
-    location.replace('CABO_v0.7.5.1.html?game=doudizhu' + (migrated ? '&migrated=1' : ''));
-  }, 600);
+  /* ================= 计分引擎（纯函数，可测试） ================= */
+  function computeDdz(info, n){
+    var M = info.bidM * Math.pow(2, info.bombs + (info.rocket?1:0) + (info.spring?1:0) + (info.anti?1:0));
+    var unit = info.base * M;
+    var pts = new Array(n).fill(0);
+    for(var i=0;i<n;i++) pts[i] = (i===info.landlord) ? (info.landlordWin ? (n-1)*unit : -(n-1)*unit) : (info.landlordWin ? -unit : unit);
+    return { pts:pts, unit:unit, M:M };
+  }
+  function computePdk(info, n){
+    var unit = info.base * (info.pdkSpring?2:1);
+    var sum = 0, pts = new Array(n).fill(0);
+    for(var i=0;i<n;i++){ if(i!==info.winner){ var rem = (info.remain && info.remain[i]) ? info.remain[i] : 0; pts[i] = -rem*unit; sum += rem*unit; } }
+    pts[info.winner] = sum;
+    return { pts:pts, unit:unit };
+  }
+  function computeZjh(info, n){
+    var pts = new Array(n).fill(0);
+    for(var i=0;i<n;i++) pts[i] = (i===info.winner) ? (n-1)*info.stake : -info.stake;
+    return { pts:pts, unit:info.stake };
+  }
+  function computeNn(info, n){
+    var pts = new Array(n).fill(0);
+    var b = info.banker;
+    for(var i=0;i<n;i++){
+      if(i===b) continue;
+      var ti = NIU_DEFS[info.types[i]].strength, tb = NIU_DEFS[info.types[b]].strength;
+      var mi = NIU_DEFS[info.types[i]].mult,    mb = NIU_DEFS[info.types[b]].mult;
+      if(ti > tb){ pts[i] += mi*info.stake; pts[b] -= mi*info.stake; }
+      else { pts[i] -= mb*info.stake; pts[b] += mb*info.stake; }
+    }
+    return { pts:pts };
+  }
+  function compute(info){
+    if(curMode==='ddz') return computeDdz(info, S.players.length);
+    if(curMode==='pdk') return computePdk(info, S.players.length);
+    if(curMode==='zjh') return computeZjh(info, S.players.length);
+    return computeNn(info, S.players.length);
+  }
+
+  /* ================= 渲染 ================= */
+  function renderTabs(){
+    var tabs = $('modeTabs').querySelectorAll('button');
+    for(var i=0;i<tabs.length;i++){ tabs[i].classList.toggle('active', tabs[i].dataset.mode===curMode); }
+  }
+  function renderCount(){
+    var m = MODES[curMode];
+    $('countRow').classList.toggle('hidden', m.fixed);
+    $('countVal').value = S.players.length;
+    $('countVal').min = m.min; $('countVal').max = m.max;
+    $('countTip').textContent = m.fixed ? '' : ('可 ' + m.min + '~' + m.max + ' 人');
+  }
+  function renderPlayers(){
+    var box = $('playerCards'); box.innerHTML = '';
+    var order = S.players.map(function(_,i){return i;}).sort(function(a,b){return S.totals[b]-S.totals[a];});
+    var rankOf = {}; order.forEach(function(idx,pos){ rankOf[idx]=pos+1; });
+    S.players.forEach(function(name,i){
+      var c = document.createElement('div'); c.className='pcard';
+      var rank = rankOf[i], badge = rank===1 ? '<span class="rank-badge gold">🏆</span>' : '<span class="rank-badge">#'+rank+'</span>';
+      var tag = (curMode==='ddz'&&i===CUR.landlord)?'<span class="tag">👑地主</span>'
+              : (curMode==='pdk'&&i===CUR.winner)?'<span class="tag">🏅赢家</span>'
+              : (curMode==='zjh'&&i===CUR.winner)?'<span class="tag">👑赢家</span>'
+              : (curMode==='nn'&&i===CUR.banker)?'<span class="tag">🏦庄家</span>' : '';
+      var scCls = S.totals[i]>0?'pos':(S.totals[i]<0?'neg':'');
+      c.innerHTML = '<span class="dot" style="background:'+COLORS[i%COLORS.length]+'"></span>'
+        + '<span class="nm">'+badge+esc(name)+tag+'</span>'
+        + '<span class="sc '+scCls+'">'+S.totals[i]+'</span>'
+        + '<button class="edit" data-i="'+i+'" title="改名">✏️</button>';
+      box.appendChild(c);
+    });
+    box.querySelectorAll('.edit').forEach(function(b){ b.onclick=function(){ rename(+b.dataset.i); }; });
+  }
+  function renderBoard(){
+    var box = $('board'); box.innerHTML = '';
+    var order = S.players.map(function(_,i){return i;}).sort(function(a,b){return S.totals[b]-S.totals[a];});
+    order.forEach(function(i,pos){
+      var c = document.createElement('div'); c.className='pcard';
+      c.style.borderLeft = '4px solid ' + COLORS[i%COLORS.length];
+      c.innerHTML = '<span class="nm">第'+(pos+1)+'名 · '+esc(S.players[i])+'</span>'
+        + '<span class="sc '+(S.totals[i]>0?'pos':(S.totals[i]<0?'neg':''))+'">'+S.totals[i]+'</span>';
+      box.appendChild(c);
+    });
+  }
+  function renderSettle(){
+    var body = $('settleBody'); body.innerHTML = '';
+    var n = S.players.length;
+    if(curMode==='ddz') renderDdz(body, n);
+    else if(curMode==='pdk') renderPdk(body, n);
+    else if(curMode==='zjh') renderZjh(body, n);
+    else renderNn(body, n);
+  }
+  function summaryHtml(res){
+    var parts = S.players.map(function(name,i){ return esc(name)+' <b>'+signed(res.pts[i])+'</b>'; });
+    var head = '';
+    if(curMode==='ddz') head = '倍数 <b>×'+res.M+'</b> · 每份 <b>'+res.unit+'</b> 分 · '+(CUR.landlordWin?'地主胜':'地主负');
+    else if(curMode==='pdk') head = '每剩牌 <b>'+res.unit+'</b> 分/张 · 赢家收全部';
+    else if(curMode==='zjh') head = '底注 <b>'+res.unit+'</b> · 赢家 +(n-1)×底注';
+    else head = '底注 <b>'+CUR.stake+'</b> · 各闲家按牛型倍率与庄家结算';
+    return '<div class="summary">'+head+'<br>本局：'+parts.join('　')+'</div>';
+  }
+  function refreshSummary(){
+    var box = $('settleBody');
+    var old = box.querySelector('.summary'); if(old) old.remove();
+    var res = compute(CUR);
+    box.insertAdjacentHTML('beforeend', summaryHtml(res));
+    renderPlayers();
+  }
+
+  /* ---- 斗地主 ---- */
+  function renderDdz(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">底分</span><div class="stepper"><button id="ddzBaseMinus">−</button><input id="ddzBase" type="number" value="'+CUR.base+'" min="1"><button id="ddzBasePlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">地主</span><div class="pick" id="ddzLandlord">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.landlord?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">胜负</span><div class="seg"><button id="ddzWin" class="'+(CUR.landlordWin?'active':'')+'">地主胜</button><button id="ddzLose" class="'+(!CUR.landlordWin?'active':'')+'">地主负</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">叫抢</span><div class="seg" id="ddzBid">';
+    [1,2,4,8].forEach(function(m){ html += '<button data-m="'+m+'" class="'+(CUR.bidM===m?'active':'')+'">×'+m+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">炸弹</span><div class="stepper"><button id="ddzBombMinus">−</button><input id="ddzBombs" type="number" value="'+CUR.bombs+'" min="0"><button id="ddzBombPlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab"></span><div class="checks">'
+      + '<label class="ck"><input type="checkbox" id="ddzRocket" '+(CUR.rocket?'checked':'')+'>火箭 ×2</label>'
+      + '<label class="ck"><input type="checkbox" id="ddzSpring" '+(CUR.spring?'checked':'')+'>春天 ×2</label>'
+      + '<label class="ck"><input type="checkbox" id="ddzAnti" '+(CUR.anti?'checked':'')+'>反春 ×2</label></div></div>';
+    html += '<div class="tip">最终 = 底分 × 叫抢倍数 × 2^(炸弹+火箭+春天+反春)；地主赢/输按 (n-1) 倍，农民各按 1 倍。</div>';
+    body.innerHTML = html;
+    bindStepper('ddzBase', function(v){ CUR.base=v; S.ddz.base=v; }, 1, 999);
+    body.querySelectorAll('#ddzLandlord button').forEach(function(b){ b.onclick=function(){ CUR.landlord=+b.dataset.i; refreshSummary(); }; });
+    $('ddzWin').onclick=function(){ CUR.landlordWin=true; $('ddzWin').classList.add('active'); $('ddzLose').classList.remove('active'); refreshSummary(); };
+    $('ddzLose').onclick=function(){ CUR.landlordWin=false; $('ddzLose').classList.add('active'); $('ddzWin').classList.remove('active'); refreshSummary(); };
+    body.querySelectorAll('#ddzBid button').forEach(function(b){ b.onclick=function(){ CUR.bidM=+b.dataset.m; body.querySelectorAll('#ddzBid button').forEach(function(x){x.classList.toggle('active',x===b);}); refreshSummary(); }; });
+    bindStepper('ddzBombs', function(v){ CUR.bombs=v; }, 0, 99);
+    $('ddzRocket').onchange=function(){ CUR.rocket=$('ddzRocket').checked; refreshSummary(); };
+    $('ddzSpring').onchange=function(){ CUR.spring=$('ddzSpring').checked; refreshSummary(); };
+    $('ddzAnti').onchange=function(){ CUR.anti=$('ddzAnti').checked; refreshSummary(); };
+    refreshSummary();
+  }
+
+  /* ---- 跑得快 ---- */
+  function renderPdk(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">底分</span><div class="stepper"><button id="ddzBaseMinus">−</button><input id="ddzBase" type="number" value="'+CUR.base+'" min="1"><button id="ddzBasePlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">赢家</span><div class="pick" id="pdkWinner">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.winner?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">各输家剩牌</span><div style="display:flex;gap:10px;flex-wrap:wrap">';
+    S.players.forEach(function(p,i){
+      if(i===CUR.winner){ html += '<span class="winner-tag">'+esc(p)+'（赢家）</span>'; }
+      else { html += '<span class="remain-item">'+esc(p)+'<input type="number" id="pdkRemain-'+i+'" value="'+(CUR.remain[i]||0)+'" min="0"></span>'; }
+    });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab"></span><div class="checks"><label class="ck"><input type="checkbox" id="pdkSpring" '+(CUR.pdkSpring?'checked':'')+'>关牌（春天） ×2</label></div></div>';
+    html += '<div class="tip">每张剩牌 = 底分（关牌再 ×2）；赢家收全部输家剩余牌分。</div>';
+    body.innerHTML = html;
+    bindStepper('ddzBase', function(v){ CUR.base=v; S.ddz.base=v; }, 1, 999);
+    body.querySelectorAll('#pdkWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; renderSettle(); }; });
+    S.players.forEach(function(_,i){ var el=$('pdkRemain-'+i); if(el) el.oninput=function(){ CUR.remain[i]=Math.max(0,parseInt(el.value,10)||0); refreshSummary(); }; });
+    $('pdkSpring').onchange=function(){ CUR.pdkSpring=$('pdkSpring').checked; refreshSummary(); };
+    refreshSummary();
+  }
+
+  /* ---- 炸金花 ---- */
+  function renderZjh(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">底注</span><div class="stepper"><button id="zjhStakeMinus">−</button><input id="zjhStake" type="number" value="'+CUR.stake+'" min="1"><button id="zjhStakePlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">赢家</span><div class="pick" id="zjhWinner">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.winner?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="tip">赢家 +(n-1)×底注，其余各 -底注（零和）。</div>';
+    body.innerHTML = html;
+    bindStepper('zjhStake', function(v){ CUR.stake=v; S.zjh.stake=v; }, 1, 999);
+    body.querySelectorAll('#zjhWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; refreshSummary(); }; });
+    refreshSummary();
+  }
+
+  /* ---- 牛牛 ---- */
+  function renderNn(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">庄家</span><div class="pick" id="nnBanker">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.banker?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">底注</span><div class="stepper"><button id="nnStakeMinus">−</button><input id="nnStake" type="number" value="'+CUR.stake+'" min="1"><button id="nnStakePlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">各玩家牛型</span><div style="display:flex;flex-direction:column;gap:8px;flex:1">';
+    S.players.forEach(function(p,i){
+      html += '<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="min-width:56px">'+esc(p)+(i===CUR.banker?'（庄）':'')+'</span><select id="nnType-'+i+'">';
+      NIU_DEFS.forEach(function(d,k){ html += '<option value="'+k+'"'+(CUR.types[i]===k?' selected':'')+'>'+d.name+(d.mult>1?'（×'+d.mult+'）':'')+'</option>'; });
+      html += '</select></div>';
+    });
+    html += '</div></div>';
+    html += '<div class="tip">闲家牛型 > 庄家则闲家按自己倍率赢；否则庄家按自己倍率赢。倍率见括号（牛牛×3、五花×4、炸弹×5）。</div>';
+    body.innerHTML = html;
+    body.querySelectorAll('#nnBanker button').forEach(function(b){ b.onclick=function(){ CUR.banker=+b.dataset.i; renderSettle(); }; });
+    bindStepper('nnStake', function(v){ CUR.stake=v; S.nn.stake=v; }, 1, 999);
+    S.players.forEach(function(_,i){ var el=$('nnType-'+i); if(el) el.onchange=function(){ CUR.types[i]=+el.value; refreshSummary(); }; });
+    refreshSummary();
+  }
+
+  /* ---- 通用 stepper 绑定 ---- */
+  function bindStepper(id, onChg, min, max){
+    var inp = $(id); if(!inp) return;
+    var mns = $(id+'Minus'), pls = $(id+'Plus');
+    function apply(v){ v = Math.max(min, Math.min(max, parseInt(v,10)||min)); inp.value=v; onChg(v); }
+    if(mns) mns.onclick = function(){ apply(parseInt(inp.value,10)-1); };
+    if(pls) pls.onclick = function(){ apply(parseInt(inp.value,10)+1); };
+    inp.oninput = function(){ apply(parseInt(inp.value,10)); };
+  }
+
+  /* ================= 历史 ================= */
+  function renderHist(){
+    var box = $('histList'); box.innerHTML='';
+    if(!S.rounds.length){ box.innerHTML='<div style="color:var(--muted);font-size:13px;text-align:center;padding:14px">还没有对局记录</div>'; return; }
+    S.rounds.slice().reverse().forEach(function(r,ri){
+      var idx = S.rounds.length - ri;
+      var detail = r.pts.map(function(v,i){ return esc(S.players[i])+' '+signed(v); }).join('，');
+      var h = document.createElement('div'); h.className='h';
+      h.innerHTML = '<span>第'+idx+'局 · '+r.label+'<small>'+detail+'</small></span>';
+      box.appendChild(h);
+    });
+  }
+  function roundLabel(info){
+    if(curMode==='ddz') return (info.landlordWin?'地主胜':'地主负')+'（×'+(info.bidM*Math.pow(2,info.bombs+(info.rocket?1:0)+(info.spring?1:0)+(info.anti?1:0)))+'）';
+    if(curMode==='pdk') return S.players[info.winner]+' 赢（关牌'+(info.pdkSpring?'×2':'×1')+'）';
+    if(curMode==='zjh') return S.players[info.winner]+' 赢（底注 '+info.stake+'）';
+    return '庄家 '+S.players[info.banker]+'（底注 '+info.stake+'）';
+  }
+
+  /* ================= 动作 ================= */
+  function rename(i){
+    var name = prompt('给「'+S.players[i]+'」改个名字：', S.players[i]);
+    if(name==null) return;
+    name = name.trim();
+    if(name){ S.players[i]=name; save(); renderAll(); toast('已改名'); }
+  }
+  function commit(){
+    var res = compute(CUR);
+    var info = JSON.parse(JSON.stringify(CUR));
+    for(var i=0;i<S.players.length;i++) S.totals[i] += res.pts[i];
+    S.rounds.push({ pts:res.pts.slice(), info:info, label:roundLabel(info), at:Date.now() });
+    resetCUR();
+    save(); renderAll(); speak();
+    toast('已结算本局');
+  }
+  function undo(){
+    if(!S.rounds.length){ toast('没有可撤销的局'); return; }
+    var last = S.rounds.pop();
+    for(var i=0;i<S.players.length;i++) S.totals[i] -= last.pts[i];
+    save(); renderAll(); toast('已撤销上一局');
+  }
+  function resetAll(){
+    if(!confirm('确定重置全部？所有分数会清空。')) return;
+    S.totals = S.players.map(function(){return 0;});
+    S.rounds = [];
+    resetCUR();
+    save(); renderAll(); toast('已重置');
+  }
+  function setCount(n){
+    var m = MODES[curMode];
+    n = Math.max(m.min, Math.min(m.max, n));
+    if(n === S.players.length) return;
+    if(S.rounds.length && !confirm('调整人数会清空当前对局分数，确定继续？')) return;
+    var old = S.players.slice();
+    S.players = [];
+    for(var i=0;i<n;i++) S.players.push(old[i] || ('玩家'+(i+1)));
+    S.totals = S.players.map(function(){return 0;});
+    S.rounds = [];
+    resetCUR(); save(); renderAll();
+  }
+  function switchMode(mode){
+    if(mode === curMode) return;
+    save();
+    curMode = mode;
+    S = load(mode);
+    resetCUR();
+    save();
+    renderAll();
+  }
+
+  /* ================= 主渲染 ================= */
+  function renderAll(){
+    renderTabs();
+    renderCount();
+    renderPlayers();
+    renderSettle();
+    renderBoard();
+    renderHist();
+    $('voiceSw').classList.toggle('on', S.voiceOn);
+    $('settleTitle').textContent = MODES[curMode].label + ' · 本局结算';
+  }
+
+  /* ================= 语音 ================= */
+  function speak(){
+    if(!S.voiceOn || !('speechSynthesis' in window)) return;
+    try{
+      var order = S.players.map(function(_,i){return i;}).sort(function(a,b){return S.totals[b]-S.totals[a];});
+      var txt = order.map(function(i,pos){ return (pos+1)+'. '+S.players[i]+' '+S.totals[i]+'分'; }).join('，');
+      var u = new SpeechSynthesisUtterance(txt); u.lang='zh-CN'; u.rate=1;
+      speechSynthesis.cancel(); speechSynthesis.speak(u);
+    }catch(e){}
+  }
+
+  /* ================= 主题 ================= */
+  function applyGlobalTheme(){ try{ var g=localStorage.getItem('cabo-theme'); if(g==='light'||g==='dark') document.documentElement.dataset.theme=g; }catch(e){} }
+  applyGlobalTheme();
+  (function(){ var tb=$('themeBtn'); if(!tb) return;
+    function sync(){ tb.textContent = document.documentElement.dataset.theme==='light' ? '🌙' : '☀️'; }
+    sync();
+    tb.onclick=function(){ var c=document.documentElement.dataset.theme==='light'?'dark':'light'; document.documentElement.dataset.theme=c; sync(); try{localStorage.setItem('cabo-theme',c);}catch(e){} };
+  })();
+
+  /* ================= 事件 ================= */
+  $('modeTabs').querySelectorAll('button').forEach(function(b){ b.onclick=function(){ switchMode(b.dataset.mode); }; });
+  $('countMinus').onclick=function(){ setCount(S.players.length-1); };
+  $('countPlus').onclick=function(){ setCount(S.players.length+1); };
+  $('commitBtn').onclick=commit;
+  $('undoBtn').onclick=undo;
+  $('resetBtn').onclick=resetAll;
+  $('voiceSw').onclick=function(){ S.voiceOn=!S.voiceOn; this.classList.toggle('on',S.voiceOn); save(); };
+
+  /* ================= 启动 ================= */
+  S = load(curMode);
+  resetCUR();
+  renderAll();
 })();
 </script>
 </body>
