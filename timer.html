@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>计时器 · Cabo Scorer</title>
+<style>
+  :root{
+    --bg:#0f1420; --bg2:#161d2e; --card:#1c2536; --line:#2a3550;
+    --txt:#e8edf7; --sub:#9fb0cc; --brand:#4f8cff; --brand2:#36d399;
+    --warn:#ffb454; --shadow:0 8px 28px rgba(0,0,0,.35); --muted:#6b7a99; --input-bg:#0f1626;
+  }
+  :root[data-theme="light"]{
+    --bg:#eef2f8; --bg2:#e3e9f2; --card:#ffffff; --line:#d6deea;
+    --txt:#16203a; --sub:#5a6b8c; --brand:#3a7bf0; --brand2:#1faf7a;
+    --warn:#d98300; --shadow:0 8px 28px rgba(20,40,80,.12); --muted:#7a89a8; --input-bg:#f1f5fb;
+  }
+  .theme-btn{margin-left:12px;background:var(--card);color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:6px 11px;font-size:15px;cursor:pointer}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:radial-gradient(1200px 600px at 50% -10%,#1b2740 0%,var(--bg) 60%);color:var(--txt);
+    -webkit-font-smoothing:antialiased;min-height:100vh}
+  .wrap{max-width:760px;margin:0 auto;padding:22px 16px 60px}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--brand),var(--brand2));
+    display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:var(--shadow)}
+  .brand{font-size:18px;font-weight:700}
+  .brand small{display:block;font-size:11px;color:var(--sub);font-weight:400;letter-spacing:1px}
+  .back{margin-left:auto;color:var(--sub);text-decoration:none;font-size:13px;border:1px solid var(--line);padding:6px 12px;border-radius:9px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-top:16px}
+  .panel h2{margin:0 0 14px;font-size:15px;color:var(--sub);font-weight:600;letter-spacing:.5px}
+  input,select{width:100%;background:var(--input-bg);border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:11px 12px;font-size:15px;outline:none}
+  input:focus{border-color:var(--brand)}
+  .add-row{display:flex;gap:8px;margin-bottom:14px}
+  .add-row input{flex:1}
+  .btn{display:block;width:100%;text-align:center;padding:13px;border-radius:12px;font-size:15px;font-weight:600;border:none;cursor:pointer}
+  .btn-primary{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;box-shadow:0 6px 18px rgba(79,140,255,.35)}
+  .btn-ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+  .proj{padding:14px;margin-bottom:12px;border-radius:14px;border:1px solid var(--line);background:#161f30}
+  .proj.run{box-shadow:0 0 0 1px var(--brand) inset}
+  .proj.done{box-shadow:0 0 0 2px var(--warn) inset;animation:flash 1s infinite}
+  @keyframes flash{0%,100%{background:#161f30}50%{background:#2a2030}}
+  .proj .p-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+  .proj .p-name{font-weight:700;font-size:16px;outline:none}
+  .proj .p-name[contenteditable]{border-bottom:1px dashed var(--line);min-width:60px}
+  .proj .p-del{background:#2a2030;border:1px solid #5a2a3a;color:#ff9aa6;border-radius:8px;padding:4px 9px;cursor:pointer;font-size:13px}
+  .proj .clock{font-size:40px;font-weight:800;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:1px;margin:6px 0}
+  .proj .mode-row{display:flex;gap:8px;margin-bottom:10px}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;background:var(--input-bg);border:1px solid var(--line);color:var(--sub);border-radius:9px;padding:8px;font-size:13px;cursor:pointer}
+  .seg button.active{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;border:none}
+  .dur{margin-bottom:10px}
+  .ctrls{display:flex;gap:8px}
+  .ctrls button{flex:1;padding:11px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer}
+  .ctrls .start{background:var(--brand2);color:#06281c}
+  .ctrls .reset{background:var(--input-bg);border:1px solid var(--line);color:var(--sub)}
+  .global{display:flex;gap:8px;margin-top:6px}
+  .global button{flex:1;padding:12px;border-radius:11px;border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:14px;cursor:pointer}
+  .global .allrun{background:linear-gradient(135deg,var(--brand2),#2bb37f);color:#06281c;border:none}
+  .center{text-align:center;color:var(--muted);font-size:13px;padding:18px}
+  .toggle-row{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub);margin-top:14px}
+  .switch{position:relative;width:46px;height:26px;background:var(--input-bg);border:1px solid var(--line);border-radius:20px;cursor:pointer;flex:none}
+  .switch.on{background:var(--brand2);border-color:var(--brand2)}
+  .switch i{position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s}
+  .switch.on i{left:22px}
+  .toast{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#000a;color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">⏱️</div>
+    <div class="brand">计时器<small>TIMER</small></div>
+    <button class="theme-btn" id="themeBtn" title="切换深色 / 浅色">🌙</button>
+    <a class="back" href="index.html">← 首页</a>
+  </header>
+
+  <div class="panel">
+    <h2>添加计时项目（每个项目独立计时）</h2>
+    <div class="add-row">
+      <input id="newName" placeholder="项目名称，如：玩家A / 第1关 / 红方">
+      <button class="btn btn-primary" id="addBtn" style="width:auto;padding:13px 18px">+ 添加</button>
+    </div>
+    <div id="list"></div>
+    <div class="global">
+      <button class="allrun" id="allRun">▶ 全部开始</button>
+      <button id="allPause">⏸ 全部暂停</button>
+      <button id="allReset">⟲ 全部重置</button>
+    </div>
+    <div class="toggle-row">
+      <div class="switch" id="voiceSw"><i></i></div>
+      <span>倒计时归零语音提醒（需浏览器支持）</span>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var projects=[], voiceOn=false, ticker=null;
+  // project: {name, mode:'up'|'down', dur(sec for down), elapsed(ms accumulated), running, lastStart, done}
+  function $(id){return document.getElementById(id);}
+  function applyGlobalTheme(){ try{ var g=localStorage.getItem('cabo-theme'); if(g==='light'||g==='dark') document.documentElement.dataset.theme=g; }catch(e){} }
+  applyGlobalTheme();
+  (function(){ var tb=document.getElementById('themeBtn'); if(!tb) return;
+    function syncIcon(){ tb.textContent = document.documentElement.dataset.theme==='light' ? '🌙' : '☀️'; }
+    syncIcon();
+    tb.onclick=function(){ var cur=document.documentElement.dataset.theme==='light'?'dark':'light'; document.documentElement.dataset.theme=cur; syncIcon(); try{ localStorage.setItem('cabo-theme',cur); }catch(e){} };
+  })();
+  function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},1600);}
+  function fmt(ms){var s=Math.floor(ms/1000);var neg=s<0;s=Math.abs(s);var h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+    var p=function(n){return (n<10?'0':'')+n;};var str=(h>0?p(h)+':':'')+p(m)+':'+p(sec);return (neg?'-':'')+str;}
+  function fmtClamp(ms){return ms<=0?'00:00':fmt(ms);}
+  function save(){try{var slim=projects.map(function(p){return {name:p.name,mode:p.mode,dur:p.dur,elapsed:p.elapsed};});
+    localStorage.setItem('timer-app',JSON.stringify({projects:slim,voiceOn:voiceOn}));}catch(e){}}
+  function load(){try{var s=JSON.parse(localStorage.getItem('timer-app')||'null');if(s){projects=(s.projects||[]).map(function(p){
+    return {name:p.name,mode:p.mode||'up',dur:p.dur||60,elapsed:p.elapsed||0,running:false,lastStart:0,done:false};});voiceOn=!!s.voiceOn;return true;}}catch(e){}return false;}
+
+  function curElapsed(p){return p.elapsed+(p.running?Date.now()-p.lastStart:0);}
+
+  function addProject(name){
+    projects.push({name:name||('项目'+(projects.length+1)),mode:'up',dur:60,elapsed:0,running:false,lastStart:0,done:false});
+    render();save();
+  }
+  $('addBtn').onclick=function(){var n=$('newName').value.trim();if(!n){toast('请输入项目名称');return;}$('newName').value='';addProject(n);};
+  $('newName').addEventListener('keydown',function(e){if(e.key==='Enter')$('addBtn').click();});
+
+  $('allRun').onclick=function(){projects.forEach(function(p){if(!p.running&&!p.done)startP(p);});render();};
+  $('allPause').onclick=function(){projects.forEach(function(p){if(p.running)pauseP(p);});render();};
+  $('allReset').onclick=function(){projects.forEach(function(p){p.elapsed=0;p.running=false;p.lastStart=0;p.done=false;});render();save();};
+
+  function startP(p){if(p.done)return;p.running=true;p.lastStart=Date.now();}
+  function pauseP(p){if(!p.running)return;p.elapsed+=Date.now()-p.lastStart;p.running=false;}
+  function resetP(p){p.elapsed=0;p.running=false;p.lastStart=0;p.done=false;}
+
+  function render(){
+    var box=$('list');box.innerHTML='';
+    if(!projects.length){box.innerHTML='<div class="center">还没有计时项目，先在上面添加一个吧</div>';return;}
+    projects.forEach(function(p,i){
+      var el=document.createElement('div');el.className='proj'+(p.running?' run':'')+(p.done?' done':'');
+      var isDown=p.mode==='down';
+      var remain=isDown?(p.dur*1000-curElapsed(p)):curElapsed(p);
+      el.innerHTML=
+        '<div class="p-top"><div class="p-name" contenteditable="true" data-i="'+i+'">'+escapeHtml(p.name)+'</div>'+
+          '<button class="p-del" data-i="'+i+'">✕</button></div>'+
+        '<div class="mode-row"><div class="seg mode"><button data-i="'+i+'" data-m="up"'+(!isDown?' class="active"':'')+'>⏫ 正计时</button>'+
+          '<button data-i="'+i+'" data-m="down"'+(isDown?' class="active"':'')+'>⏳ 倒计时</button></div></div>'+
+        (isDown?'<div class="dur"><input type="number" min="1" id="dur-'+i+'" value="'+p.dur+'" placeholder="倒计时秒数"> <small style="color:var(--muted)">秒</small></div>':'')+
+        '<div class="clock">'+fmtClamp(remain)+'</div>'+
+        '<div class="ctrls"><button class="start" data-i="'+i+'">'+(p.running?'⏸ 暂停':'▶ 开始')+'</button>'+
+          '<button class="reset" data-i="'+i+'">⟲ 重置</button></div>';
+      box.appendChild(el);
+    });
+    box.querySelectorAll('.p-name').forEach(function(n){n.onblur=function(){projects[+n.dataset.i].name=n.textContent.trim()||('项目'+ (+n.dataset.i+1));save();};});
+    box.querySelectorAll('.mode button').forEach(function(b){b.onclick=function(){var p=projects[+b.dataset.i];p.mode=b.dataset.m;if(p.mode==='down'&&p.running){pauseP(p);}render();save();};});
+    box.querySelectorAll('.dur input').forEach(function(inp){inp.oninput=function(){var v=parseInt(inp.value,10);projects[+inp.id.split('-')[1]].dur=Math.max(1,v||1);save();};});
+    box.querySelectorAll('.p-del').forEach(function(b){b.onclick=function(){projects.splice(+b.dataset.i,1);render();save();};});
+    box.querySelectorAll('.ctrls .start').forEach(function(b){b.onclick=function(){var p=projects[+b.dataset.i];if(p.done){resetP(p);}if(p.running)pauseP(p);else startP(p);render();save();};});
+    box.querySelectorAll('.ctrls .reset').forEach(function(b){b.onclick=function(){resetP(projects[+b.dataset.i]);render();save();};});
+  }
+  function escapeHtml(s){return (s||'').replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];});}
+
+  // 计时循环
+  function tick(){
+    var need=false;
+    projects.forEach(function(p){
+      if(p.mode==='down'&&p.running){
+        var remain=p.dur*1000-curElapsed(p);
+        if(remain<=0){pauseP(p);p.done=true;if(voiceOn)say(p.name+' 时间到');toast(p.name+' 时间到');need=true;}
+      }
+    });
+    if(need)render();
+    else { // 轻量更新时钟，避免整页重绘
+      document.querySelectorAll('.proj').forEach(function(el,i){
+        var p=projects[i];if(!p)return;var remain=p.mode==='down'?(p.dur*1000-curElapsed(p)):curElapsed(p);
+        var clk=el.querySelector('.clock');if(clk)clk.textContent=fmtClamp(remain);
+        var st=el.querySelector('.ctrls .start');if(st)st.textContent=p.running?'⏸ 暂停':'▶ 开始';
+        el.classList.toggle('run',p.running);el.classList.toggle('done',p.done);
+      });
+    }
+  }
+  function say(t){if(!('speechSynthesis' in window))return;try{var u=new SpeechSynthesisUtterance(t);u.lang='zh-CN';u.rate=1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+
+  $('voiceSw').onclick=function(){voiceOn=!voiceOn;this.classList.toggle('on',voiceOn);save();};
+
+  if(load()){$('voiceSw').classList.toggle('on',voiceOn);}
+  render();
+  ticker=setInterval(tick,250);
+})();
+</script>
+</body>
+</html>
