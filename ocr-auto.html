@@ -268,20 +268,35 @@ function detectCards(imgData, thr){
     groups.push({ x0,y0,x1,y1, bw:x1-x0+1, bh:y1-y0+1, n:grp.length, area, cx:(x0+x1)/2, cy:(y0+y1)/2 });
   }
 
-  // The draw and discard piles sit in the middle of the table and also carry
-  // white print, so anything near the centre (or glued to the frame) is out.
+  // Keep the outer ring (exclude central draw/discard pile) and drop oversized noise blobs.
   const cards = groups.filter(c=>{
-    const d=Math.hypot(c.cx-cx, c.cy-cy);
+    const dCenter=Math.hypot(c.cx-cx, c.cy-cy);
     const border=(c.x0<=2||c.y0<=2||c.x1>=W-3||c.y1>=H-3);
-    return d>S*0.22 && !border;
+    const maxDim=Math.max(c.bw,c.bh);
+    return dCenter>S*0.18 && maxDim<=S*0.25 && !border;
   });
 
-  // Each card belongs to whichever table edge it sits closest to.
+  // Assign cards to players using edge zones; corner cards go to the more extreme axis.
   const sides={A:[],B:[],C:[],D:[]};
   for(const c of cards){
-    const d={ A:c.cy, B:W-c.cx, C:H-c.cy, D:c.cx };
+    const xn=c.cx/W, yn=c.cy/H;
+    const inTop=yn<0.35 && xn>=0.15 && xn<=0.85;
+    const inBottom=yn>0.65 && xn>=0.15 && xn<=0.85;
+    const inLeft=xn<0.35 && yn>=0.15 && yn<=0.85;
+    const inRight=xn>0.65 && yn>=0.15 && yn<=0.85;
     let side='A';
-    for(const k of ['B','C','D']) if(d[k]<d[side]) side=k;
+    if(inTop&&inLeft){ side=(yn<xn)?'A':'D'; }
+    else if(inTop&&inRight){ side=(yn<(1-xn))?'A':'B'; }
+    else if(inBottom&&inLeft){ side=((1-yn)<xn)?'C':'D'; }
+    else if(inBottom&&inRight){ side=((1-yn)<(1-xn))?'C':'B'; }
+    else if(inTop){ side='A'; }
+    else if(inBottom){ side='C'; }
+    else if(inLeft){ side='D'; }
+    else if(inRight){ side='B'; }
+    else {
+      const d={ A:c.cy, B:W-c.cx, C:H-c.cy, D:c.cx };
+      for(const k of ['B','C','D']) if(d[k]<d[side]) side=k;
+    }
     sides[side].push(c);
   }
   for(const k of ['A','B','C','D']){
