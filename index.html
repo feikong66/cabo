@@ -42,7 +42,24 @@
   .announce{background:linear-gradient(135deg,#22304e,#1c2740);border:1px solid var(--line);border-radius:12px;
     padding:12px 16px;margin:0 0 22px;font-size:14px;line-height:1.6;color:#cfe0ff}
   .announce b{color:#fff}
-  @media(max-width:480px){ .hero h1{font-size:27px} .btn{flex:1 1 100%;max-width:none} }
+  .games{margin:18px 0 26px}
+  .games h2{font-size:15px;color:var(--sub);margin:0 0 14px;text-align:center;font-weight:600;letter-spacing:1px}
+  .game-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:520px;margin:0 auto}
+  .game-card{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 14px;text-align:center;text-decoration:none;color:var(--txt);transition:transform .12s,box-shadow .12s}
+  .game-card:active{transform:scale(.97)}
+  .game-card.cabo{border-color:rgba(79,140,255,.35);background:linear-gradient(135deg,rgba(79,140,255,.12),var(--card))}
+  .game-card.skyjo{border-color:rgba(54,211,153,.35);background:linear-gradient(135deg,rgba(54,211,153,.12),var(--card))}
+  .game-card.free{border-color:rgba(167,139,250,.35);background:linear-gradient(135deg,rgba(167,139,250,.12),var(--card))}
+  .game-card.timer{border-color:rgba(255,180,84,.35);background:linear-gradient(135deg,rgba(255,180,84,.12),var(--card))}
+  .game-card.ddz{border-color:rgba(244,114,182,.35);background:linear-gradient(135deg,rgba(244,114,182,.12),var(--card))}
+  .game-card.mj{border-color:rgba(34,211,238,.35);background:linear-gradient(135deg,rgba(34,211,238,.12),var(--card))}
+  .game-card.uno{border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,rgba(245,158,11,.12),var(--card))}
+  .game-card.yahtzee{border-color:rgba(217,70,239,.35);background:linear-gradient(135deg,rgba(217,70,239,.12),var(--card))}
+  .game-card.judge{border-color:rgba(167,139,250,.35);background:linear-gradient(135deg,rgba(167,139,250,.12),var(--card))}
+  .game-ic{font-size:32px;margin-bottom:8px}
+  .game-title{font-size:17px;font-weight:700;margin-bottom:4px}
+  .game-desc{font-size:12px;color:var(--sub)}
+  @media(max-width:480px){ .hero h1{font-size:27px} .btn{flex:1 1 100%;max-width:none} .game-card{padding:16px 10px} }
 </style>
 </head>
 <body>
@@ -58,12 +75,62 @@
     <p>注册账号即可云端保存对局，换手机也能接着打；AI 语音自动报分，支持「减半」特殊规则；还能赞助作者、由管理后台查看用户。</p>
   </section>
 
+  <section class="games">
+    <h2>选择游戏</h2>
+    <div class="game-cards">
+      <a class="game-card cabo btn-game" href="#" data-mode="cabo">
+        <div class="game-ic">🃏</div>
+        <div class="game-title">CABO 计分</div>
+        <div class="game-desc">经典翻牌低分胜</div>
+      </a>
+      <a class="game-card skyjo btn-game" href="#" data-mode="skyjo">
+        <div class="game-ic">⭐</div>
+        <div class="game-title">Skyjo 计分</div>
+        <div class="game-desc">12 张翻牌最低分</div>
+      </a>
+      <a class="game-card free btn-tpl" href="free.html">
+        <div class="game-ic">📋</div>
+        <div class="game-title">自由记分板</div>
+        <div class="game-desc">任意项目任意加分</div>
+      </a>
+      <a class="game-card timer btn-tpl" href="timer.html">
+        <div class="game-ic">⏱️</div>
+        <div class="game-title">计时器</div>
+        <div class="game-desc">每个项目独立计时</div>
+      </a>
+      <a class="game-card ddz btn-tpl" href="doudizhu.html">
+        <div class="game-ic">🎴</div>
+        <div class="game-title">斗地主计分</div>
+        <div class="game-desc">地主/农民·倍数结算</div>
+      </a>
+      <a class="game-card mj btn-tpl" href="mahjong.html">
+        <div class="game-ic">🀄</div>
+        <div class="game-title">麻将计分</div>
+        <div class="game-desc">自摸/点炮·番数结算</div>
+      </a>
+      <a class="game-card uno btn-tpl" href="uno.html">
+        <div class="game-ic">🎴</div>
+        <div class="game-title">UNO 计分</div>
+        <div class="game-desc">剩牌罚分·低分胜</div>
+      </a>
+      <a class="game-card yahtzee btn-tpl" href="yahtzee.html">
+        <div class="game-ic">🎲</div>
+        <div class="game-title">Yahtzee 计分</div>
+        <div class="game-desc">13 类·最高分胜</div>
+      </a>
+      <a class="game-card judge" href="judge.html">
+        <div class="game-ic">⚖️</div>
+        <div class="game-title">桌游裁判</div>
+        <div class="game-desc">谁是卧底/狼人杀法官</div>
+      </a>
+    </div>
+    <div id="gameVer" style="text-align:center;font-size:12px;color:var(--sub);margin-top:10px;min-height:18px"></div>
+  </section>
+
   <nav class="cta">
-    <a class="btn btn-primary" href="CABO_v0.7.5.html">🎮 进入计分器</a>
     <a class="btn btn-ghost" href="register.html">✍️ 注册账号</a>
     <a class="btn btn-ghost" href="login.html">🔑 登录</a>
     <a class="btn btn-ghost" href="donate.html">💝 赞助我们</a>
-    <a class="btn btn-ghost" href="admin.html">🛡️ 管理后台</a>
   </nav>
 
   <section class="features">
@@ -85,11 +152,30 @@
 <script>
 (function(){
   var API=(function(){try{var c=localStorage.getItem('cabo-api');if(c)return c;}catch(e){}
-    var h=location.hostname;if(h.endsWith('.tcloudbaseapp.com'))return 'https://'+h.split('.')[0]+'.ap-shanghai.app.tcloudbase.com';return '';})();
+    var h=location.hostname;if(h.endsWith('.tcloudbaseapp.com'))return 'https://'+h.split('.')[0]+'.service.tcloudbase.com';return '';})();
   fetch(API+'/api/config').then(function(r){return r.json();}).then(function(d){
     var el=document.getElementById('announce');
     if(d&&d.announce){el.innerHTML='📢 <b>'+d.announce.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];})+'</b>';el.classList.remove('hidden');}
   }).catch(function(){});
+
+  // 自动探测最新版 CABO 计分器文件，跳到原本的 CABO 界面（保留原始 UI，不替换）
+  var CANDIDATES = ['CABO_v0.7.5.1.html','CABO_v0.7.5.html','CABO_v0.7.4.1.html','CABO_v0.7.4.html'];
+  function setGameHref(file){
+    document.querySelectorAll('.btn-game').forEach(function(a){
+      var mode = a.getAttribute('data-mode');
+      a.href = file + '?game=' + mode + '&v=20260815';
+    });
+    var verEl = document.getElementById('gameVer');
+    if(verEl) verEl.textContent = '当前版本 ' + file;
+  }
+  function tryNext(i){
+    if(i >= CANDIDATES.length){ setGameHref('CABO_v0.7.5.1.html'); return; }
+    var f = CANDIDATES[i];
+    fetch(f + '?_probe=' + Date.now(), {method:'HEAD', cache:'no-store'}).then(function(r){
+      if(r.ok) setGameHref(f); else tryNext(i+1);
+    }).catch(function(){ tryNext(i+1); });
+  }
+  tryNext(0);
 })();
 </script>
 </body>
