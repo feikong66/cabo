@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>斗地主计分 · 跳转中…</title>
+<style>
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    background:#0f1420;color:#e8edf7;min-height:100vh;display:flex;align-items:center;justify-content:center}
+  .box{max-width:420px;text-align:center;padding:24px}
+  .spin{font-size:48px;animation:rot 1.2s linear infinite;display:inline-block}
+  @keyframes rot{to{transform:rotate(360deg)}}
+  h1{margin:14px 0 8px;font-size:18px}
+  p{margin:6px 0;color:#9fb0cc;font-size:14px;line-height:1.6}
+  a{color:#4f8cff;text-decoration:none;border:1px solid #2a3550;padding:8px 16px;border-radius:9px;display:inline-block;margin-top:14px;font-size:14px}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="spin">🃏</div>
+  <h1>斗地主已升级到完整版</h1>
+  <p>新版本包含：局内改名、随时切换地主/农民、炸弹/火箭/春天/反春天倍数、欢乐斗地主叫抢规则，以及跑得快 / 炸金花 / 牛牛等扑克模式。</p>
+  <p>正在迁移你的旧数据并跳转…</p>
+  <a id="manual" href="CABO_v0.7.5.1.html?game=doudizhu">点此手动跳转</a>
+</div>
+<script>
+(function(){
+  // 旧 doudizhu.html 的数据格式 → 新主应用 doudizhu 模式的数据格式
+  // 旧: {players:["地主",...], totals:[10,-5,-5], rounds:[{winIsLand,per,mult,delta,at}], landlord, base, voiceOn}
+  // 新: state = {players:[{name,color}], rounds:[{pts,ddz:{landlord,landlordWin,bidM,bombs,rocket,spring,anti}}], ddz:{subMode,base}, adjust, ...}
+  function migrate(){
+    try{
+      var raw = localStorage.getItem('ddz-scorer');
+      if(!raw) return false;
+      var old = JSON.parse(raw);
+      if(!old || !Array.isArray(old.players) || old.players.length < 3) return false;
+
+      // 颜色（按旧 HTML 的 CSS 变量顺序：地主=warn, 农民1=brand, 农民2=brand2）
+      var colors = ['#ffb454','#4f8cff','#36d399','#a78bfa','#f472b6','#34d399'];
+      var players = old.players.map(function(name,idx){
+        return { name: name || ('玩家'+(idx+1)), color: colors[idx % colors.length] };
+        });
+      // 兼容 2/4 人：补齐 / 截断
+      while(players.length < 2) players.push({name:'玩家'+(players.length+1), color: colors[players.length % colors.length]});
+      if(players.length > 6) players = players.slice(0,6);
+
+      var rounds = [];
+      var sumDelta = [0,0,0,0,0,0];
+      (old.rounds || []).forEach(function(r){
+        var delta = Array.isArray(r.delta) ? r.delta : [];
+        // bidM 推算：per = base*mult；旧 mult 是已乘过的总倍数。简化：bidM=mult，bombs/rocket/spring/anti=0
+        var bidM = (typeof r.mult === 'number' && r.mult > 0) ? r.mult : 1;
+        var pts = players.map(function(_,i){ return +delta[i] || 0; });
+        pts.forEach(function(v,i){ sumDelta[i] += v; });
+        rounds.push({
+          pts: pts,
+          ddz: {
+            subMode: 'ddz',
+            landlord: (typeof r.landlord === 'number') ? r.landlord : (old.landlord || 0),
+            landlordWin: !!r.winIsLand,
+            bidM: bidM,
+            bombs: 0,
+            rocket: false,
+            spring: false,
+            anti: false
+          }
+        });
+      });
+      // adjust = 当前总分 - 各局累计分（这样新引擎的 totals() 才能算出旧 totals）
+      var adjust = players.map(function(_,i){
+        var t = (old.totals && old.totals[i]) || 0;
+        return t - sumDelta[i];
+        });
+
+      var state = {
+        started: true,
+        players: players,
+        rounds: rounds,
+        adjust: adjust,
+        opLog: [],
+        bonusApplied: false,
+        archived: false,
+        ddz: { subMode: 'ddz', base: Math.max(1, +old.base || 1) },
+        hundredUsed: players.map(function(){ return false; }),
+        sound: true,
+        theme: (document.documentElement && document.documentElement.dataset && document.documentElement.dataset.theme) || 'dark',
+        lang: 'zh',
+        voice: { on: !!old.voiceOn, volume: 1, lang: null, voiceName: null, serviceUrl: '', rate: '0%', mode: 'concise' },
+        rules: { caboPenalty: 10, tieRule: 'callerWins', hundredEgg: 'half', cardInput: 'cards', cardEntry: 'picker', autoAdvance: true, lowBonus: { enabled: true, amount: 10 } },
+        endScore: 100,
+        winRule: 'high'
+      };
+      // 只在尚无新存档时才覆盖，避免破坏用户已在主应用里玩的数据
+      var newKey = 'cabo-scorer-v2:doudizhu';
+      if(!localStorage.getItem(newKey)){
+        localStorage.setItem(newKey, JSON.stringify(state));
+        return true;
+      }
+      return false;
+    }catch(e){ return false; }
+  }
+
+  var migrated = migrate();
+  setTimeout(function(){
+    // 始终跳到主应用斗地主模式（含跑得快/炸金花/牛牛 + 局内改名/选地主）
+    location.replace('CABO_v0.7.5.1.html?game=doudizhu' + (migrated ? '&migrated=1' : ''));
+  }, 600);
+})();
+</script>
+</body>
+</html>
