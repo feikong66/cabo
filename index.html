@@ -56,6 +56,8 @@
   .game-card.uno{border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,rgba(245,158,11,.12),var(--card))}
   .game-card.yahtzee{border-color:rgba(217,70,239,.35);background:linear-gradient(135deg,rgba(217,70,239,.12),var(--card))}
   .game-card.judge{border-color:rgba(167,139,250,.35);background:linear-gradient(135deg,rgba(167,139,250,.12),var(--card))}
+  .game-card.wish{border-color:rgba(255,200,90,.55);background:linear-gradient(135deg,rgba(255,180,60,.18),rgba(255,120,180,.10),var(--card));box-shadow:0 0 22px rgba(255,170,60,.18);animation:wishPulse 2.6s ease-in-out infinite}
+  @keyframes wishPulse{0%,100%{box-shadow:0 0 18px rgba(255,170,60,.16)}50%{box-shadow:0 0 30px rgba(255,170,60,.38)}}
   .game-ic{font-size:32px;margin-bottom:8px}
   .game-title{font-size:17px;font-weight:700;margin-bottom:4px}
   .game-desc{font-size:12px;color:var(--sub)}
@@ -123,6 +125,11 @@
         <div class="game-title">桌游裁判</div>
         <div class="game-desc">谁是卧底/狼人杀法官</div>
       </a>
+      <a class="game-card wish btn-tpl" href="wish.html">
+        <div class="game-ic">🌠</div>
+        <div class="game-title">许个愿望</div>
+        <div class="game-desc">想要什么功能？告诉我</div>
+      </a>
     </div>
     <div id="gameVer" style="text-align:center;font-size:12px;color:var(--sub);margin-top:10px;min-height:18px"></div>
   </section>
@@ -152,7 +159,7 @@
 <script>
 (function(){
   var API=(function(){try{var c=localStorage.getItem('cabo-api');if(c)return c;}catch(e){}
-    var h=location.hostname;if(h.endsWith('.tcloudbaseapp.com'))return 'https://'+h.split('.')[0]+'.service.tcloudbase.com';return '';})();
+    var h=location.hostname;if(h.endsWith('.tcloudbaseapp.com')){var sub=h.split('.')[0];var env=sub.replace(/-(\d+)$/,'');return 'https://'+env+'.service.tcloudbase.com';}return '';})();
   fetch(API+'/api/config').then(function(r){return r.json();}).then(function(d){
     var el=document.getElementById('announce');
     if(d&&d.announce){el.innerHTML='📢 <b>'+d.announce.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];})+'</b>';el.classList.remove('hidden');}
