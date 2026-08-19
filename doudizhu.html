@@ -100,6 +100,9 @@
     <button data-mode="pdk">跑得快</button>
     <button data-mode="zjh">炸金花</button>
     <button data-mode="nn">牛牛</button>
+    <button data-mode="texas">德州扑克</button>
+    <button data-mode="bj">21点</button>
+    <button data-mode="gd">掼蛋</button>
   </div>
 
   <div class="panel" id="playersPanel">
@@ -143,13 +146,19 @@
     ddz: { label:'斗地主', key:'poker-ddz', min:3, max:3, defN:3, fixed:true  },
     pdk: { label:'跑得快', key:'poker-pdk', min:3, max:6, defN:3, fixed:false },
     zjh: { label:'炸金花', key:'poker-zjh', min:2, max:6, defN:3, fixed:false },
-    nn:  { label:'牛牛',   key:'poker-nn',  min:3, max:6, defN:4, fixed:false }
+    nn:  { label:'牛牛',   key:'poker-nn',  min:3, max:6, defN:4, fixed:false },
+    texas:{ label:'德州扑克', key:'poker-texas', min:2, max:6, defN:4, fixed:false },
+    bj:  { label:'21点',   key:'poker-bj',  min:2, max:6, defN:3, fixed:false },
+    gd:  { label:'掼蛋',   key:'poker-gd',  min:4, max:4, defN:4, fixed:true  }
   };
   var DEF_NAMES = {
     ddz:['地主','农民1','农民2'],
     pdk:['玩家1','玩家2','玩家3'],
     zjh:['玩家1','玩家2','玩家3'],
-    nn:['玩家1','玩家2','玩家3','玩家4']
+    nn:['玩家1','玩家2','玩家3','玩家4'],
+    texas:['玩家1','玩家2','玩家3','玩家4'],
+    bj:['庄家','闲家1','闲家2'],
+    gd:['玩家1','玩家2','玩家3','玩家4']
   };
   var COLORS = ['#ffb454','#4f8cff','#36d399','#a78bfa','#f472b6','#34d399'];
   /* 牛牛牛型表：strength 比大小，mult 倍率 */
@@ -191,6 +200,9 @@
       ddz: { base: 1 },
       zjh: { stake: 1 },
       nn:  { stake: 1 },
+      texas: { stake: 1 },
+      bj:  { stake: 1 },
+      gd:  {},
       voiceOn: false
     };
   }
@@ -209,6 +221,9 @@
     if(curMode==='ddz'){ CUR = { base:(S.ddz&&S.ddz.base)||1, landlord:0, landlordWin:true, bidM:1, bombs:0, rocket:false, spring:false, anti:false }; }
     else if(curMode==='pdk'){ CUR = { base:(S.ddz&&S.ddz.base)||1, winner:0, remain:S.players.map(function(){return 0;}), pdkSpring:false }; }
     else if(curMode==='zjh'){ CUR = { stake:(S.zjh&&S.zjh.stake)||1, winner:0 }; }
+    else if(curMode==='texas'){ var _ts=(S.texas&&S.texas.stake)||1; CUR = { stake:_ts, winner:0, losses:S.players.map(function(){return _ts;}) }; }
+    else if(curMode==='bj'){ CUR = { stake:(S.bj&&S.bj.stake)||1, banker:0, results:S.players.map(function(){return 1;}) }; }
+    else if(curMode==='gd'){ CUR = { winner:0, up:1 }; }
     else { CUR = { stake:(S.nn&&S.nn.stake)||1, banker:0, types:S.players.map(function(){return 0;}) }; }
   }
 
@@ -244,10 +259,48 @@
     }
     return { pts:pts };
   }
+  // 德州扑克：赢家收池，各输家输额可不同（覆盖跟注/加注/全下），零和。
+  function computeTexas(info, n){
+    var pts = new Array(n).fill(0);
+    var sum = 0;
+    for(var i=0;i<n;i++){
+      if(i===info.winner) continue;
+      var loss = (info.losses && info.losses[i]) ? info.losses[i] : 0;
+      pts[i] = -loss; sum += loss;
+    }
+    pts[info.winner] = sum;
+    return { pts:pts, pot:sum };
+  }
+  // 21点：庄家 vs 各闲家，结果 0平/1赢/2黑杰克/3输/4爆。
+  function computeBj(info, n){
+    var pts = new Array(n).fill(0);
+    var b = info.banker;
+    for(var i=0;i<n;i++){
+      if(i===b) continue;
+      var r = (info.results && typeof info.results[i]==='number') ? info.results[i] : 1;
+      var m = 0;
+      if(r===1) m = 1;            // 普通赢
+      else if(r===2) m = 1.5;     // 黑杰克 1.5 倍
+      else if(r===3 || r===4) m = -1; // 输 / 爆牌
+      // r===0 平局 m=0
+      pts[i] += Math.round(m * info.stake * 2) / 2;   // 避免 0.5 浮点误差
+      pts[b] -= Math.round(m * info.stake * 2) / 2;
+    }
+    return { pts:pts };
+  }
+  // 掼蛋：升级制，每局赢家 +升级数（双下默认×2），累计先到 A(14) 胜。
+  function computeGuandan(info, n){
+    var pts = new Array(n).fill(0);
+    pts[info.winner] = info.up || 1;
+    return { pts:pts };
+  }
   function compute(info){
     if(curMode==='ddz') return computeDdz(info, S.players.length);
     if(curMode==='pdk') return computePdk(info, S.players.length);
     if(curMode==='zjh') return computeZjh(info, S.players.length);
+    if(curMode==='texas') return computeTexas(info, S.players.length);
+    if(curMode==='bj') return computeBj(info, S.players.length);
+    if(curMode==='gd') return computeGuandan(info, S.players.length);
     return computeNn(info, S.players.length);
   }
 
@@ -273,6 +326,9 @@
       var tag = (curMode==='ddz'&&i===CUR.landlord)?'<span class="tag">👑地主</span>'
               : (curMode==='pdk'&&i===CUR.winner)?'<span class="tag">🏅赢家</span>'
               : (curMode==='zjh'&&i===CUR.winner)?'<span class="tag">👑赢家</span>'
+              : (curMode==='texas'&&i===CUR.winner)?'<span class="tag">💰赢家</span>'
+              : (curMode==='bj'&&i===CUR.banker)?'<span class="tag">🏦庄家</span>'
+              : (curMode==='gd'&&i===CUR.winner)?'<span class="tag">🏅赢家</span>'
               : (curMode==='nn'&&i===CUR.banker)?'<span class="tag">🏦庄家</span>' : '';
       var scCls = S.totals[i]>0?'pos':(S.totals[i]<0?'neg':'');
       c.innerHTML = '<span class="dot" style="background:'+COLORS[i%COLORS.length]+'"></span>'
@@ -300,6 +356,9 @@
     if(curMode==='ddz') renderDdz(body, n);
     else if(curMode==='pdk') renderPdk(body, n);
     else if(curMode==='zjh') renderZjh(body, n);
+    else if(curMode==='texas') renderTexas(body, n);
+    else if(curMode==='bj') renderBj(body, n);
+    else if(curMode==='gd') renderGd(body, n);
     else renderNn(body, n);
   }
   function summaryHtml(res){
@@ -308,6 +367,9 @@
     if(curMode==='ddz') head = '倍数 <b>×'+res.M+'</b> · 每份 <b>'+res.unit+'</b> 分 · '+(CUR.landlordWin?'地主胜':'地主负');
     else if(curMode==='pdk') head = '每剩牌 <b>'+res.unit+'</b> 分/张 · 赢家收全部';
     else if(curMode==='zjh') head = '底注 <b>'+res.unit+'</b> · 赢家 +(n-1)×底注';
+    else if(curMode==='texas') head = '本局底池 <b>'+res.pot+'</b> · 赢家收全部';
+    else if(curMode==='bj') head = '底注 <b>'+CUR.stake+'</b> · 庄家 vs 各闲家结算';
+    else if(curMode==='gd') head = '升级 <b>+'+(CUR.up||1)+'</b> · 累计先到 A(14) 胜';
     else head = '底注 <b>'+CUR.stake+'</b> · 各闲家按牛型倍率与庄家结算';
     return '<div class="summary">'+head+'<br>本局：'+parts.join('　')+'</div>';
   }
@@ -408,6 +470,66 @@
     refreshSummary();
   }
 
+  /* ---- 德州扑克 ---- */
+  function renderTexas(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">默认底注</span><div class="stepper"><button id="txStakeMinus">−</button><input id="txStake" type="number" value="'+CUR.stake+'" min="1"><button id="txStakePlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">赢家</span><div class="pick" id="txWinner">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.winner?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">各输家输额</span><div style="display:flex;flex-direction:column;gap:8px;flex:1">';
+    S.players.forEach(function(p,i){
+      if(i===CUR.winner){ html += '<span class="winner-tag">'+esc(p)+'（赢家）</span>'; }
+      else { html += '<span class="remain-item">'+esc(p)+'<input type="number" id="txLoss-'+i+'" value="'+(CUR.losses[i]||0)+'" min="0"></span>'; }
+    });
+    html += '</div></div>';
+    html += '<div class="tip">赢家收走所有输家的输额（零和）。默认输额=底注，可单独改（覆盖跟注/加注/全下）。</div>';
+    body.innerHTML = html;
+    bindStepper('txStake', function(v){ CUR.stake=v; S.texas.stake=v; refreshSummary(); }, 1, 9999);
+    body.querySelectorAll('#txWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; renderTexas(body,n); }; });
+    S.players.forEach(function(_,i){ var el=$('txLoss-'+i); if(el) el.oninput=function(){ CUR.losses[i]=Math.max(0,parseInt(el.value,10)||0); refreshSummary(); }; });
+    refreshSummary();
+  }
+
+  /* ---- 21点 ---- */
+  var BJ_RESULTS = [
+    {k:0, n:'平局'}, {k:1, n:'赢 ×1'}, {k:2, n:'黑杰克 ×1.5'}, {k:3, n:'输 ×1'}, {k:4, n:'爆牌 ×1'}
+  ];
+  function renderBj(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">庄家</span><div class="pick" id="bjBanker">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.banker?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">底注</span><div class="stepper"><button id="bjStakeMinus">−</button><input id="bjStake" type="number" value="'+CUR.stake+'" min="1"><button id="bjStakePlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">各闲家结果</span><div style="display:flex;flex-direction:column;gap:8px;flex:1">';
+    S.players.forEach(function(p,i){
+      html += '<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="min-width:56px">'+esc(p)+(i===CUR.banker?'（庄）':'')+'</span><select id="bjRes-'+i+'">';
+      BJ_RESULTS.forEach(function(d){ html += '<option value="'+d.k+'"'+(CUR.results[i]===d.k?' selected':'')+'>'+d.n+'</option>'; });
+      html += '</select></div>';
+    });
+    html += '</div></div>';
+    html += '<div class="tip">庄家 vs 各闲家结算：黑杰克闲家 +(1.5×底注)，普通赢 +(1×底注)，平局 0，输/爆牌 -(1×底注)；庄家反向。</div>';
+    body.innerHTML = html;
+    body.querySelectorAll('#bjBanker button').forEach(function(b){ b.onclick=function(){ CUR.banker=+b.dataset.i; renderBj(body,n); }; });
+    bindStepper('bjStake', function(v){ CUR.stake=v; S.bj.stake=v; }, 1, 9999);
+    S.players.forEach(function(_,i){ var el=$('bjRes-'+i); if(el) el.onchange=function(){ CUR.results[i]=+el.value; refreshSummary(); }; });
+    refreshSummary();
+  }
+
+  /* ---- 掼蛋 ---- */
+  function renderGd(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">赢家</span><div class="pick" id="gdWinner">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.winner?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">升级</span><div class="stepper"><button id="gdUpMinus">−</button><input id="gdUp" type="number" value="'+CUR.up+'" min="1" max="4"><button id="gdUpPlus">+</button></div><span class="tip" style="margin:0">双下升 2 级，单下升 1 级</span></div>';
+    html += '<div class="tip">升级制：从 2 开始，累计先升到 A（共 12 级）者胜。每局赢家 +升级数。</div>';
+    body.innerHTML = html;
+    body.querySelectorAll('#gdWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; refreshSummary(); }; });
+    bindStepper('gdUp', function(v){ CUR.up=v; refreshSummary(); }, 1, 4);
+    refreshSummary();
+  }
+
   /* ---- 通用 stepper 绑定 ---- */
   function bindStepper(id, onChg, min, max){
     var inp = $(id); if(!inp) return;
@@ -434,6 +556,9 @@
     if(curMode==='ddz') return (info.landlordWin?'地主胜':'地主负')+'（×'+(info.bidM*Math.pow(2,info.bombs+(info.rocket?1:0)+(info.spring?1:0)+(info.anti?1:0)))+'）';
     if(curMode==='pdk') return S.players[info.winner]+' 赢（关牌'+(info.pdkSpring?'×2':'×1')+'）';
     if(curMode==='zjh') return S.players[info.winner]+' 赢（底注 '+info.stake+'）';
+    if(curMode==='texas') return S.players[info.winner]+' 收池';
+    if(curMode==='bj') return '庄家 '+S.players[info.banker]+'（底注 '+info.stake+'）';
+    if(curMode==='gd') return S.players[info.winner]+' 升 '+(info.up||1)+' 级';
     return '庄家 '+S.players[info.banker]+'（底注 '+info.stake+'）';
   }
 
