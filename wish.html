@@ -77,11 +77,20 @@
   .msg.ok{color:var(--ok)} .msg.err{color:var(--err)}
   .wish-list{margin-top:26px;animation:rise .7s .16s cubic-bezier(.2,.8,.2,1) both}
   .wish-list h2{font-size:14px;color:var(--sub);margin:0 0 12px;text-align:center;letter-spacing:1px}
-  .w-item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:10px;backdrop-filter:blur(8px)}
+  .w-item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 15px;margin-bottom:10px;backdrop-filter:blur(8px);display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .w-item .main{flex:1;min-width:0}
   .w-item .t{font-size:14px;font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
   .w-item .badge{font-size:11px;padding:2px 9px;border-radius:999px;border:1px solid var(--gold);color:var(--gold)}
+  .w-item .badge.done{border-color:var(--ok);color:var(--ok)}
+  .w-item .badge.reject{border-color:var(--muted);color:var(--muted)}
   .w-item .d{font-size:13px;color:var(--sub);margin-top:6px;line-height:1.6}
   .w-item .c{font-size:11px;color:var(--muted);margin-top:6px}
+  .w-item .vote{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--input-bg);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;transition:.15s;color:var(--sub)}
+  .w-item .vote:hover{border-color:var(--gold)}
+  .w-item .vote.voted{border-color:var(--gold);color:var(--gold);background:rgba(255,200,90,.12)}
+  .w-item .vote .n{font-size:18px;font-weight:800;color:var(--txt);line-height:1}
+  .w-item .vote.voted .n{color:var(--gold)}
+  .w-item .vote .lb{font-size:10px;color:var(--muted)}
   .empty{color:var(--muted);text-align:center;font-size:13px;padding:18px}
 
   /* 提交成功撒花爆发层 */
@@ -105,7 +114,7 @@
 
   <section class="hero">
     <h1>想要什么新功能？</h1>
-    <p>告诉作者你想加什么。愿望会直达云端后台，被采纳后会在下方「已实现的愿望」里点亮 ✨</p>
+    <p>告诉作者你想加什么。愿望直达云端后台，你还能给别人的愿望投票，票数高的作者会优先做 ✨</p>
   </section>
 
   <div class="card">
@@ -137,7 +146,7 @@
   </div>
 
   <div class="wish-list">
-    <h2>✨ 已实现的愿望</h2>
+    <h2>✨ 大家的愿望（点 👍 投票）</h2>
     <div id="wishList"><div class="empty">加载中…</div></div>
   </div>
 </div>
@@ -236,21 +245,47 @@
     btn.disabled=false; btn.textContent='✨ 许下愿望';
   };
 
-  /* ---- 已实现的愿望列表 ---- */
+  /* ---- 愿望列表 + 投票 ---- */
+  var VOTED_KEY = 'cabo-wish-voted';
+  function votedSet(){ try{ return JSON.parse(localStorage.getItem(VOTED_KEY)||'[]'); }catch(e){ return []; } }
+  function hasVoted(id){ return votedSet().indexOf(id) >= 0; }
+  function markVoted(id){ try{ var a=votedSet(); if(a.indexOf(id)<0){ a.push(id); localStorage.setItem(VOTED_KEY, JSON.stringify(a)); } }catch(e){} }
+  function statusBadge(s){
+    if(s==='已完成') return '<span class="badge done">✅ 已完成</span>';
+    if(s==='已采纳') return '<span class="badge done">🌟 已采纳</span>';
+    if(s==='已拒绝') return '<span class="badge reject">已拒绝</span>';
+    return '<span class="badge">⏳ 待处理</span>';
+  }
   async function loadWishList(){
     var box=$('wishList');
-    if(!API){ box.innerHTML='<div class="empty">云端未连接，暂无法加载已实现的愿望</div>'; return; }
+    if(!API){ box.innerHTML='<div class="empty">云端未连接，暂无法加载愿望</div>'; return; }
     try{
       var r=await fetch(API+'/api/wishes',{cache:'no-store'});
       var d=await r.json().catch(function(){return {};});
       var items=(d.items||[]);
-      if(!items.length){ box.innerHTML='<div class="empty">还没有已实现的愿望，快来许下第一个吧 ✨</div>'; return; }
+      if(!items.length){ box.innerHTML='<div class="empty">还没有愿望，快来许下第一个吧 ✨</div>'; return; }
       box.innerHTML=items.map(function(w){
-        return '<div class="w-item"><div class="t"><span>'+esc(w.title)+'</span><span class="badge">'+esc(w.status||'已完成')+'</span></div>'
+        var voted=hasVoted(w._id);
+        return '<div class="w-item"><div class="main"><div class="t"><span>'+esc(w.title)+'</span>'+statusBadge(w.status)+'</div>'
           +(w.desc?'<div class="d">'+esc(w.desc)+'</div>':'')
-          +'<div class="c">'+(w.category?esc(w.category)+' · ':'')+(w.created_at?esc(String(w.created_at).replace('T',' ').slice(0,10)):'')+'</div></div>';
+          +'<div class="c">'+(w.category?esc(w.category)+' · ':'')+(w.created_at?esc(String(w.created_at).replace('T',' ').slice(0,10)):'')+'</div></div>'
+          +'<button class="vote'+(voted?' voted':'')+'" data-id="'+esc(w._id)+'" data-votes="'+w.votes+'"><span class="n">'+(voted?'❤️':w.votes)+'</span><span class="lb">'+(voted?'已投':'投票')+'</span></button></div>';
       }).join('');
+      box.querySelectorAll('.vote').forEach(function(b){ b.onclick=function(){ vote(b.getAttribute('data-id'), b); }; });
     }catch(e){ box.innerHTML='<div class="empty">加载失败，点此重试</div>'; box.onclick=loadWishList; }
+  }
+  async function vote(id, btn){
+    if(!API) return;
+    if(hasVoted(id)){ toast('你已经投过票啦'); return; }
+    btn.disabled=true;
+    try{
+      var r=await fetch(API+'/api/wishes/'+id+'/vote',{method:'POST',headers:{'Content-Type':'application/json'}});
+      var d=await r.json().catch(function(){return {};});
+      if(r.status===409){ toast('你已经投过票啦'); markVoted(id); }
+      else if(r.ok){ markVoted(id); var n=(typeof d.votes==='number')?d.votes:((+btn.dataset.votes)+1); btn.innerHTML='<span class="n">❤️</span><span class="lb">已投</span>'; btn.classList.add('voted'); toast('👍 已投一票'); }
+      else{ toast('投票失败：'+(d.error||r.status)); }
+    }catch(e){ toast('网络异常：'+(e&&e.message||e)); }
+    btn.disabled=false;
   }
   loadWishList();
 })();
