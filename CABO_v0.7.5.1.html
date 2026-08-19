@@ -348,7 +348,7 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .r-tools{display:inline-flex;gap:6px;margin-left:8px;flex:0 0 auto}
 .r-act{display:inline-flex;align-items:center;justify-content:center;padding:5px 11px;min-width:40px;height:30px;border:1px solid var(--line);background:var(--accent);border-radius:8px;cursor:pointer;color:#fff;font-size:12px;font-weight:700;line-height:1;transition:.15s;box-shadow:0 2px 6px rgba(43,182,115,.28)}
 .r-act:hover{background:#25a05c;color:#fff}
-.r-act.danger{background:var(--danger);border-color:var(--danger);box-shadow:0 2px 6px rgba(224,90,77,.28)}
+.r-act.danger{background:var(--danger);border-color:var(--danger);color:#fff;box-shadow:0 2px 6px rgba(224,90,77,.28)}
 .r-act.danger:hover{background:#b33124;color:#fff}
 /* ---- 斗地主 / 跑得快 计分面板 ---- */
 .ddz-panel{background:var(--input-bg,#222);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:10px;display:flex;flex-direction:column;gap:10px}
@@ -2779,7 +2779,7 @@ function historyHtml(){
     const rnHtml = isK
       ? `${t(`<span class="rn">第`)}${k+1}${t(`局</span><span class="rn-kami">🚀 神风特攻队</span>`)}`
       : `${t(`<span class="rn">第`)}${k+1}${t(`局</span>`)}`;
-    const tools = `<span class="r-tools"><button class="r-act" data-edit="${k}${t(`" title="修改本局">修改</button><button class="r-act danger" data-del="`)}${k}${t(`" title="删除本局">删除</button></span>`)}`;
+    const tools = `<span class="r-tools"><button class="r-act" data-edit="${k}" title="修改本局">修改</button><button class="r-act danger" data-del="${k}" title="删除本局">删除</button></span>`;
     const rawPts = state.players.map((_,i)=> (has(r.pts)&&has(r.pts[i])) ? r.pts[i] : 0);
     const roundEggs = eggs.filter(e=> e.round===k).map(e=> e.player);
     const parts = state.players.map((p,i)=>{
