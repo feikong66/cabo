@@ -83,6 +83,20 @@
     color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;border:1px solid var(--line);opacity:0;transition:.25s;pointer-events:none;z-index:60}
   #toast.show{opacity:1}
   footer{margin-top:30px;text-align:center;color:var(--sub);font-size:11px;line-height:1.7}
+  /* 手机端按钮协调 */
+  @media (max-width:600px){
+    body{padding:16px 12px 56px}
+    .grid{gap:14px}
+    .card{padding:16px}
+    .card h2{font-size:16px}
+    .btn{font-size:15px;padding:13px 16px}
+    .asr-ctrl{flex-wrap:wrap;row-gap:8px}
+    .asr-inputs{gap:8px}
+    #ocrFrame{height:62vh;min-height:320px}
+  }
+  @media (max-width:380px){
+    .asr-inputs{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -125,7 +139,7 @@
         <button class="btn" id="asrClear" style="margin-left:auto;padding:6px 10px;font-size:12px">清空</button>
       </div>
       <div class="asr-inputs" id="asrInputs"></div>
-      <button class="btn mic" id="micBtn">🎤 开始语音报分</button>
+      <button class="btn primary mic" id="micBtn">🎤 开始语音报分</button>
       <div class="asr-result" id="asrResult"></div>
       <div class="pill">支持浏览器：Chrome / Edge（含 Android）。iOS Safari 不支持 Web Speech 识别。</div>
     </div>
