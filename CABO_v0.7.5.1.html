@@ -264,6 +264,20 @@ input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(43
 .mini{flex:1;padding:9px;border-radius:10px;font-size:13.5px;background:var(--input-bg);color:var(--text);border:1px solid var(--line);box-shadow:none;font-weight:600}
 .mini.danger{background:var(--danger);border-color:var(--danger);color:#fff;box-shadow:0 2px 6px rgba(224,90,77,.25)}
 .mini.danger:hover{background:#b33124;color:#fff}
+/* ---- 周报/年报 ---- */
+.wk-big{display:flex;gap:14px;justify-content:center;margin:6px 0 14px}
+.wk-big>div{background:var(--accent);background:linear-gradient(135deg,var(--accent),var(--accent-2));border-radius:16px;padding:14px 22px;text-align:center;min-width:96px;box-shadow:0 6px 18px rgba(31,157,94,.25)}
+.wk-big b{display:block;font-size:34px;font-weight:800;color:#fff;line-height:1.1}
+.wk-big span{font-size:13px;color:rgba(255,255,255,.85)}
+.wk-line{text-align:center;font-size:16px;color:var(--text);line-height:1.6;margin:4px 8px 6px}
+.wk-line b{color:var(--accent-2)}
+.wk-sub{text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px}
+.wk-sub b{color:var(--text)}
+.wk-dist{margin:8px 4px 0;display:flex;flex-direction:column;gap:8px}
+.wk-bar{display:flex;align-items:center;gap:8px;font-size:13px}
+.wk-bar>span{width:54px;flex:0 0 auto;color:var(--muted)}
+.wk-bar>i{flex:1;height:10px;border-radius:6px;background:linear-gradient(90deg,var(--accent),var(--accent-2));display:block;min-width:6px}
+.wk-bar>em{width:30px;flex:0 0 auto;text-align:right;color:var(--text);font-style:normal;font-weight:700}
 .report-text{width:100%;height:200px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;line-height:1.6;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--input-bg);color:var(--text);resize:vertical}
 .report-preview{width:100%;border-radius:12px;border:1px solid var(--line);margin-bottom:12px;display:block}
 .footer{text-align:center;color:var(--muted);font-size:12px;margin-top:24px}
@@ -2293,7 +2307,7 @@ function renderGame(){
   const isPicker = state.rules.cardInput === 'cards' && state.rules.cardEntry === 'picker';
   const isPoker = ['doudizhu','zhajinhua','niuniu'].indexOf(state.game) >= 0;
   const roundSub = isPoker ? (state.lang==='en' ? 'Poker · highest total wins' : '扑克模式 · 累计高分胜') : (state.endScore + (state.lang==='en'?' pts · ':' 分 · ') + (state.winRule==='low'?(state.lang==='en'?'lowest wins':'低分胜'):(state.lang==='en'?'highest wins':'高分胜')));
-  screen.innerHTML = `${t(`<div class="round-info"><span>第`)}${roundNo}${t(`局 ·`)}${state.players.length}${t(`人</span><span>`)}${roundSub}${t(`</span></div> <div class="qi-panel" id="qiPanel"> <div class="qi-title">⚡ ${t("quickInput")}</div> <div class="qi-paste"> <textarea id="qiPaste" placeholder="${t("pasteScoresHint")}"></textarea> <button class="ghost" id="qiApply">${t("apply")}</button> <button class="ghost" id="qiSaveTmpl">${t("saveTemplate")}</button> </div> <div class="qi-tmpl" id="qiTmpl">${getPlayerTemplates().map((tm,idx)=>`<button data-idx="${idx}">${escapeHtml(tm.name || tm.scores.join(','))}</button>`).join('') || `<span style="color:var(--muted);font-size:12px">${t("noTemplates")}</span>`}</div> </div> <div id="players"></div> <div class="special-panel" id="specialPanel"></div> <div class="actions"> <div class="action-bar"> <button class="primary" id="submitBtn">${state.game==='skyjo'?'记录本局':'提交本局'}</button> <button class="ghost icon-btn" id="autoSaveBtn" title="自动存档：开">💾</button> <button class="ghost" id="moreBtn">更多操作 ▾</button> </div> </div> <div class="overlay hidden" id="moreSheet"> <div class="modal more-modal" id="moreModal"> <h2>更多操作</h2> <div class="action-panel"> <div class="action-row"> <button id="undoBtn">↩ 撤销上一局</button> <button id="undoMultiBtn">↩ 撤销多局</button> <button id="clearBtn">🧹 重置本局</button> </div> <div class="action-row"> <button id="opLogBtn">📜 操作记录</button> </div> <div class="action-row"> <button class="ghost" id="countBtn">👥`)}${state.players.length}${t(`人</button> <button class="ghost" id="newGameBtn">🔄 新对局</button> </div> <div class="action-row"> <button class="ghost" id="saveBtn">💾 保存对局</button> <button class="ghost" id="savesBtn">📂 我的存档</button> </div> <div class="action-row"> <button class="ghost" id="chartBtn">📊 趋势</button> <button class="ghost" id="reportBtn">📤 战报</button> </div> <div class="action-row"> <button class="ghost" id="statsBtn">🏅 战绩</button> <button class="ghost" id="shareBtn">🔗 分享本局</button> </div> <div class="action-row"> <button class="ghost" id="expBtn">📦 导出/导入</button> <button class="ghost" id="endBtn">🗣 结束本局</button> </div> <div class="action-row"> <button class="ghost" id="roomBtn">`)}${roomBtnLabel()}${t(`</button> </div> <div class="action-row"> <button class="ghost" id="backBtn">← 返回设置</button> </div> </div> <button class="ghost" id="moreClose" style="width:100%;margin-top:12px">收起</button> </div> </div> <div class="chart-wrap hidden" id="chartWrap"> <h3>分数趋势</h3> <canvas id="chart"></canvas> <div class="chart-legend" id="chartLegend"></div> </div> <div class="history"> <h3>对局记录</h3> <div id="histList">`)}${historyHtml()}</div>
+  screen.innerHTML = `${t(`<div class="round-info"><span>第`)}${roundNo}${t(`局 ·`)}${state.players.length}${t(`人</span><span>`)}${roundSub}${t(`</span></div> <div class="qi-panel" id="qiPanel"> <div class="qi-title">⚡ ${t("quickInput")}</div> <div class="qi-paste"> <textarea id="qiPaste" placeholder="${t("pasteScoresHint")}"></textarea> <button class="ghost" id="qiApply">${t("apply")}</button> <button class="ghost" id="qiSaveTmpl">${t("saveTemplate")}</button> </div> <div class="qi-tmpl" id="qiTmpl">${getPlayerTemplates().map((tm,idx)=>`<button data-idx="${idx}">${escapeHtml(tm.name || tm.scores.join(','))}</button>`).join('') || `<span style="color:var(--muted);font-size:12px">${t("noTemplates")}</span>`}</div> </div> <div id="players"></div> <div class="special-panel" id="specialPanel"></div> <div class="actions"> <div class="action-bar"> <button class="primary" id="submitBtn">${state.game==='skyjo'?'记录本局':'提交本局'}</button> <button class="ghost icon-btn" id="autoSaveBtn" title="自动存档：开">💾</button> <button class="ghost" id="moreBtn">更多操作 ▾</button> </div> </div> <div class="overlay hidden" id="moreSheet"> <div class="modal more-modal" id="moreModal"> <h2>更多操作</h2> <div class="action-panel"> <div class="action-row"> <button id="undoBtn">↩ 撤销上一局</button> <button id="undoMultiBtn">↩ 撤销多局</button> <button id="clearBtn">🧹 重置本局</button> </div> <div class="action-row"> <button id="opLogBtn">📜 操作记录</button> </div> <div class="action-row"> <button class="ghost" id="countBtn">👥`)}${state.players.length}${t(`人</button> <button class="ghost" id="newGameBtn">🔄 新对局</button> </div> <div class="action-row"> <button class="ghost" id="saveBtn">💾 保存对局</button> <button class="ghost" id="savesBtn">📂 我的存档</button> </div> <div class="action-row"> <button class="ghost" id="chartBtn">📊 趋势</button> <button class="ghost" id="reportBtn">📤 战报</button> </div> <div class="action-row"> <button class="ghost" id="statsBtn">🏅 战绩</button> <button class="ghost" id="weeklyBtn">📊 周报</button> <button class="ghost" id="shareBtn">🔗 分享本局</button> </div> <div class="action-row"> <button class="ghost" id="expBtn">📦 导出/导入</button> <button class="ghost" id="endBtn">🗣 结束本局</button> </div> <div class="action-row"> <button class="ghost" id="roomBtn">`)}${roomBtnLabel()}${t(`</button> </div> <div class="action-row"> <button class="ghost" id="backBtn">← 返回设置</button> </div> </div> <button class="ghost" id="moreClose" style="width:100%;margin-top:12px">收起</button> </div> </div> <div class="chart-wrap hidden" id="chartWrap"> <h3>分数趋势</h3> <canvas id="chart"></canvas> <div class="chart-legend" id="chartLegend"></div> </div> <div class="history"> <h3>对局记录</h3> <div id="histList">`)}${historyHtml()}</div>
     </div>`;
   const pl = document.querySelector("#players");
   state.players.forEach((p,i)=>{
@@ -2394,6 +2408,7 @@ function renderGame(){
   };
   document.querySelector("#reportBtn").onclick = openReport;
   document.querySelector("#statsBtn").onclick = openStats;
+  document.querySelector("#weeklyBtn").onclick = openWeekly;
   document.querySelector("#shareBtn").onclick = shareLink;
   document.querySelector("#expBtn").onclick = openExportImport;
   document.querySelector("#endBtn").onclick = ()=> showGameOver(totals(), -1);
@@ -3016,6 +3031,7 @@ function announceRound(pts, cabo, kami, meta){
     r.cards = state.players.map((_,i)=> [0,1,2,3].map(j=> parseFloat(document.getElementById("c"+i+"-"+j).value)||0));
     r.extraCards = state.players.map((_,i)=> (roundExtraCards[i] || []).map(v=> parseFloat(v)||0));
   }
+  if(!r.time) r.time = Date.now();   // 周报/月报按局时间聚合用
   state.rounds.push(r);
   const events = [];
   if(has(kami)) events.push({type:"kamikaze", name: state.players[kami].name});
@@ -4336,6 +4352,120 @@ function openStats(){
   overlay.classList.remove("hidden");
   document.querySelector("#stClose").onclick = ()=> overlay.classList.add("hidden");
   document.querySelector("#stRecap").onclick = ()=>{ overlay.classList.add("hidden"); exportRecapPoster(); };
+}
+
+/* ---------- 周报 / 年报战绩总结（功能 B） ---------- */
+function weeklyAggregate(days){
+  const now = Date.now();
+  const start = now - days*86400000;
+  const saves = loadSaves() || [];
+  const nick = (function(){ try{ return (localStorage.getItem("cabo-nick")||"").trim(); }catch(e){ return ""; } })();
+  let count = 0, best = null, nickWins = 0, nickPlayed = 0;
+  const byGame = {}, byDay = {}, allWin = {};
+  const GAME_LABEL = {cabo:'卡波 CABO', skyjo:'Skyjo', doudizhu:'斗地主', zhajinhua:'炸金花', niuniu:'牛牛', ddz:'斗地主', pdk:'跑得快', zjh:'炸金花', nn:'牛牛', texas:'德州扑克', bj:'21点', gd:'掼蛋'};
+  saves.forEach(function(s){
+    const g = (s.rules && s.rules.game) || s.game || 'cabo';
+    const wr = s.winRule || 'low';
+    (s.rounds||[]).forEach(function(r){
+      const t = r.time || s.time || now;
+      if(t < start || t > now) return;
+      count++;
+      byGame[g] = (byGame[g]||0)+1;
+      const d = new Date(t); const dk = d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();
+      byDay[dk] = (byDay[dk]||0)+1;
+      const pts = (r.pts||[]).map(function(v){ return +v||0; });
+      if(!pts.length) return;
+      const lo = wr==='low'; let bi = 0;
+      for(let i=1;i<pts.length;i++){ if(lo ? pts[i]<pts[bi] : pts[i]>pts[bi]) bi = i; }
+      const bv = pts[bi];
+      if(best===null || Math.abs(bv) < Math.abs(best)) best = bv;
+      const names = (s.players||[]).map(function(p){ return p.name; });
+      if(nick){
+        const mi = names.indexOf(nick);
+        if(mi>=0 && mi<pts.length){ nickPlayed++; if(mi===bi) nickWins++; }
+      }
+      const nm = (s.players && s.players[bi] && s.players[bi].name) || ('P'+(bi+1));
+      if(!allWin[nm]) allWin[nm] = {w:0,p:0};
+      allWin[nm].w++;
+      (s.players||[]).forEach(function(p,i){ const k=p.name||('P'+(i+1)); if(!allWin[k]) allWin[k]={w:0,p:0}; allWin[k].p++; });
+    });
+  });
+  let topGame=null, topGameN=-1; Object.keys(byGame).forEach(function(g){ if(byGame[g]>topGameN){ topGameN=byGame[g]; topGame=g; } });
+  let topWinner=null, topWinnerN=-1; Object.keys(allWin).forEach(function(n){ if(allWin[n].w>topWinnerN){ topWinnerN=allWin[n].w; topWinner=n; } });
+  return { count:count, best:best, activeDays:Object.keys(byDay).length, nick:nick, nickWins:nickWins, nickPlayed:nickPlayed,
+           topGame: topGame? (GAME_LABEL[topGame]||topGame) : null, topGameN:topGameN, topWinner:topWinner, topWinnerN:topWinnerN,
+           winRate: nickPlayed ? Math.round(nickWins/nickPlayed*100) : null, byGame:byGame };
+}
+function openWeekly(){
+  let period = 7;
+  const tabs = [{d:7,l:'本周'},{d:30,l:'本月'},{d:365,l:'本年'}];
+  const periodLabel = function(d){ return d===7?'本周':d===30?'本月':'本年'; };
+  function render(){
+    const a = weeklyAggregate(period);
+    let html = '<div class="modal" style="max-width:460px"><h2>📊 战绩'+(period===365?'年':'周')+'报</h2>';
+    html += '<div class="seg" style="margin:8px 0 14px">' + tabs.map(function(t){ return '<button data-d="'+t.d+'" class="'+(t.d===period?'active':'')+'">'+t.l+'</button>'; }).join('') + '</div>';
+    if(a.count===0){
+      html += '<div style="color:var(--muted);text-align:center;padding:26px 0;line-height:1.8">这段时间还没有对局记录～<br>打完几局再来查看吧！</div>';
+    } else {
+      html += '<div class="wk-big"><div><b>'+a.count+'</b><span>局</span></div><div><b>'+a.activeDays+'</b><span>活跃天</span></div></div>';
+      let line;
+      if(a.nick && a.nickPlayed>0){
+        line = '「'+escapeHtml(a.nick)+'」'+periodLabel(period)+'打了 <b>'+a.count+'</b> 局，胜率 <b>'+a.winRate+'%</b>';
+      } else {
+        line = periodLabel(period)+'本机记录了 <b>'+a.count+'</b> 局';
+        if(a.topWinner) line += '，最常获胜的是 <b>'+escapeHtml(a.topWinner)+'</b>';
+      }
+      html += '<div class="wk-line">'+line+'</div>';
+      if(a.topGame) html += '<div class="wk-sub">最常玩：<b>'+a.topGame+'</b>（'+a.topGameN+' 局） · 最佳单局：<b>'+(a.best>=0?'+':'')+a.best+'</b></div>';
+      const games = Object.keys(a.byGame);
+      if(games.length>1){
+        const maxn = Math.max.apply(null, games.map(function(g){ return a.byGame[g]; }));
+        const SHORT = {cabo:'卡波',skyjo:'Skyjo',doudizhu:'斗地主',zhajinhua:'炸金花',niuniu:'牛牛',ddz:'斗地主',pdk:'跑得快',zjh:'炸金花',nn:'牛牛',texas:'德州',bj:'21点',gd:'掼蛋'};
+        html += '<div class="wk-dist">' + games.map(function(g){
+          return '<div class="wk-bar"><span>'+(SHORT[g]||g)+'</span><i style="width:'+(a.byGame[g]/maxn*100)+'%"></i><em>'+a.byGame[g]+'</em></div>';
+        }).join('') + '</div>';
+      }
+    }
+    html += '<div class="modal-actions"><button class="ghost" id="wkPoster">📸 分享海报</button><button class="primary" id="wkClose">关闭</button></div></div>';
+    overlay.innerHTML = html; overlay.classList.remove("hidden");
+    overlay.querySelectorAll(".seg button").forEach(function(b){ b.onclick = function(){ period = +b.dataset.d; render(); }; });
+    document.querySelector("#wkClose").onclick = function(){ overlay.classList.add("hidden"); };
+    document.querySelector("#wkPoster").onclick = function(){ exportWeeklyPoster(a); };
+  }
+  render();
+}
+function exportWeeklyPoster(a){
+  const W=400,H=640,S=2;
+  const cv=document.createElement("canvas"); cv.width=W*S; cv.height=H*S;
+  const ctx=cv.getContext("2d"); ctx.scale(S,S);
+  const bg=ctx.createLinearGradient(0,0,0,H); bg.addColorStop(0,"#070f1e"); bg.addColorStop(.5,"#0f2440"); bg.addColorStop(1,"#16324f"); ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  const starSeed=[0.12,0.85,0.33,0.67,0.21,0.91,0.05,0.44,0.78,0.29,0.63,0.17,0.52,0.88,0.39,0.74,0.11,0.56,0.95,0.48,0.81,0.36,0.69,0.02,0.59,0.27,0.42,0.99,0.14,0.61];
+  starSeed.forEach(function(s,i){ const x=(s*930)%W; const y=((Math.sin(i*2.7)*.5+.5)*H*.4)+12; ctx.fillStyle="rgba(255,255,255,"+(0.25+0.7*((i*13)%10)/10)+")"; ctx.beginPath(); ctx.arc(x,y,(i%4===0)?1.6:0.9,0,7); ctx.fill(); });
+  function text(str,x,y,size,color,weight,align){ ctx.textAlign=align||"left"; ctx.font=(weight||"normal")+" "+size+"px PingFang SC,Microsoft YaHei,Helvetica Neue,Arial,sans-serif"; ctx.fillStyle=color; ctx.fillText(str,x,y); }
+  text("📊 战绩周报", W/2, 60, 30, "#fff", "800", "center");
+  text((a.nick?('「'+a.nick+'」的战绩'):'本机战绩'), W/2, 88, 14, "rgba(255,255,255,.7)", "500", "center");
+  text(String(a.count), W/2, 178, 68, "#ffd699", "800", "center");
+  text("局", W/2, 204, 16, "rgba(255,255,255,.6)", "500", "center");
+  let line;
+  if(a.nick && a.nickPlayed>0) line = "胜率 "+a.winRate+"%";
+  else if(a.topWinner) line = "最常获胜 "+a.topWinner;
+  else line = a.activeDays+" 个活跃天";
+  text(line, W/2, 248, 20, "#fff", "700", "center");
+  if(a.topGame) text("最常玩 "+a.topGame+" · 最佳单局 "+(a.best>=0?'+':'')+a.best, W/2, 280, 14, "rgba(255,255,255,.85)", "500", "center");
+  try{
+    const qrText = location.origin + location.pathname;
+    if(typeof CABOQR!=="undefined" && CABOQR.make){
+      const m=CABOQR.make(qrText); const size=m.length, cell=84/size;
+      ctx.fillStyle="#fff"; ctx.fillRect(W/2-46,H-132,92,92);
+      ctx.fillStyle="#000";
+      for(let r=0;r<size;r++) for(let c=0;c<size;c++) if(m[r][c]) ctx.fillRect(W/2-42+c*cell,H-128+r*cell,cell+0.5,cell+0.5);
+      text("扫码来战", W/2, H-26, 12, "rgba(255,255,255,.6)", "500", "center");
+    }
+  }catch(e){}
+  const fname = "战绩周报_"+fmtTime(Date.now()).replace(/[:\s]/g,"-")+".png";
+  const finish = function(url){ const a2=document.createElement("a"); a2.href=url; a2.download=fname; document.body.appendChild(a2); a2.click(); a2.remove(); toast("海报已保存"); };
+  if(cv.toBlob) cv.toBlob(function(b){ if(!b){ finish(cv.toDataURL("image/png")); return; } const u=URL.createObjectURL(b); finish(u); setTimeout(function(){ try{ URL.revokeObjectURL(u); }catch(e){} }, 5000); }, "image/png");
+  else finish(cv.toDataURL("image/png"));
 }
 
 /* ---------- 导出 / 导入 / 分享 ---------- */
