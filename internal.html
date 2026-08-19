@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>CABO 内部工具箱 · 不外传</title>
+<style>
+  :root{
+    --bg:#0c0f1a; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.12);
+    --txt:#e8ecf5; --sub:rgba(232,236,245,.62); --accent:#34d6c8; --accent2:#7c6bff;
+    --danger:#e05a4d; --ok:#3ecf8e;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Microsoft YaHei",sans-serif;
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(124,107,255,.22), transparent 60%),
+      radial-gradient(1000px 500px at 100% 0%, rgba(52,214,200,.18), transparent 55%),
+      var(--bg);
+    color:var(--txt); min-height:100vh; padding:24px 16px 60px;
+  }
+  .wrap{max-width:980px;margin:0 auto}
+  /* ---- 门禁 ---- */
+  #gate{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:rgba(8,10,18,.96);backdrop-filter:blur(8px);z-index:50;
+  }
+  .gate-box{
+    width:min(360px,90vw);background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:28px 24px;text-align:center;box-shadow:0 18px 60px rgba(0,0,0,.5);
+  }
+  .gate-box h1{font-size:18px;margin:0 0 6px}
+  .gate-box p{color:var(--sub);font-size:13px;margin:0 0 18px;line-height:1.6}
+  #keyInput{
+    width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(0,0,0,.3);color:var(--txt);font-size:15px;outline:none;text-align:center;letter-spacing:1px;
+  }
+  #keyInput:focus{border-color:var(--accent)}
+  #enterBtn{
+    width:100%;margin-top:12px;padding:12px;border:none;border-radius:12px;cursor:pointer;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));color:#08111a;font-weight:700;font-size:15px;
+  }
+  #gateErr{color:var(--danger);font-size:12px;margin-top:10px;min-height:14px}
+  /* ---- 工具箱 ---- */
+  #app{display:none}
+  header.app-head{text-align:center;margin-bottom:26px}
+  .badge{display:inline-block;font-size:11px;letter-spacing:2px;color:#08111a;background:var(--accent);
+    padding:3px 10px;border-radius:999px;font-weight:700;margin-bottom:10px}
+  header.app-head h1{font-size:26px;margin:0 0 6px;background:linear-gradient(90deg,#fff,var(--accent));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  header.app-head p{color:var(--sub);margin:0;font-size:13px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .card h2{margin:0;font-size:17px;display:flex;align-items:center;gap:8px}
+  .card .desc{color:var(--sub);font-size:13px;line-height:1.6;margin:0;flex:1}
+  .btn{
+    padding:11px 14px;border-radius:12px;border:1px solid var(--line);cursor:pointer;font-size:14px;font-weight:600;
+    background:rgba(255,255,255,.05);color:var(--txt);text-align:center;transition:.15s;
+  }
+  .btn:hover{background:rgba(255,255,255,.1)}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#08111a;border:none}
+  .btn.danger{background:var(--danger);color:#fff;border:none}
+  .pill{font-size:11px;color:var(--sub);border:1px dashed var(--line);border-radius:8px;padding:6px 8px;line-height:1.5}
+  /* OCR 内嵌 */
+  #ocrFrame{width:100%;height:520px;border:1px solid var(--line);border-radius:12px;background:#000;display:none}
+  /* ASR */
+  .asr-ctrl{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub)}
+  .asr-ctrl button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);cursor:pointer;font-size:16px}
+  .asr-inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .asr-row{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+  .asr-row label{font-size:13px;color:var(--sub);min-width:42px}
+  .asr-row input{flex:1;width:100%;background:transparent;border:none;color:var(--txt);font-size:18px;outline:none;text-align:right}
+  .mic{display:flex;align-items:center;justify-content:center;gap:8px}
+  .mic.listening{background:var(--danger);color:#fff;border:none;animation:pulse 1.1s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+  .asr-result{font-size:12px;color:var(--sub);min-height:16px;line-height:1.6}
+  .asr-result b{color:var(--ok)}
+  #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:rgba(20,24,38,.95);
+    color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;border:1px solid var(--line);opacity:0;transition:.25s;pointer-events:none;z-index:60}
+  #toast.show{opacity:1}
+  footer{margin-top:30px;text-align:center;color:var(--sub);font-size:11px;line-height:1.7}
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="gate-box">
+    <h1>🔒 内部工具箱</h1>
+    <p>此页面为 CABO 内部工具（OCR 整桌识别 / 语音报分 / 联机版），仅限团队内部使用，请勿外传。</p>
+    <input id="keyInput" type="password" placeholder="请输入访问口令" autocomplete="off">
+    <button id="enterBtn">进入</button>
+    <div id="gateErr"></div>
+  </div>
+</div>
+
+<div class="wrap" id="app">
+  <header class="app-head">
+    <span class="badge">INTERNAL · 内部</span>
+    <h1>CABO 内部工具箱</h1>
+    <p>整桌识别 · 语音报分 · 联机版 —— 后续成熟可收费，当前不外传</p>
+  </header>
+
+  <div class="grid">
+    <!-- 模块 1：整桌识别 OCR -->
+    <div class="card">
+      <h2>📷 整桌识别（OCR）</h2>
+      <p class="desc">拍照 / 选图，自动定位 16 张 CABO 牌并识别分数（16/16 准确率），一键录入。基于 <code>ocr-auto.html</code>。</p>
+      <button class="btn primary" id="ocrOpen">打开整桌识别</button>
+      <iframe id="ocrFrame" src="" title="整桌识别"></iframe>
+      <div class="pill">提示：首次打开需授权相机 / 相册。识别结果可在原页导出。</div>
+    </div>
+
+    <!-- 模块 2：语音报分 ASR -->
+    <div class="card">
+      <h2>🎤 语音报分（ASR）</h2>
+      <p class="desc">点麦克风，说「5 分、8 分、12 分」或中文「五分、十二分」，自动按玩家顺序填入下方。本地识别，不上云。</p>
+      <div class="asr-ctrl">
+        玩家数
+        <button id="asrMinus">−</button>
+        <span id="asrCount">4</span>
+        <button id="asrPlus">+</button>
+        <button class="btn" id="asrClear" style="margin-left:auto;padding:6px 10px;font-size:12px">清空</button>
+      </div>
+      <div class="asr-inputs" id="asrInputs"></div>
+      <button class="btn mic" id="micBtn">🎤 开始语音报分</button>
+      <div class="asr-result" id="asrResult"></div>
+      <div class="pill">支持浏览器：Chrome / Edge（含 Android）。iOS Safari 不支持 Web Speech 识别。</div>
+    </div>
+
+    <!-- 模块 3：联机版 -->
+    <div class="card">
+      <h2>🎮 CABO 联机版</h2>
+      <p class="desc">多手机各进各的号，改头像、真·联机对战，胜率归位到个人。<br><b>v2 规划中</b>：三人各一号 + 自定义头像 + 房间结算胜率。</p>
+      <a class="btn primary" href="CABO_v0.7.5.1.html" target="_blank">进入现有联机对战（测试）</a>
+      <div class="pill">当前为现有房间联机能力；「各手机各一号 + 头像 + 独立胜率」版本正在开发，完成后将在此替换入口。</div>
+    </div>
+  </div>
+
+  <footer>
+    CABO INTERNAL TOOLBOX · 仅内部使用<br>
+    访问入口不对外公开，请勿分享此链接。
+  </footer>
+</div>
+
+<div id="toast"></div>
+
+<script>
+/* ===== 门禁 ===== */
+var ACCESS_KEY = "cabo-pro";   // 内部口令，可随时修改
+function unlock(){ document.getElementById("gate").style.display="none"; document.getElementById("app").style.display="block"; }
+(function(){
+  var params = new URLSearchParams(location.search);
+  if(params.get("key") === ACCESS_KEY){ unlock(); return; }
+  var input = document.getElementById("keyInput");
+  var err = document.getElementById("gateErr");
+  function tryEnter(){
+    if(input.value === ACCESS_KEY){ unlock(); }
+    else { err.textContent = "口令错误"; input.value=""; input.focus(); }
+  }
+  document.getElementById("enterBtn").onclick = tryEnter;
+  input.addEventListener("keydown", function(e){ if(e.key==="Enter") tryEnter(); });
+  setTimeout(function(){ input.focus(); }, 100);
+})();
+
+/* ===== 轻量 toast ===== */
+function toast(msg){
+  var t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove("show"); }, 2200);
+}
+
+/* ===== OCR 内嵌（懒加载） ===== */
+document.getElementById("ocrOpen").onclick = function(){
+  var f = document.getElementById("ocrFrame");
+  if(f.style.display === "none"){
+    if(!f.src) f.src = "ocr-auto.html";
+    f.style.display = "block";
+    this.textContent = "收起整桌识别";
+  } else {
+    f.style.display = "none";
+    this.textContent = "打开整桌识别";
+  }
+};
+
+/* ===== 语音报分面板 ===== */
+var ASR_N = 4;
+var CN = {零:0,一:1,二:2,两:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9,十:10,十一:11,十二:12,十三:13};
+function renderAsrInputs(){
+  var box = document.getElementById("asrInputs");
+  box.innerHTML = "";
+  for(var i=0;i<ASR_N;i++){
+    var row = document.createElement("div"); row.className="asr-row";
+    row.innerHTML = '<label>玩家'+(i+1)+'</label><input type="number" inputmode="numeric" placeholder="—" data-i="'+i+'">';
+    box.appendChild(row);
+  }
+  document.getElementById("asrCount").textContent = ASR_N;
+}
+document.getElementById("asrMinus").onclick = function(){ if(ASR_N>1){ ASR_N--; renderAsrInputs(); } };
+document.getElementById("asrPlus").onclick  = function(){ if(ASR_N<10){ ASR_N++; renderAsrInputs(); } };
+document.getElementById("asrClear").onclick = function(){
+  document.querySelectorAll("#asrInputs input").forEach(function(el){ el.value=""; });
+  document.getElementById("asrResult").textContent = "";
+};
+renderAsrInputs();
+
+var asrRec = null, asrListening = false;
+document.getElementById("micBtn").onclick = function(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ toast("当前浏览器不支持语音识别，请用 Chrome / Edge"); return; }
+  if(asrListening){ try{ asrRec.stop(); }catch(e){} return; }
+  try{
+    asrRec = new SR();
+    asrRec.lang = "zh-CN";
+    asrRec.interimResults = false;
+    asrRec.maxAlternatives = 1;
+    var btn = document.getElementById("micBtn");
+    var resEl = document.getElementById("asrResult");
+    btn.classList.add("listening"); btn.textContent = "🎤 聆听中…（点此停止）";
+    asrListening = true;
+    toast("请说分数，例如：5 分、8 分、12 分");
+    asrRec.onresult = function(e){
+      var text = "";
+      try{ text = (e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript) || ""; }catch(_){}
+      var nums = (text.match(/-?\d+/g) || []).map(Number);
+      if(!nums.length){
+        Object.keys(CN).forEach(function(k){ text = text.split(k).join(String(CN[k])); });
+        nums = (text.match(/-?\d+/g) || []).map(Number);
+      }
+      if(!nums.length){ resEl.innerHTML = "没听清数字，听到：<b>"+(text||"空")+"</b>"; return; }
+      var inputs = document.querySelectorAll("#asrInputs input");
+      var filled = [];
+      for(var i=0;i<nums.length && i<inputs.length;i++){
+        inputs[i].value = nums[i];
+        filled.push("玩家"+(i+1)+"="+nums[i]);
+      }
+      resEl.innerHTML = "识别原文：<b>"+text+"</b><br>已填入：" + (filled.join("，")||"无");
+    };
+    asrRec.onerror = function(e){ resEl.textContent = "识别失败：" + (e && e.error ? e.error : ""); };
+    asrRec.onend = function(){
+      btn.classList.remove("listening"); btn.textContent = "🎤 开始语音报分"; asrListening = false;
+    };
+    asrRec.start();
+  }catch(e){ toast("语音识别启动失败"); document.getElementById("micBtn").textContent="🎤 开始语音报分"; asrListening=false; }
+};
+</script>
+</body>
+</html>
