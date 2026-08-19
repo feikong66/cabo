@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>扑克计分 · 斗地主/跑得快/炸金花/牛牛</title>
+<title>扑克计分 · 斗地主/跑得快/干瞪眼/510K/掼蛋</title>
 <style>
   :root{
     --bg:#0f1420; --bg2:#161d2e; --card:#1c2536; --line:#2a3550;
@@ -84,6 +84,31 @@
   .tip{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5}
   .count-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
   .count-row label{font-size:13px;color:var(--sub)}
+  /* 规则弹窗 */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+  .modal{width:min(920px,100%);max-height:min(760px,92vh);background:var(--card);border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column;box-shadow:var(--shadow);overflow:hidden}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--bg2)}
+  .modal-head h3{margin:0;font-size:16px;color:var(--txt)}
+  .modal-close{background:var(--bg);border:1px solid var(--line);color:var(--sub);width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:14px}
+  .modal-body{display:flex;flex:1;overflow:hidden}
+  .rule-sidebar{width:150px;border-right:1px solid var(--line);overflow:auto;padding:10px 0;background:var(--bg2)}
+  .rule-sidebar button{display:block;width:100%;text-align:left;padding:11px 16px;border:none;background:transparent;color:var(--sub);font-size:14px;cursor:pointer;border-left:3px solid transparent}
+  .rule-sidebar button.active{background:var(--card);color:var(--brand);border-left-color:var(--brand);font-weight:700}
+  .rule-content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .rule-tabs{display:flex;border-bottom:1px solid var(--line);background:var(--bg2)}
+  .rule-tabs button{flex:1;padding:12px;border:none;background:transparent;color:var(--sub);font-size:14px;cursor:pointer;position:relative}
+  .rule-tabs button.active{color:var(--brand);font-weight:700;background:var(--card)}
+  .rule-tabs button.active::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--brand)}
+  .rule-panel{flex:1;overflow:auto;padding:18px 20px;font-size:14px;line-height:1.75;color:var(--txt)}
+  .rule-panel h4{margin:0 0 10px;color:var(--brand);font-size:15px}
+  .rule-panel h5{margin:16px 0 8px;color:var(--warn);font-size:14px}
+  .rule-panel p{margin:6px 0;color:var(--txt)}
+  .rule-panel .sub{color:var(--sub)}
+  .rule-panel table{width:100%;border-collapse:collapse;margin:10px 0;font-size:13px}
+  .rule-panel th,.rule-panel td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  .rule-panel th{background:var(--bg2);color:var(--sub);font-weight:600}
+  .rule-panel .tag{display:inline-block;background:var(--bg2);border:1px solid var(--line);color:var(--brand);border-radius:6px;padding:1px 8px;font-size:12px;margin-right:6px}
+  .rule-panel .mult{color:var(--danger);font-weight:700}
 </style>
 </head>
 <body>
@@ -91,6 +116,7 @@
   <header>
     <div class="logo">🎴</div>
     <div class="brand">扑克计分<small>POKER SCORER</small></div>
+    <button class="theme-btn" id="ruleBtn" title="游戏规则">📖</button>
     <button class="theme-btn" id="themeBtn" title="切换深色 / 浅色">🌙</button>
     <a class="back" href="index.html">← 首页</a>
   </header>
@@ -98,10 +124,12 @@
   <div class="tabs" id="modeTabs">
     <button data-mode="ddz">斗地主</button>
     <button data-mode="pdk">跑得快</button>
+    <button data-mode="gdy">干瞪眼</button>
     <button data-mode="zjh">炸金花</button>
     <button data-mode="nn">牛牛</button>
     <button data-mode="texas">德州扑克</button>
     <button data-mode="bj">21点</button>
+    <button data-mode="k510">510K</button>
     <button data-mode="gd">掼蛋</button>
   </div>
 
@@ -136,6 +164,26 @@
     <div class="hist" id="histList"></div>
   </div>
 </div>
+
+<div class="modal-backdrop hidden" id="ruleModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>📖 游戏规则</h3>
+      <button class="modal-close" id="ruleClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="rule-sidebar" id="ruleSidebar"></div>
+      <div class="rule-content">
+        <div class="rule-tabs" id="ruleTabs">
+          <button class="active" data-tab="intro">图文说明</button>
+          <button data-tab="rule">玩法规则</button>
+        </div>
+        <div class="rule-panel" id="rulePanel"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -145,19 +193,23 @@
   var MODES = {
     ddz: { label:'斗地主', key:'poker-ddz', min:3, max:3, defN:3, fixed:true  },
     pdk: { label:'跑得快', key:'poker-pdk', min:3, max:6, defN:3, fixed:false },
+    gdy: { label:'干瞪眼', key:'poker-gdy', min:4, max:4, defN:4, fixed:true  },
     zjh: { label:'炸金花', key:'poker-zjh', min:2, max:6, defN:3, fixed:false },
     nn:  { label:'牛牛',   key:'poker-nn',  min:3, max:6, defN:4, fixed:false },
     texas:{ label:'德州扑克', key:'poker-texas', min:2, max:6, defN:4, fixed:false },
     bj:  { label:'21点',   key:'poker-bj',  min:2, max:6, defN:3, fixed:false },
+    k510:{ label:'510K',   key:'poker-510k', min:3, max:3, defN:3, fixed:true },
     gd:  { label:'掼蛋',   key:'poker-gd',  min:4, max:4, defN:4, fixed:true  }
   };
   var DEF_NAMES = {
     ddz:['地主','农民1','农民2'],
     pdk:['玩家1','玩家2','玩家3'],
+    gdy:['玩家1','玩家2','玩家3','玩家4'],
     zjh:['玩家1','玩家2','玩家3'],
     nn:['玩家1','玩家2','玩家3','玩家4'],
     texas:['玩家1','玩家2','玩家3','玩家4'],
     bj:['庄家','闲家1','闲家2'],
+    k510:['玩家1','玩家2','玩家3'],
     gd:['玩家1','玩家2','玩家3','玩家4']
   };
   var COLORS = ['#ffb454','#4f8cff','#36d399','#a78bfa','#f472b6','#34d399'];
@@ -178,6 +230,44 @@
     {name:'炸弹牛',strength:12, mult:5}
   ];
 
+  /* ================= 规则百科数据 ================= */
+  var RULES = {
+    pdk:{
+      title:'跑得快',
+      intro:'<h4>基本牌型</h4><table><tr><th>牌型</th><th>说明</th></tr><tr><td>连对</td><td>2个及以上点数对子，从3到A</td></tr><tr><td>三张</td><td>最后一手牌时，3张相同点数可单出</td></tr><tr><td>三带一</td><td>最后一手牌时，3张相同可带1张</td></tr><tr><td>三带二</td><td>3张相同带任意2张其他牌（可对子或单张）</td></tr><tr><td>飞机</td><td>点数相连的三带（两组）</td></tr><tr><td>同花顺</td><td>5张相邻点数且花色相同，A只能在头或尾</td></tr><tr><td>炸弹</td><td>4张及以上相同点数</td></tr><tr><td>钢板</td><td>2组3张点数相邻的牌，只能2组不能带其他</td></tr></table><h5>特殊规则</h5><p><span class="tag">全关</span>一人出完手牌，其他任意一家一张未出。</p><p><span class="tag">炸弹现结</span>打出炸弹的玩家获得底分×20欢乐豆，其他各扣底分×10。</p><p><span class="tag">放走包赔</span>下家报单时，故意出非最大牌放走单张下家，需替另一个输家结算（炸弹不算）。</p>',
+      rule:'<h4>基本规则</h4><p><span class="tag">牌张</span>去掉大小王、3张2、1张A，共48张牌，3人各16张。</p><p><span class="tag">胜负</span>一家打完手牌即获胜；<span class="tag">必出</span>有大过上家的牌一定要打出。</p><h4>结算</h4><p>输家输豆 = 剩牌数量 × 底分 × 倍数 × 罚分</p><p>赢家赢豆 = 其余两名玩家输豆之和</p><p>剩牌越多罚分越高：全关罚分<span class="mult">3</span>，剩8~15张罚分<span class="mult">2</span>。</p><p class="sub">2025/12/2规则更新：打出炸弹后会使倍数加倍。</p>'
+    },
+    gdy:{
+      title:'干瞪眼',
+      intro:'<h4>炸弹规则</h4><table><tr><th>牌型</th><th>说明</th><th>倍数</th></tr><tr><td>三软炸</td><td>王或3 + 两张相同点数</td><td class="mult">×2</td></tr><tr><td>三硬炸</td><td>3张相同点数（不含王/3当癞子）</td><td class="mult">×2</td></tr><tr><td>四软炸</td><td>王或3 + 三张相同点数</td><td class="mult">×2</td></tr><tr><td>四硬炸</td><td>4张相同点数</td><td class="mult">×2</td></tr><tr><td>五炸</td><td>王或3 + 四张相同点数</td><td class="mult">×5</td></tr><tr><td>六炸</td><td>王或3 + 五张相同点数</td><td class="mult">×5</td></tr><tr><td>王炸</td><td>大王+小王</td><td class="mult">×6</td></tr><tr><td>全关</td><td>一人出完，其余未出一张</td><td class="mult">×4</td></tr></table><p class="sub">炸弹大小：三软炸 &lt; 三硬炸 &lt; 四软炸 &lt; 四硬炸 &lt; 五炸 &lt; 六炸 &lt; 王炸</p>',
+      rule:'<h4>玩法说明</h4><p>用一副扑克去掉一张3，共53张，4名玩家。</p><p>从首出玩家开始逆时针出牌；一轮结束后由最后出牌玩家开始，每人补一张牌，进入下一轮。有人出完则游戏结束。</p><p>牌抓完则凭手上牌继续对局。行牌压制按点数+1增长，<span class="tag">3和王是癞子</span>可变任意点数；<span class="tag">2可无视压制</span>顺序任意压制同类牌型。</p><p class="sub">注意：王不能单独打出。</p>'
+    },
+    gd:{
+      title:'掼蛋',
+      intro:'<h4>基本牌型</h4><table><tr><th>牌型</th><th>说明</th></tr><tr><td>单张/对子</td><td>1张/2张相同点数</td></tr><tr><td>顺子</td><td>5张相邻点数，A只能在头或尾</td></tr><tr><td>三张/三带二</td><td>3张相同；3张相同带1对子</td></tr><tr><td>同花顺</td><td>5张相邻且花色相同</td></tr><tr><td>炸弹</td><td>4张及以上相同点数</td></tr><tr><td>钢板</td><td>2组3张相邻点数，不能带其他</td></tr></table><h4>加倍系数</h4><p>4张炸弹 <span class="mult">×2</span>　5张炸弹 <span class="mult">×3</span>　同花顺 <span class="mult">×4</span>　6张及以上炸弹 <span class="mult">×5</span></p>',
+      rule:'<h4>核心机制</h4><p><span class="tag">逢人配</span>红桃级牌可当任意一张牌组成最大牌型；单独打出视为普通级牌。</p><p><span class="tag">级牌</span>每轮随机一个数字作为级牌，大小：大王&gt;小王&gt;级牌&gt;A。</p><p><span class="tag">接风</span>玩家出完手牌后，若无人跟牌则其队友得优先出牌权。</p><h4>结算</h4><p>头游产生后加倍系数不再变化；最终金额 = 场次底分 × 加倍系数 × 排名倍数。</p><p>玩家当局能赢的最大豆子数不超过自身携带豆子。</p>'
+    },
+    k510:{
+      title:'510K',
+      intro:'<h4>牌型大小</h4><p>王炸 &gt; 真510K &gt; 炸弹 &gt; 510K &gt; 其他牌型</p><table><tr><th>牌型</th><th>说明</th></tr><tr><td>王炸</td><td>大王+小王</td></tr><tr><td>真510K</td><td>同一花色的5、10、K</td></tr><tr><td>炸弹</td><td>4张相同点数</td></tr><tr><td>510K</td><td>非同一花色的5、10、K</td></tr></table><h4>分数牌</h4><p>5=5分，10/K=10分，是压制结算的重要争夺内容。</p>',
+      rule:'<h4>玩法说明</h4><p>3人各自为战争先型，目标是通过压制获得更多分数牌和分数，同时奖励先出完玩家。</p><h4>结算规则</h4><p>欢乐豆 = 底分 × (胜利玩家分数 - 失败玩家分数) × 最终倍数</p><p>胜利玩家分数 = 所有牌对应正分相加</p><p>失败玩家分数 = 不属于特定牌型的其它牌分数</p><p>最终倍数 = 天地倍数 × 牌型倍数 × 自摸倍数</p><p class="sub">胡牌玩家和剩余玩家一一结算；结算后胡牌玩家可离开，剩余玩家继续。</p>'
+    },
+    qqp:{
+      title:'七雀牌',
+      intro:'<h4>胡牌番型</h4><table><tr><th>牌型</th><th>说明</th><th>倍数</th></tr><tr><td>平胡</td><td>手牌组成3+3+1</td><td class="mult">×1</td></tr><tr><td>顺子胡</td><td>3+3+1中的1与同花三顺连成同花四顺</td><td class="mult">×4</td></tr><tr><td>炸弹胡</td><td>3+3+1中，其中1和三张连成四张</td><td class="mult">×8</td></tr><tr><td>一条龙</td><td>长度为7的同花顺</td><td class="mult">×20</td></tr></table><h4>特殊事件</h4><p><span class="tag">自摸</span>最后胡牌从牌堆摸且包含在3中，倍数×4。</p><p><span class="tag">天胡</span>第一次轮到自己回合且未摸牌就胡牌，倍数×32。</p>',
+      rule:'<h4>玩法说明</h4><p>4人玩，开局每人7张牌。用一副去掉大小王和四张2的48张牌。</p><p>通过一张一张摸打回合，将手牌凑成特定牌型：3+3+1的组合。</p><h4>区域</h4><p><span class="tag">牌堆</span>发完7张后剩余19张盖住的牌。</p><p><span class="tag">亮牌区</span>最近三张被打出的牌，可摸上来自己使用。</p><p><span class="tag">弃牌区</span>被顶出亮牌区的牌，仅展示无法摸打。</p><h4>结算</h4><p>欢乐豆 = 底分 × (胜利玩家分数 - 失败玩家分数) × 最终倍数</p><p>胜利玩家分数 = 所有牌对应正分相加；失败玩家分数 = 不属于特定牌型的其它牌分数。</p>'
+    },
+    bqp:{
+      title:'八雀牌',
+      intro:'<h4>待补充</h4><p>八雀牌规则与七雀牌类似，通常人数、牌数或胡牌牌型有所扩展，如增加可选牌型或改变初始手牌数量。</p>',
+      rule:'<h4>玩法框架</h4><p>以七雀牌为基础进行扩展，常见变化包括：增加特殊牌、调整3+3+1的牌型要求、或引入新的番型倍数。具体规则以实际房间设置为准。</p>'
+    },
+    bbqp:{
+      title:'百变八雀牌',
+      intro:'<h4>待补充</h4><p>百变八雀牌在八雀牌基础上加入更多变化规则，例如癞子、换牌、额外番型等。</p>',
+      rule:'<h4>玩法框架</h4><p>规则以八雀牌为底，增加随机变化元素。建议先熟悉七雀牌/八雀牌后再尝试百变模式。</p>'
+    }
+  };
   var curMode = 'ddz';
   var S = null;   // 当前模式完整状态 {players,totals,rounds,ddz,zjh,nn,voiceOn}
   var CUR = null; // 当前局结算参数（按模式）
@@ -186,6 +276,33 @@
   function esc(s){ return (s==null?'':String(s)).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
   function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},1600); }
   function signed(v){ return (v>0?'+':'')+v; }
+
+  /* ================= 规则百科弹窗 ================= */
+  var ruleCur = 'pdk', ruleTab = 'intro';
+  function openRule(){ $('ruleModal').classList.remove('hidden'); renderRule(); }
+  function closeRule(){ $('ruleModal').classList.add('hidden'); }
+  function renderRule(){
+    var sb = $('ruleSidebar'); sb.innerHTML = '';
+    Object.keys(RULES).forEach(function(k){
+      var b = document.createElement('button');
+      b.textContent = RULES[k].title;
+      b.className = (k===ruleCur?'active':'');
+      b.onclick = function(){ ruleCur=k; renderRule(); };
+      sb.appendChild(b);
+    });
+    var tabs = $('ruleTabs').querySelectorAll('button');
+    tabs.forEach(function(b){ b.classList.toggle('active', b.dataset.tab===ruleTab); });
+    $('rulePanel').innerHTML = RULES[ruleCur][ruleTab] || '<p>暂无</p>';
+  }
+  (function(){ if(!$('ruleTabs')) return;
+    $('ruleTabs').querySelectorAll('button').forEach(function(b){
+      b.onclick = function(){ ruleTab=b.dataset.tab; renderRule(); };
+    });
+    $('ruleBtn').onclick = openRule;
+    $('ruleClose').onclick = closeRule;
+    $('ruleModal').onclick = function(e){ if(e.target===$('ruleModal')) closeRule(); };
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape' && !$('ruleModal').classList.contains('hidden')) closeRule(); });
+  })();
 
   /* ================= 存档（每模式独立 key） ================= */
   function keyOf(mode){ return MODES[mode].key; }
@@ -198,10 +315,13 @@
       totals: players.map(function(){return 0;}),
       rounds: [],
       ddz: { base: 1 },
+      pdk: { base: 1 },
+      gdy: { base: 1 },
       zjh: { stake: 1 },
       nn:  { stake: 1 },
       texas: { stake: 1 },
       bj:  { stake: 1 },
+      k510:{ base: 1 },
       gd:  {},
       voiceOn: false
     };
@@ -212,17 +332,26 @@
   function load(mode){
     try{
       var raw = localStorage.getItem(keyOf(mode));
-      if(raw){ var s = JSON.parse(raw); if(s && Array.isArray(s.players) && s.players.length){ return s; } }
+      if(raw){ var s = JSON.parse(raw); if(s && Array.isArray(s.players) && s.players.length){ return migrateState(s, mode); } }
     }catch(e){}
     return defaultState(mode);
+  }
+  /* 旧存档兼容：补全新增子状态 */
+  function migrateState(s, mode){
+    if(mode==='pdk'){ if(!s.pdk) s.pdk = { base: (s.ddz && s.ddz.base) || 1 }; }
+    else if(mode==='gdy'){ if(!s.gdy) s.gdy = { base: 1 }; }
+    else if(mode==='k510'){ if(!s.k510) s.k510 = { base: 1 }; }
+    return s;
   }
   function resetCUR(){
     var n = S.players.length;
     if(curMode==='ddz'){ CUR = { base:(S.ddz&&S.ddz.base)||1, landlord:0, landlordWin:true, bidM:1, bombs:0, rocket:false, spring:false, anti:false }; }
-    else if(curMode==='pdk'){ CUR = { base:(S.ddz&&S.ddz.base)||1, winner:0, remain:S.players.map(function(){return 0;}), pdkSpring:false }; }
+    else if(curMode==='pdk'){ CUR = { base:(S.pdk&&S.pdk.base)||1, winner:0, remain:S.players.map(function(){return 0;}), bombs:0, pdkSpring:false, quanGuan:false }; }
+    else if(curMode==='gdy'){ CUR = { base:(S.gdy&&S.gdy.base)||1, winner:0, remain:S.players.map(function(){return 0;}), bombMult:1, quanGuan:false }; }
     else if(curMode==='zjh'){ CUR = { stake:(S.zjh&&S.zjh.stake)||1, winner:0 }; }
     else if(curMode==='texas'){ var _ts=(S.texas&&S.texas.stake)||1; CUR = { stake:_ts, winner:0, losses:S.players.map(function(){return _ts;}) }; }
     else if(curMode==='bj'){ CUR = { stake:(S.bj&&S.bj.stake)||1, banker:0, results:S.players.map(function(){return 1;}) }; }
+    else if(curMode==='k510'){ CUR = { base:(S.k510&&S.k510.base)||1, points:S.players.map(function(){return 0;}), winner:0, mult:1, bonus:30 }; }
     else if(curMode==='gd'){ CUR = { winner:0, up:1 }; }
     else { CUR = { stake:(S.nn&&S.nn.stake)||1, banker:0, types:S.players.map(function(){return 0;}) }; }
   }
@@ -236,11 +365,53 @@
     return { pts:pts, unit:unit, M:M };
   }
   function computePdk(info, n){
-    var unit = info.base * (info.pdkSpring?2:1);
+    var base = info.base || 1;
+    var bombFactor = Math.pow(2, info.bombs || 0);
+    var spring = info.pdkSpring ? 2 : 1;
+    var unit = base * bombFactor * spring;
     var sum = 0, pts = new Array(n).fill(0);
-    for(var i=0;i<n;i++){ if(i!==info.winner){ var rem = (info.remain && info.remain[i]) ? info.remain[i] : 0; pts[i] = -rem*unit; sum += rem*unit; } }
+    for(var i=0;i<n;i++){
+      if(i===info.winner) continue;
+      var rem = (info.remain && info.remain[i]) ? info.remain[i] : 0;
+      var penalty = 1;
+      if(info.quanGuan) penalty = 3;
+      else if(rem>=8 && rem<=15) penalty = 2;
+      pts[i] = -rem * unit * penalty;
+      sum += rem * unit * penalty;
+    }
     pts[info.winner] = sum;
     return { pts:pts, unit:unit };
+  }
+  // 干瞪眼：剩余牌 × 底分 × 炸弹倍数 × 全关倍数，赢家收全部。
+  function computeGdy(info, n){
+    var base = info.base || 1;
+    var mult = info.bombMult || 1;
+    var qg = info.quanGuan ? 4 : 1;
+    var unit = base * mult * qg;
+    var sum = 0, pts = new Array(n).fill(0);
+    for(var i=0;i<n;i++){
+      if(i===info.winner) continue;
+      var rem = (info.remain && info.remain[i]) ? info.remain[i] : 0;
+      pts[i] = -rem * unit;
+      sum += rem * unit;
+    }
+    pts[info.winner] = sum;
+    return { pts:pts, unit:unit };
+  }
+  // 510K：简化记分，按抓分、头游、倍数结算。
+  function compute510k(info, n){
+    var base = info.base || 1;
+    var mult = info.mult || 1;
+    var bonus = (typeof info.bonus==='number') ? info.bonus : 30;
+    var total = 0;
+    for(var i=0;i<n;i++) total += (info.points && info.points[i]) ? info.points[i] : 0;
+    var avg = total / n;
+    var pts = new Array(n).fill(0);
+    for(var i=0;i<n;i++){
+      var p = (info.points && info.points[i]) ? info.points[i] : 0;
+      pts[i] = Math.round((p - avg + (i===info.winner ? bonus : 0)) * base * mult);
+    }
+    return { pts:pts, unit:base*mult };
   }
   function computeZjh(info, n){
     var pts = new Array(n).fill(0);
@@ -297,9 +468,11 @@
   function compute(info){
     if(curMode==='ddz') return computeDdz(info, S.players.length);
     if(curMode==='pdk') return computePdk(info, S.players.length);
+    if(curMode==='gdy') return computeGdy(info, S.players.length);
     if(curMode==='zjh') return computeZjh(info, S.players.length);
     if(curMode==='texas') return computeTexas(info, S.players.length);
     if(curMode==='bj') return computeBj(info, S.players.length);
+    if(curMode==='k510') return compute510k(info, S.players.length);
     if(curMode==='gd') return computeGuandan(info, S.players.length);
     return computeNn(info, S.players.length);
   }
@@ -324,7 +497,7 @@
       var c = document.createElement('div'); c.className='pcard';
       var rank = rankOf[i], badge = rank===1 ? '<span class="rank-badge gold">🏆</span>' : '<span class="rank-badge">#'+rank+'</span>';
       var tag = (curMode==='ddz'&&i===CUR.landlord)?'<span class="tag">👑地主</span>'
-              : (curMode==='pdk'&&i===CUR.winner)?'<span class="tag">🏅赢家</span>'
+              : ((curMode==='pdk'||curMode==='gdy'||curMode==='k510')&&i===CUR.winner)?'<span class="tag">🏅赢家</span>'
               : (curMode==='zjh'&&i===CUR.winner)?'<span class="tag">👑赢家</span>'
               : (curMode==='texas'&&i===CUR.winner)?'<span class="tag">💰赢家</span>'
               : (curMode==='bj'&&i===CUR.banker)?'<span class="tag">🏦庄家</span>'
@@ -355,9 +528,11 @@
     var n = S.players.length;
     if(curMode==='ddz') renderDdz(body, n);
     else if(curMode==='pdk') renderPdk(body, n);
+    else if(curMode==='gdy') renderGdy(body, n);
     else if(curMode==='zjh') renderZjh(body, n);
     else if(curMode==='texas') renderTexas(body, n);
     else if(curMode==='bj') renderBj(body, n);
+    else if(curMode==='k510') render510k(body, n);
     else if(curMode==='gd') renderGd(body, n);
     else renderNn(body, n);
   }
@@ -365,10 +540,12 @@
     var parts = S.players.map(function(name,i){ return esc(name)+' <b>'+signed(res.pts[i])+'</b>'; });
     var head = '';
     if(curMode==='ddz') head = '倍数 <b>×'+res.M+'</b> · 每份 <b>'+res.unit+'</b> 分 · '+(CUR.landlordWin?'地主胜':'地主负');
-    else if(curMode==='pdk') head = '每剩牌 <b>'+res.unit+'</b> 分/张 · 赢家收全部';
+    else if(curMode==='pdk') head = '每剩牌 <b>'+res.unit+'</b> 分/张 · 炸弹×'+Math.pow(2,CUR.bombs||0)+(CUR.quanGuan?' · 全关':'')+(CUR.pdkSpring?' · 关牌':'');
+    else if(curMode==='gdy') head = '每剩牌 <b>'+res.unit+'</b> 分/张 · 炸弹倍率×'+(CUR.bombMult||1)+(CUR.quanGuan?' · 全关×4':'');
     else if(curMode==='zjh') head = '底注 <b>'+res.unit+'</b> · 赢家 +(n-1)×底注';
     else if(curMode==='texas') head = '本局底池 <b>'+res.pot+'</b> · 赢家收全部';
     else if(curMode==='bj') head = '底注 <b>'+CUR.stake+'</b> · 庄家 vs 各闲家结算';
+    else if(curMode==='k510') head = '底分 <b>'+CUR.base+'</b> · 总倍率 <b>×'+(CUR.mult||1)+'</b> · 头游奖励 <b>'+(CUR.bonus||30)+'</b> 分';
     else if(curMode==='gd') head = '升级 <b>+'+(CUR.up||1)+'</b> · 累计先到 A(14) 胜';
     else head = '底注 <b>'+CUR.stake+'</b> · 各闲家按牛型倍率与庄家结算';
     return '<div class="summary">'+head+'<br>本局：'+parts.join('　')+'</div>';
@@ -392,7 +569,7 @@
     html += '<div class="ddz-row"><span class="ddz-lab">叫抢</span><div class="seg" id="ddzBid">';
     [1,2,4,8].forEach(function(m){ html += '<button data-m="'+m+'" class="'+(CUR.bidM===m?'active':'')+'">×'+m+'</button>'; });
     html += '</div></div>';
-    html += '<div class="ddz-row"><span class="ddz-lab">炸弹</span><div class="stepper"><button id="ddzBombMinus">−</button><input id="ddzBombs" type="number" value="'+CUR.bombs+'" min="0"><button id="ddzBombPlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">炸弹</span><div class="stepper"><button id="ddzBombsMinus">−</button><input id="ddzBombs" type="number" value="'+CUR.bombs+'" min="0"><button id="ddzBombsPlus">+</button></div></div>';
     html += '<div class="ddz-row"><span class="ddz-lab"></span><div class="checks">'
       + '<label class="ck"><input type="checkbox" id="ddzRocket" '+(CUR.rocket?'checked':'')+'>火箭 ×2</label>'
       + '<label class="ck"><input type="checkbox" id="ddzSpring" '+(CUR.spring?'checked':'')+'>春天 ×2</label>'
@@ -400,7 +577,7 @@
     html += '<div class="tip">最终 = 底分 × 叫抢倍数 × 2^(炸弹+火箭+春天+反春)；地主赢/输按 (n-1) 倍，农民各按 1 倍。</div>';
     body.innerHTML = html;
     bindStepper('ddzBase', function(v){ CUR.base=v; S.ddz.base=v; }, 1, 999);
-    body.querySelectorAll('#ddzLandlord button').forEach(function(b){ b.onclick=function(){ CUR.landlord=+b.dataset.i; refreshSummary(); }; });
+    body.querySelectorAll('#ddzLandlord button').forEach(function(b){ b.onclick=function(){ CUR.landlord=+b.dataset.i; body.querySelectorAll('#ddzLandlord button').forEach(function(x){ x.classList.toggle('on', x===b); }); refreshSummary(); }; });
     $('ddzWin').onclick=function(){ CUR.landlordWin=true; $('ddzWin').classList.add('active'); $('ddzLose').classList.remove('active'); refreshSummary(); };
     $('ddzLose').onclick=function(){ CUR.landlordWin=false; $('ddzLose').classList.add('active'); $('ddzWin').classList.remove('active'); refreshSummary(); };
     body.querySelectorAll('#ddzBid button').forEach(function(b){ b.onclick=function(){ CUR.bidM=+b.dataset.m; body.querySelectorAll('#ddzBid button').forEach(function(x){x.classList.toggle('active',x===b);}); refreshSummary(); }; });
@@ -424,13 +601,71 @@
       else { html += '<span class="remain-item">'+esc(p)+'<input type="number" id="pdkRemain-'+i+'" value="'+(CUR.remain[i]||0)+'" min="0"></span>'; }
     });
     html += '</div></div>';
-    html += '<div class="ddz-row"><span class="ddz-lab"></span><div class="checks"><label class="ck"><input type="checkbox" id="pdkSpring" '+(CUR.pdkSpring?'checked':'')+'>关牌（春天） ×2</label></div></div>';
-    html += '<div class="tip">每张剩牌 = 底分（关牌再 ×2）；赢家收全部输家剩余牌分。</div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">炸弹</span><div class="stepper"><button id="pdkBombMinus">−</button><input id="pdkBomb" type="number" value="'+CUR.bombs+'" min="0"><button id="pdkBombPlus">+</button></div><span class="tip" style="margin:0">每个炸弹使倍数加倍</span></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab"></span><div class="checks">'
+      + '<label class="ck"><input type="checkbox" id="pdkSpring" '+(CUR.pdkSpring?'checked':'')+'>关牌（春天） ×2</label>'
+      + '<label class="ck"><input type="checkbox" id="pdkQuan" '+(CUR.quanGuan?'checked':'')+'>全关（罚分×3）</label></div></div>';
+    html += '<div class="tip">每张剩牌 = 底分 × 炸弹倍数 × 关牌倍数 × 罚分（全关×3，剩8~15张×2）；赢家收全部。</div>';
     body.innerHTML = html;
-    bindStepper('ddzBase', function(v){ CUR.base=v; S.ddz.base=v; }, 1, 999);
+    bindStepper('ddzBase', function(v){ CUR.base=v; S.pdk.base=v; }, 1, 999);
+    bindStepper('pdkBomb', function(v){ CUR.bombs=v; refreshSummary(); }, 0, 99);
     body.querySelectorAll('#pdkWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; renderSettle(); }; });
     S.players.forEach(function(_,i){ var el=$('pdkRemain-'+i); if(el) el.oninput=function(){ CUR.remain[i]=Math.max(0,parseInt(el.value,10)||0); refreshSummary(); }; });
     $('pdkSpring').onchange=function(){ CUR.pdkSpring=$('pdkSpring').checked; refreshSummary(); };
+    $('pdkQuan').onchange=function(){ CUR.quanGuan=$('pdkQuan').checked; refreshSummary(); };
+    refreshSummary();
+  }
+
+  /* ---- 干瞪眼 ---- */
+  function renderGdy(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">底分</span><div class="stepper"><button id="gdyBaseMinus">−</button><input id="gdyBase" type="number" value="'+CUR.base+'" min="1"><button id="gdyBasePlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">赢家</span><div class="pick" id="gdyWinner">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.winner?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">各输家剩牌</span><div style="display:flex;gap:10px;flex-wrap:wrap">';
+    S.players.forEach(function(p,i){
+      if(i===CUR.winner){ html += '<span class="winner-tag">'+esc(p)+'（赢家）</span>'; }
+      else { html += '<span class="remain-item">'+esc(p)+'<input type="number" id="gdyRemain-'+i+'" value="'+(CUR.remain[i]||0)+'" min="0"></span>'; }
+    });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">炸弹倍率</span><div class="pick" id="gdyBomb">';
+    [{k:1,l:'无'},{k:2,l:'三炸 ×2'},{k:5,l:'五炸/六炸 ×5'},{k:6,l:'王炸 ×6'}].forEach(function(o){ html += '<button data-m="'+o.k+'" class="'+(CUR.bombMult===o.k?'on':'')+'">'+o.l+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab"></span><div class="checks"><label class="ck"><input type="checkbox" id="gdyQuan" '+(CUR.quanGuan?'checked':'')+'>全关 ×4</label></div></div>';
+    html += '<div class="tip">每剩牌 = 底分 × 炸弹倍率 × 全关倍数；赢家收全部输家输豆。</div>';
+    body.innerHTML = html;
+    bindStepper('gdyBase', function(v){ CUR.base=v; S.gdy.base=v; }, 1, 999);
+    body.querySelectorAll('#gdyWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; renderSettle(); }; });
+    body.querySelectorAll('#gdyBomb button').forEach(function(b){ b.onclick=function(){ CUR.bombMult=+b.dataset.m; renderGdy(body,n); }; });
+    S.players.forEach(function(_,i){ var el=$('gdyRemain-'+i); if(el) el.oninput=function(){ CUR.remain[i]=Math.max(0,parseInt(el.value,10)||0); refreshSummary(); }; });
+    $('gdyQuan').onchange=function(){ CUR.quanGuan=$('gdyQuan').checked; refreshSummary(); };
+    refreshSummary();
+  }
+
+  /* ---- 510K ---- */
+  function render510k(body, n){
+    var html = '';
+    html += '<div class="ddz-row"><span class="ddz-lab">底分</span><div class="stepper"><button id="k510BaseMinus">−</button><input id="k510Base" type="number" value="'+CUR.base+'" min="1"><button id="k510BasePlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">头游奖励</span><div class="stepper"><button id="k510BonusMinus">−</button><input id="k510Bonus" type="number" value="'+(CUR.bonus||30)+'" min="0"><button id="k510BonusPlus">+</button></div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">赢家</span><div class="pick" id="k510Winner">';
+    S.players.forEach(function(p,i){ html += '<button data-i="'+i+'" class="'+(i===CUR.winner?'on':'')+'">'+esc(p)+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">各玩家抓分</span><div style="display:flex;flex-direction:column;gap:8px;flex:1">';
+    S.players.forEach(function(p,i){
+      html += '<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="min-width:80px">'+esc(p)+(i===CUR.winner?'（头游）':'')+'</span><input type="number" id="k510Point-'+i+'" value="'+(CUR.points[i]||0)+'" min="0" style="width:90px;text-align:center;padding:7px;border-radius:8px;background:var(--input-bg);border:1px solid var(--line);color:var(--txt)"></div>';
+    });
+    html += '</div></div>';
+    html += '<div class="ddz-row"><span class="ddz-lab">最终倍数</span><div class="pick" id="k510Mult">';
+    [1,2,3,4,5,6,8,10,12,16,20,32].forEach(function(m){ html += '<button data-m="'+m+'" class="'+(CUR.mult===m?'on':'')+'">×'+m+'</button>'; });
+    html += '</div></div>';
+    html += '<div class="tip">欢乐豆 = 底分 × (玩家抓分 - 平均抓分 + 头游奖励) × 最终倍数。5=5分，10/K=10分。</div>';
+    body.innerHTML = html;
+    bindStepper('k510Base', function(v){ CUR.base=v; S.k510.base=v; }, 1, 999);
+    bindStepper('k510Bonus', function(v){ CUR.bonus=v; refreshSummary(); }, 0, 999);
+    body.querySelectorAll('#k510Winner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; renderSettle(); }; });
+    body.querySelectorAll('#k510Mult button').forEach(function(b){ b.onclick=function(){ CUR.mult=+b.dataset.m; render510k(body,n); }; });
+    S.players.forEach(function(_,i){ var el=$('k510Point-'+i); if(el) el.oninput=function(){ CUR.points[i]=Math.max(0,parseInt(el.value,10)||0); refreshSummary(); }; });
     refreshSummary();
   }
 
@@ -444,7 +679,7 @@
     html += '<div class="tip">赢家 +(n-1)×底注，其余各 -底注（零和）。</div>';
     body.innerHTML = html;
     bindStepper('zjhStake', function(v){ CUR.stake=v; S.zjh.stake=v; }, 1, 999);
-    body.querySelectorAll('#zjhWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; refreshSummary(); }; });
+    body.querySelectorAll('#zjhWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; body.querySelectorAll('#zjhWinner button').forEach(function(x){ x.classList.toggle('on', x===b); }); refreshSummary(); }; });
     refreshSummary();
   }
 
@@ -525,7 +760,7 @@
     html += '<div class="ddz-row"><span class="ddz-lab">升级</span><div class="stepper"><button id="gdUpMinus">−</button><input id="gdUp" type="number" value="'+CUR.up+'" min="1" max="4"><button id="gdUpPlus">+</button></div><span class="tip" style="margin:0">双下升 2 级，单下升 1 级</span></div>';
     html += '<div class="tip">升级制：从 2 开始，累计先升到 A（共 12 级）者胜。每局赢家 +升级数。</div>';
     body.innerHTML = html;
-    body.querySelectorAll('#gdWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; refreshSummary(); }; });
+    body.querySelectorAll('#gdWinner button').forEach(function(b){ b.onclick=function(){ CUR.winner=+b.dataset.i; body.querySelectorAll('#gdWinner button').forEach(function(x){ x.classList.toggle('on', x===b); }); refreshSummary(); }; });
     bindStepper('gdUp', function(v){ CUR.up=v; refreshSummary(); }, 1, 4);
     refreshSummary();
   }
@@ -554,10 +789,12 @@
   }
   function roundLabel(info){
     if(curMode==='ddz') return (info.landlordWin?'地主胜':'地主负')+'（×'+(info.bidM*Math.pow(2,info.bombs+(info.rocket?1:0)+(info.spring?1:0)+(info.anti?1:0)))+'）';
-    if(curMode==='pdk') return S.players[info.winner]+' 赢（关牌'+(info.pdkSpring?'×2':'×1')+'）';
+    if(curMode==='pdk') return S.players[info.winner]+' 赢（关牌'+(info.pdkSpring?'×2':'×1')+(info.bombs?' · 炸弹'+info.bombs:'')+'）';
+    if(curMode==='gdy') return S.players[info.winner]+' 赢（炸弹×'+(info.bombMult||1)+(info.quanGuan?' · 全关':'')+'）';
     if(curMode==='zjh') return S.players[info.winner]+' 赢（底注 '+info.stake+'）';
     if(curMode==='texas') return S.players[info.winner]+' 收池';
     if(curMode==='bj') return '庄家 '+S.players[info.banker]+'（底注 '+info.stake+'）';
+    if(curMode==='k510') return S.players[info.winner]+' 头游（×'+info.mult+'）';
     if(curMode==='gd') return S.players[info.winner]+' 升 '+(info.up||1)+' 级';
     return '庄家 '+S.players[info.banker]+'（底注 '+info.stake+'）';
   }
