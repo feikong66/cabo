@@ -3,193 +3,250 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>卡波计分 · Cabo Scorer</title>
+<title>Cabo Scorer 已升级 · 请前往新地址</title>
 <style>
   :root{
-    --bg:#0f1420; --bg2:#161d2e; --card:#1c2536; --line:#2a3550;
-    --txt:#e8edf7; --sub:#9fb0cc; --brand:#4f8cff; --brand2:#36d399;
-    --warn:#ffb454; --shadow:0 8px 28px rgba(0,0,0,.35);
+    --bg:#07091a; --txt:#f5f7ff; --sub:#a8b3d4; --muted:#6f7ba0;
+    --gold:#ffc85a; --gold2:#ff8f4f; --pink:#ff7ab8; --violet:#8a7bff; --cyan:#5eead4;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-    background:radial-gradient(1200px 600px at 50% -10%,#1b2740 0%,var(--bg) 60%);
-    color:var(--txt);-webkit-font-smoothing:antialiased;min-height:100vh}
-  .wrap{max-width:920px;margin:0 auto;padding:28px 18px 56px}
-  header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--brand),var(--brand2));
-    display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:var(--shadow)}
-  .brand{font-size:20px;font-weight:700;letter-spacing:.5px}
-  .brand small{display:block;font-size:12px;color:var(--sub);font-weight:400;letter-spacing:1px}
-  .hero{margin:26px 0 30px;text-align:center}
-  .hero h1{font-size:34px;line-height:1.25;margin:0 0 12px;
-    background:linear-gradient(90deg,#fff,#bcd2ff);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero p{color:var(--sub);font-size:15px;line-height:1.7;margin:0 auto;max-width:560px}
-  .cta{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin:26px 0 36px}
-  .btn{flex:1 1 160px;max-width:240px;text-decoration:none;text-align:center;padding:14px 18px;border-radius:12px;
-    font-size:15px;font-weight:600;transition:transform .12s ease,box-shadow .12s ease;cursor:pointer;border:1px solid var(--line)}
-  .btn:active{transform:translateY(1px)}
-  .btn-primary{background:linear-gradient(135deg,var(--brand),#3a7bf0);color:#fff;border:none;box-shadow:0 6px 18px rgba(79,140,255,.4)}
-  .btn-ghost{background:var(--card);color:var(--txt)}
-  .btn-ghost:hover{background:#222d42}
-  .features{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-top:8px}
-  .feat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 16px 18px}
-  .feat .ic{font-size:22px;margin-bottom:8px}
-  .feat h3{margin:0 0 6px;font-size:15px}
-  .feat p{margin:0;color:var(--sub);font-size:13px;line-height:1.6}
-  .note{margin-top:34px;text-align:center;color:var(--sub);font-size:12px;line-height:1.8}
-  .note a{color:var(--brand)}
-  footer{margin-top:30px;text-align:center;color:#5e6c88;font-size:12px}
-  .announce{background:linear-gradient(135deg,#22304e,#1c2740);border:1px solid var(--line);border-radius:12px;
-    padding:12px 16px;margin:0 0 22px;font-size:14px;line-height:1.6;color:#cfe0ff}
-  .announce b{color:#fff}
-  .games{margin:18px 0 26px}
-  .games h2{font-size:15px;color:var(--sub);margin:0 0 14px;text-align:center;font-weight:600;letter-spacing:1px}
-  .game-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:520px;margin:0 auto}
-  .game-card{display:block;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 14px;text-align:center;text-decoration:none;color:var(--txt);transition:transform .12s,box-shadow .12s}
-  .game-card:active{transform:scale(.97)}
-  .game-card.cabo{border-color:rgba(79,140,255,.35);background:linear-gradient(135deg,rgba(79,140,255,.12),var(--card))}
-  .game-card.skyjo{border-color:rgba(54,211,153,.35);background:linear-gradient(135deg,rgba(54,211,153,.12),var(--card))}
-  .game-card.free{border-color:rgba(167,139,250,.35);background:linear-gradient(135deg,rgba(167,139,250,.12),var(--card))}
-  .game-card.timer{border-color:rgba(255,180,84,.35);background:linear-gradient(135deg,rgba(255,180,84,.12),var(--card))}
-  .game-card.ddz{border-color:rgba(244,114,182,.35);background:linear-gradient(135deg,rgba(244,114,182,.12),var(--card))}
-  .game-card.mj{border-color:rgba(34,211,238,.35);background:linear-gradient(135deg,rgba(34,211,238,.12),var(--card))}
-  .game-card.uno{border-color:rgba(245,158,11,.35);background:linear-gradient(135deg,rgba(245,158,11,.12),var(--card))}
-  .game-card.yahtzee{border-color:rgba(217,70,239,.35);background:linear-gradient(135deg,rgba(217,70,239,.12),var(--card))}
-  .game-card.judge{border-color:rgba(167,139,250,.35);background:linear-gradient(135deg,rgba(167,139,250,.12),var(--card))}
-  .game-card.wish{border-color:rgba(255,200,90,.55);background:linear-gradient(135deg,rgba(255,180,60,.18),rgba(255,120,180,.10),var(--card));box-shadow:0 0 22px rgba(255,170,60,.18);animation:wishPulse 2.6s ease-in-out infinite}
-  @keyframes wishPulse{0%,100%{box-shadow:0 0 18px rgba(255,170,60,.16)}50%{box-shadow:0 0 30px rgba(255,170,60,.38)}}
-  .game-card.ocr{border-color:rgba(45,212,191,.55);background:linear-gradient(135deg,rgba(45,212,191,.16),rgba(79,140,255,.10),var(--card));box-shadow:0 0 22px rgba(45,212,191,.18);animation:ocrPulse 2.6s ease-in-out infinite}
-  @keyframes ocrPulse{0%,100%{box-shadow:0 0 18px rgba(45,212,191,.16)}50%{box-shadow:0 0 30px rgba(45,212,191,.4)}}
-  .game-ic{font-size:32px;margin-bottom:8px}
-  .game-title{font-size:17px;font-weight:700;margin-bottom:4px}
-  .game-desc{font-size:12px;color:var(--sub)}
-  @media(max-width:480px){ .hero h1{font-size:27px} .btn{flex:1 1 100%;max-width:none} .game-card{padding:16px 10px} }
+  html,body{margin:0;padding:0;min-height:100vh;overflow-x:hidden}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+    color:var(--txt); background:var(--bg);
+    -webkit-font-smoothing:antialiased;
+  }
+  /* 背景：深空渐变 */
+  body::before{
+    content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(900px 600px at 8% -8%, rgba(138,123,255,.30) 0%, transparent 55%),
+      radial-gradient(900px 600px at 96% 8%, rgba(255,122,184,.26) 0%, transparent 55%),
+      radial-gradient(1100px 700px at 50% 110%, rgba(255,180,60,.22) 0%, transparent 55%),
+      linear-gradient(180deg, #050816 0%, #0b1029 50%, #1a1538 100%);
+  }
+  /* 流动极光光晕 */
+  .aurora{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+  .aurora span{position:absolute;border-radius:50%;filter:blur(90px);mix-blend-mode:screen;opacity:.55;animation:float 22s ease-in-out infinite}
+  .aurora span:nth-child(1){width:520px;height:520px;left:-120px;top:-100px;background:radial-gradient(circle,rgba(138,123,255,.85),transparent 70%)}
+  .aurora span:nth-child(2){width:460px;height:460px;right:-100px;top:22%;background:radial-gradient(circle,rgba(255,122,184,.75),transparent 70%);animation-delay:-8s}
+  .aurora span:nth-child(3){width:560px;height:560px;left:30%;bottom:-180px;background:radial-gradient(circle,rgba(255,200,90,.7),transparent 70%);animation-delay:-14s}
+  @keyframes float{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,-40px) scale(1.1)}66%{transform:translate(-40px,30px) scale(.92)}}
+
+  canvas#stars{position:fixed;inset:0;z-index:2;pointer-events:none}
+
+  /* 主内容 */
+  .wrap{position:relative;z-index:3;max-width:560px;margin:0 auto;padding:54px 22px 80px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center}
+
+  .badge{display:inline-block;padding:6px 16px;border:1px solid rgba(255,200,90,.4);border-radius:999px;background:rgba(255,200,90,.1);color:var(--gold);font-size:13px;font-weight:700;letter-spacing:2px;animation:badgePulse 2.5s ease-in-out infinite;backdrop-filter:blur(8px)}
+  @keyframes badgePulse{0%,100%{box-shadow:0 0 16px rgba(255,200,90,.18)}50%{box-shadow:0 0 32px rgba(255,200,90,.42)}}
+  .rocket{font-size:56px;margin:14px 0 6px;animation:rocketBob 2.4s ease-in-out infinite;filter:drop-shadow(0 6px 20px rgba(255,170,60,.4))}
+  @keyframes rocketBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+
+  h1{font-size:38px;margin:0 0 14px;font-weight:900;line-height:1.2;letter-spacing:-.5px;
+    background:linear-gradient(100deg,#fff 0%,#ffc85a 35%,#ff8f4f 65%,#ff7ab8 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    animation:titleShine 5s linear infinite;background-size:200% 100%}
+  @keyframes titleShine{0%{background-position:0% 50%}100%{background-position:200% 50%}}
+
+  p.sub{margin:0 0 26px;color:var(--sub);font-size:15px;line-height:1.7;max-width:420px}
+  p.sub b{color:var(--gold)}
+
+  /* 特性卡 */
+  .features{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:0 0 28px}
+  .features span{padding:6px 14px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);font-size:12.5px;color:var(--sub);backdrop-filter:blur(8px)}
+  .features span b{color:var(--cyan)}
+
+  /* 主按钮 */
+  .go{display:block;width:100%;max-width:380px;padding:18px 20px;border:none;border-radius:18px;cursor:pointer;font-size:18px;font-weight:800;color:#3a2500;letter-spacing:.5px;
+    background:linear-gradient(135deg,#ffd76a 0%,#ffc85a 35%,#ff8f4f 75%,#ff7ab8 100%);background-size:200% 200%;
+    box-shadow:0 10px 36px rgba(255,140,80,.45), inset 0 1px 0 rgba(255,255,255,.4);transition:transform .15s,box-shadow .25s,background-position .5s;
+    animation:btnGradient 6s ease-in-out infinite;position:relative;overflow:hidden}
+  .go:hover{transform:translateY(-2px) scale(1.02);box-shadow:0 14px 46px rgba(255,140,80,.55)}
+  .go:active{transform:scale(.98)}
+  @keyframes btnGradient{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+  .go::after{content:"";position:absolute;top:-50%;left:-50%;width:30%;height:200%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);transform:rotate(20deg);animation:shine 3.5s ease-in-out infinite}
+  @keyframes shine{0%{left:-50%}60%,100%{left:150%}}
+  .go small{display:block;font-size:12px;font-weight:600;color:#5a3a00;margin-top:4px;letter-spacing:1px;opacity:.8}
+
+  /* 次按钮 */
+  .sub-btn{display:block;width:100%;max-width:380px;margin-top:12px;padding:14px 20px;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:rgba(255,255,255,.05);color:var(--txt);text-decoration:none;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(10px);transition:all .15s}
+  .sub-btn:hover{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.28)}
+
+  /* 倒计时 */
+  .countdown{margin:18px 0 0;color:var(--sub);font-size:13px;display:flex;align-items:center;gap:8px;justify-content:center}
+  .countdown b{color:var(--gold);font-size:18px;font-weight:900;display:inline-block;min-width:24px}
+  .countdown a{color:var(--sub);text-decoration:underline;cursor:pointer;font-size:12px;border:none;background:none}
+
+  /* 地址卡 */
+  .addr-box{margin:28px 0 0;padding:14px 16px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.04);max-width:440px;width:100%;display:flex;align-items:center;gap:10px;backdrop-filter:blur(10px)}
+  .addr-box .url{flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--cyan);word-break:break-all;text-align:left;line-height:1.4}
+  .addr-box .cp{flex-shrink:0;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);color:var(--txt);padding:7px 12px;border-radius:9px;font-size:12px;cursor:pointer;font-weight:600}
+  .addr-box .cp:hover{background:rgba(255,255,255,.14)}
+
+  /* 二维码 */
+  .qr{margin:28px 0 0;padding:16px;background:#fff;border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.4)}
+  .qr svg{display:block;width:140px;height:140px}
+  .qr-tip{font-size:12px;color:var(--muted);margin-top:8px}
+
+  /* 底部 */
+  footer{position:fixed;bottom:14px;left:0;right:0;text-align:center;font-size:11px;color:var(--muted);opacity:.7;z-index:3;padding:0 12px}
+  footer span{color:var(--gold)}
+
+  /* 关闭倒计时按钮 */
+  .cancel{color:var(--sub);cursor:pointer;font-size:12px;text-decoration:underline;background:none;border:none;padding:0;margin-left:6px}
+
+  @media(max-width:480px){
+    h1{font-size:30px}
+    .rocket{font-size:44px}
+    .wrap{padding:36px 18px 70px}
+  }
 </style>
 </head>
 <body>
+<div class="aurora"><span></span><span></span><span></span></div>
+<canvas id="stars"></canvas>
+
 <div class="wrap">
-  <div id="announce" class="announce hidden"></div>
-  <header>
-    <div class="logo">🃏</div>
-    <div class="brand">卡波计分<small>CABO SCORER</small></div>
-  </header>
-
-  <section class="hero">
-    <h1>卡波纸牌 · 一键计分与语音播报</h1>
-    <p>注册账号即可云端保存对局，换手机也能接着打；AI 语音自动报分，支持「减半」特殊规则；还能赞助作者、由管理后台查看用户。</p>
-  </section>
-
-  <section class="games">
-    <h2>选择游戏</h2>
-    <div class="game-cards">
-      <a class="game-card cabo btn-game" href="#" data-mode="cabo">
-        <div class="game-ic">🃏</div>
-        <div class="game-title">CABO 计分</div>
-        <div class="game-desc">经典翻牌低分胜</div>
-      </a>
-      <a class="game-card ocr btn-tpl" href="ocr-auto.html">
-        <div class="game-ic">📷</div>
-        <div class="game-title">拍桌识别</div>
-        <div class="game-desc">一拍自动读 16 张牌</div>
-      </a>
-      <a class="game-card skyjo btn-game" href="#" data-mode="skyjo">
-        <div class="game-ic">⭐</div>
-        <div class="game-title">Skyjo 计分</div>
-        <div class="game-desc">12 张翻牌最低分</div>
-      </a>
-      <a class="game-card free btn-tpl" href="free.html">
-        <div class="game-ic">📋</div>
-        <div class="game-title">自由记分板</div>
-        <div class="game-desc">任意项目任意加分</div>
-      </a>
-      <a class="game-card timer btn-tpl" href="timer.html">
-        <div class="game-ic">⏱️</div>
-        <div class="game-title">计时器</div>
-        <div class="game-desc">每个项目独立计时</div>
-      </a>
-      <a class="game-card ddz btn-tpl" href="doudizhu.html">
-        <div class="game-ic">🎴</div>
-        <div class="game-title">扑克计分</div>
-        <div class="game-desc">斗地主/跑得快/炸金花/牛牛</div>
-      </a>
-      <a class="game-card mj btn-tpl" href="mahjong.html">
-        <div class="game-ic">🀄</div>
-        <div class="game-title">麻将计分</div>
-        <div class="game-desc">自摸/点炮·番数结算</div>
-      </a>
-      <a class="game-card uno btn-tpl" href="uno.html">
-        <div class="game-ic">🎴</div>
-        <div class="game-title">UNO 计分</div>
-        <div class="game-desc">剩牌罚分·低分胜</div>
-      </a>
-      <a class="game-card yahtzee btn-tpl" href="yahtzee.html">
-        <div class="game-ic">🎲</div>
-        <div class="game-title">Yahtzee 计分</div>
-        <div class="game-desc">13 类·最高分胜</div>
-      </a>
-      <a class="game-card judge" href="judge.html">
-        <div class="game-ic">⚖️</div>
-        <div class="game-title">桌游裁判</div>
-        <div class="game-desc">谁是卧底/狼人杀法官</div>
-      </a>
-      <a class="game-card wish btn-tpl" href="wish.html">
-        <div class="game-ic">🌠</div>
-        <div class="game-title">许个愿望</div>
-        <div class="game-desc">想要什么功能？告诉我</div>
-      </a>
-    </div>
-    <div id="gameVer" style="text-align:center;font-size:12px;color:var(--sub);margin-top:10px;min-height:18px"></div>
-  </section>
-
-  <nav class="cta">
-    <a class="btn btn-ghost" href="register.html">✍️ 注册账号</a>
-    <a class="btn btn-ghost" href="login.html">🔑 登录</a>
-    <a class="btn btn-ghost" href="donate.html">💝 赞助我们</a>
-  </nav>
-
-  <section class="features">
-    <div class="feat"><div class="ic">☁️</div><h3>账号云同步</h3><p>登录后分数与历史存云端，多端无缝衔接，再也不怕换手机丢数据。</p></div>
-    <div class="feat"><div class="ic">🔊</div><h3>AI 语音播报</h3><p>自动语音播报当前分数与名次，老人小孩都能听清，零配置开声。</p></div>
-    <div class="feat"><div class="ic">✂️</div><h3>减半计分</h3><p>内置「减半 / 免减半」特殊规则与视觉标识，规则一目了然。</p></div>
-    <div class="feat"><div class="ic">📊</div><h3>对局存档</h3><p>一键保存多局对战，随时载入继续，历史成绩随时回看。</p></div>
-    <div class="feat"><div class="ic">💝</div><h3>赞助支持</h3><p>微信 / 支付宝收款码，支持作者持续维护与功能更新。</p></div>
-    <div class="feat"><div class="ic">🛡️</div><h3>管理后台</h3><p>管理员可查看注册用户、导出数据、管理收款码配置。</p></div>
-  </section>
-
-  <div class="note">
-    本站为纯前端 + 腾讯云开发（CloudBase）部署，数据存于文档型云数据库。<br>
-    使用中有任何问题或建议，欢迎通过赞助页联系作者。
+  <div class="badge">✦ SITE MIGRATION</div>
+  <div class="rocket">🚀</div>
+  <h1>Cabo Scorer 已升级</h1>
+  <p class="sub">本站（GitHub Pages）已<b>停止更新</b>。最新版本已迁移至<b>腾讯云</b>，更快、更稳、玩法更多。<br>点下方按钮一键直达 —</p>
+  <div class="features">
+    <span>⚡ <b>毫秒级</b>实时同步</span>
+    <span>📷 整桌<b>一拍出分</b></span>
+    <span>🌠 许愿<b>直达后台</b></span>
+    <span>💬 房间<b>实时聊天</b></span>
   </div>
 
-  <footer>© Cabo Scorer · 卡波计分</footer>
+  <button class="go" id="goBtn">
+    🚀 立即前往腾讯云最新版本
+    <small id="goTip">5 秒后自动跳转</small>
+  </button>
+
+  <a class="sub-btn" id="goHomeBtn">看看首页有什么 🏠</a>
+
+  <div class="countdown" id="countdown">
+    <span id="cdText">⏳ <b id="cdSec">5</b> 秒后自动跳转</span>
+    <button class="cancel" id="cancelCd">取消</button>
+  </div>
+
+  <div class="addr-box">
+    <div class="url" id="addrText">https://cabo-x666-d2gjwxo2of930b7da-1468132660.tcloudbaseapp.com/CABO_v0.7.5.1.html</div>
+    <button class="cp" id="cpBtn">📋 复制</button>
+  </div>
+
+  <div class="qr" id="qrBox">
+    <div id="qrSvg"></div>
+    <div class="qr-tip">📱 扫码直达腾讯云版</div>
+  </div>
 </div>
+
+<footer>Cabo Scorer · 本站已迁移至 <span>腾讯云开发</span> · GitHub Pages 停止更新</footer>
+
 <script>
 (function(){
-  var API=(function(){try{var c=localStorage.getItem('cabo-api');if(c)return c;}catch(e){}
-    var h=location.hostname;if(h.endsWith('.tcloudbaseapp.com')){var sub=h.split('.')[0];var env=sub.replace(/-(\d+)$/,'');return 'https://'+env+'.service.tcloudbase.com';}return '';})();
-  fetch(API+'/api/config').then(function(r){return r.json();}).then(function(d){
-    var el=document.getElementById('announce');
-    if(d&&d.announce){el.innerHTML='📢 <b>'+d.announce.replace(/[&<>]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;'}[c];})+'</b>';el.classList.remove('hidden');}
-  }).catch(function(){});
+  'use strict';
+  var NEW_URL = 'https://cabo-x666-d2gjwxo2of930b7da-1468132660.tcloudbaseapp.com/CABO_v0.7.5.1.html';
+  var HOME_URL = 'https://cabo-x666-d2gjwxo2of930b7da-1468132660.tcloudbaseapp.com/';
 
-  // 自动探测最新版 CABO 计分器文件，跳到原本的 CABO 界面（保留原始 UI，不替换）
-  var CANDIDATES = ['CABO_v0.7.5.1.html','CABO_v0.7.5.html','CABO_v0.7.4.1.html','CABO_v0.7.4.html'];
-  function setGameHref(file){
-    document.querySelectorAll('.btn-game').forEach(function(a){
-      var mode = a.getAttribute('data-mode');
-      a.href = file + '?game=' + mode + '&v=20260815';
+  // ----- 倒计时跳转 -----
+  var sec = 5, timer = null, cancelled = false;
+  var cdSec = document.getElementById('cdSec');
+  var cdText = document.getElementById('cdText');
+  var goBtn = document.getElementById('goBtn');
+  var goTip = document.getElementById('goTip');
+  var cancelBtn = document.getElementById('cancelCd');
+  function tick(){
+    if(cancelled) return;
+    cdSec.textContent = sec;
+    if(sec <= 0){ doRedirect(); return; }
+    sec--;
+    timer = setTimeout(tick, 1000);
+  }
+  function doRedirect(){ window.location.replace(NEW_URL); }
+  timer = setTimeout(tick, 1000);
+  cancelBtn.onclick = function(){ cancelled = true; clearTimeout(timer); document.getElementById('countdown').style.display='none'; if(goTip) goTip.textContent='点上方按钮前往'; };
+  goBtn.onclick = doRedirect;
+  document.getElementById('goHomeBtn').onclick = function(){ window.location.replace(HOME_URL); };
+  document.getElementById('cpBtn').onclick = function(){
+    var btn = this;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(NEW_URL).then(function(){
+        btn.textContent = '✓ 已复制'; setTimeout(function(){ btn.textContent = '📋 复制'; }, 2000);
+      }).catch(function(){ fallback(); });
+    } else fallback();
+    function fallback(){
+      try{ var ta = document.createElement('textarea'); ta.value = NEW_URL; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); btn.textContent='✓ 已复制'; setTimeout(function(){ btn.textContent='📋 复制'; }, 2000); }catch(e){ prompt('复制此链接：', NEW_URL); }
+    }
+  };
+
+  // ----- 二维码（CABOQR，识别当前 URL） -----
+  try{
+    var qrBox = document.getElementById('qrSvg');
+    var qrText = (window.location.protocol === 'file:') ? NEW_URL : (window.location.href.split('#')[0]);
+    if(typeof CABOQR !== 'undefined' && CABOQR.make){
+      var m = CABOQR.make(qrText);
+      var size = m.length, cell = 140/size;
+      var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+size+' '+size+'" shape-rendering="crispEdges"><rect width="'+size+'" height="'+size+'" fill="#fff"/>';
+      for(var r=0;r<size;r++) for(var c=0;c<size;c++) if(m[r][c]) svg += '<rect x="'+c+'" y="'+r+'" width="1" height="1" fill="#000"/>';
+      svg += '</svg>';
+      qrBox.innerHTML = svg;
+    }
+  }catch(e){}
+
+  // ----- 粒子星空 -----
+  (function(){
+    var cv = document.getElementById('stars');
+    var ctx = cv.getContext('2d');
+    var stars = []; var W=0, H=0, dpr;
+    function resize(){
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      W = cv.width = innerWidth * dpr;
+      H = cv.height = innerHeight * dpr;
+      cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
+    }
+    function seed(){
+      stars = [];
+      var n = Math.floor(innerWidth / 10);
+      var COLORS = ['#ffd76a','#ffb454','#ff9d66','#ffd6e8','#c9c2ff','#5eead4'];
+      for(var i=0;i<n;i++) stars.push({
+        x: Math.random()*W, y: Math.random()*H,
+        r: Math.random()*1.6+.4,
+        s: Math.random()*1.2+.4,
+        a: Math.random()*.55+.25,
+        tw: Math.random()*Math.PI*2,
+        c: COLORS[i % COLORS.length]
+      });
+    }
+    function tick(t){
+      ctx.clearRect(0,0,W,H);
+      for(var i=0;i<stars.length;i++){
+        var p = stars[i]; p.y -= p.s * dpr; p.tw += .03;
+        if(p.y < -4){ p.y = H + 4; p.x = Math.random()*W; }
+        var al = p.a * (0.55 + 0.45 * Math.sin(p.tw));
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r * dpr, 0, Math.PI*2);
+        ctx.fillStyle = p.c; ctx.globalAlpha = al; ctx.fill();
+      }
+      ctx.globalAlpha = 1; requestAnimationFrame(tick);
+    }
+    resize(); seed(); window.addEventListener('resize', function(){ resize(); seed(); });
+    requestAnimationFrame(tick);
+  })();
+
+  // ----- 流星（额外特效，每 6 秒一颗） -----
+  function shoot(){
+    var s = document.createElement('div');
+    s.style.cssText = 'position:fixed;left:-80px;top:'+(Math.random()*60)+'%;width:80px;height:2px;background:linear-gradient(90deg,transparent,#fff,transparent);z-index:4;pointer-events:none;transform:rotate(15deg);box-shadow:0 0 8px #fff, 0 0 16px rgba(255,200,90,.6);transition:transform 1.6s cubic-bezier(.2,.8,.2,1), opacity .3s';
+    document.body.appendChild(s);
+    requestAnimationFrame(function(){
+      s.style.transform = 'rotate(15deg) translateX(140vw)';
+      s.style.opacity = '0';
     });
-    var verEl = document.getElementById('gameVer');
-    if(verEl) verEl.textContent = '当前版本 ' + file;
+    setTimeout(function(){ s.remove(); }, 1800);
   }
-  function tryNext(i){
-    if(i >= CANDIDATES.length){ setGameHref('CABO_v0.7.5.1.html'); return; }
-    var f = CANDIDATES[i];
-    fetch(f + '?_probe=' + Date.now(), {method:'HEAD', cache:'no-store'}).then(function(r){
-      if(r.ok) setGameHref(f); else tryNext(i+1);
-    }).catch(function(){ tryNext(i+1); });
-  }
-  tryNext(0);
+  setTimeout(shoot, 1200);
+  setInterval(function(){ if(Math.random()<>0.6) shoot(); }, 6000);
 })();
 </script>
 </body>
