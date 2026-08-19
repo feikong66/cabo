@@ -3785,6 +3785,135 @@ async function exportReportImage(reportText){
   }
 }
 
+/* ---------- 战绩回顾海报（整局统计 + 二维码，复用胜利结算的视觉语言） ---------- */
+async function exportRecapPoster(){
+  const cv = document.querySelector("#reportCanvas");
+  if(!cv){ toast(t("未找到绘图区域")); return; }
+  const ctx = cv.getContext("2d");
+  const W = 400, H = 760, S = 2;
+  cv.width = W * S; cv.height = H * S;
+  cv.style.width = W + "px"; cv.style.height = H + "px";
+  ctx.scale(S, S);
+  ctx.clearRect(0,0,W,H);
+  try{ if(document.fonts && document.fonts.ready) await document.fonts.ready; }catch(e){}
+
+  const ff = "PingFang SC,Microsoft YaHei,Helvetica Neue,Arial,sans-serif";
+  function roundRect(x,y,w,h,r,fill,stroke){
+    ctx.beginPath(); ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h); ctx.lineTo(x+r,y+h);
+    ctx.quadraticCurveTo(x,y+h,x,y+h-r); ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath();
+    if(fill){ ctx.fillStyle = fill; ctx.fill(); }
+    if(stroke){ ctx.strokeStyle = stroke[0]; ctx.lineWidth = stroke[1]; ctx.stroke(); }
+  }
+  function shadow(blur,color,ox,oy){ ctx.shadowColor=color; ctx.shadowBlur=blur; ctx.shadowOffsetX=ox||0; ctx.shadowOffsetY=oy||0; }
+  function noShadow(){ ctx.shadowColor="transparent"; ctx.shadowBlur=0; ctx.shadowOffsetX=0; ctx.shadowOffsetY=0; }
+  function text(str,x,y,size,color,weight,align){ ctx.textAlign=align||"left"; ctx.font=(weight||"normal")+" "+size+"px "+ff; ctx.fillStyle=color; ctx.fillText(str,x,y); }
+  function fit(str,maxW,size){ ctx.font="700 "+size+"px "+ff; if(ctx.measureText(str).width<=maxW) return str; let s=str; while(s.length>1 && ctx.measureText(s+"…").width>maxW) s=s.slice(0,-1); return s+"…"; }
+
+  // ---- 统计 ----
+  const stats = computeStats();
+  const ts = totals();
+  const n = state.players.length;
+  const roundCount = state.rounds.length;
+  const low = state.winRule !== "high";
+  const wins = state.players.map(()=>0);
+  {
+    const {series} = computeTotals();
+    let prev = state.players.map(()=>0);
+    state.rounds.forEach((r,k)=>{
+      const cur = series[k];
+      const d = state.players.map((_,i)=> cur[i]-prev[i]); prev = cur;
+      let bv = d[0], bi = 0;
+      for(let i=1;i<d.length;i++){ if(low ? d[i]<bv : d[i]>bv){ bv=d[i]; bi=i; } }
+      if(d.length) wins[bi]++;
+    });
+  }
+  const ordered = stats.map((s,i)=>({ idx:i, name:s.name, rank:s.rank, total:s.total, avg:s.avg, best:s.best })).sort((a,b)=> a.rank - b.rank);
+
+  // ---- 背景 ----
+  const bg = ctx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,"#070f1e"); bg.addColorStop(.45,"#0f1f3a"); bg.addColorStop(1,"#1b3a5c");
+  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+  const starSeed=[0.12,0.85,0.33,0.67,0.21,0.91,0.05,0.44,0.78,0.29,0.63,0.17,0.52,0.88,0.39,0.74,0.11,0.56,0.95,0.48,0.81,0.36,0.69,0.02,0.59,0.27,0.42,0.99,0.14,0.61];
+  starSeed.forEach((s,i)=>{ const x=(s*930)%W; const y=((Math.sin(i*2.7)*.5+.5)*H*.5)+10; ctx.fillStyle="rgba(255,255,255,"+(0.25+0.7*((i*13)%10)/10)+")"; ctx.beginPath(); ctx.arc(x,y,(i%4===0)?1.6:0.9,0,7); ctx.fill(); });
+
+  // ---- 主卡片 ----
+  const px=20, py=30, pw=W-px*2, ph=H-py*2-40;
+  shadow(32,"rgba(0,0,0,.55)",0,8);
+  roundRect(px,py,pw,ph,20,"rgba(16,32,56,.94)",["rgba(218,195,140,.6)",2.5]);
+  noShadow();
+  roundRect(px+9,py+9,pw-18,ph-18,15,null,["rgba(218,195,140,.16)",1]);
+
+  text(t("🏆 战绩回顾"), W/2, py+50, 30, "#fff", "800", "center");
+  text((state.game==='skyjo'?'Skyjo':GN()) + " · " + fmtTime(Date.now()).slice(0,16), W/2, py+74, 13, "rgba(255,255,255,.7)", "500", "center");
+
+  // 元信息
+  let y = py+100;
+  text(t("总轮数 ") + roundCount + t(" · ") + n + t(" 人 · ") + (low ? t("低分胜") : t("高分胜")), W/2, y, 13, "#ffd699", "600", "center");
+  y += 28;
+
+  // 排名卡片（前 4 名横向，超过 4 人则紧凑）
+  const shown = ordered.slice(0, Math.min(n, 4));
+  const gap = shown.length<=3 ? 14 : 10;
+  const cardW = Math.min(88, (pw-24-gap*(shown.length-1))/shown.length);
+  const startX = W/2 - (shown.length*cardW + gap*(shown.length-1))/2;
+  const cy0 = y;
+  shown.forEach((r,i)=>{
+    const x=startX+i*(cardW+gap), gold=(r.rank===1);
+    shadow(14,"rgba(0,0,0,.4)",0,5);
+    roundRect(x,cy0,cardW,104,14, gold?"rgba(46,62,90,.98)":"rgba(28,48,80,.98)", [gold?"rgba(255,215,0,.85)":"rgba(200,180,130,.5)",2]);
+    noShadow();
+    ctx.fillStyle=gold?"#ffd700":"rgba(180,200,230,.85)"; ctx.beginPath(); ctx.arc(x+cardW/2,cy0+18,12,0,7); ctx.fill();
+    text(String(r.rank), x+cardW/2, cy0+23, 13, gold?"#4a3b00":"#0a1628", "800", "center");
+    text(fit(r.name, cardW-12, 13), x+cardW/2, cy0+48, 13, "#fff", "700", "center");
+    text(String(r.total), x+cardW/2, cy0+80, 26, gold?"#ffd700":"#fff", "800", "center");
+    text(t("分"), x+cardW/2, cy0+96, 10, "rgba(255,255,255,.55)", "500", "center");
+  });
+  y = cy0 + 116;
+
+  ctx.strokeStyle="rgba(218,195,140,.22)"; ctx.beginPath(); ctx.moveTo(px+24,y); ctx.lineTo(px+pw-24,y); ctx.stroke();
+  y += 22;
+
+  // 每玩家明细
+  text(t("玩家明细"), px+26, y, 14, "#ffd699", "700"); y += 20;
+  ordered.forEach((r)=>{
+    text("• " + fit(r.name, 120, 13), px+26, y, 13, "#fff", "700");
+    const line2 = t("胜 ") + wins[r.idx] + t(" 局 · 平均 ") + (r.avg>=0?"+":"") + r.avg + t(" · 最佳 ") + (r.best==null?"—":((r.best>=0?"+":"")+r.best));
+    text(line2, px+26+130, y, 12, "rgba(255,255,255,.75)", "500");
+    y += 22;
+  });
+
+  // ---- 二维码（右下角） ----
+  const qrText = room.code ? roomLink(room.code) : location.origin + location.pathname;
+  const qrSize = 88, qrX = W - 22 - qrSize, qrY = H - 22 - qrSize - 40;
+  try{
+    const m = (typeof CABOQR!=="undefined" && CABOQR.make) ? CABOQR.make(qrText) : null;
+    if(m){
+      const size = m.length, cell = qrSize/size, qx = qrX, qy = qrY;
+      ctx.fillStyle="#fff"; ctx.fillRect(qx-4,qy-4,qrSize+8,qrSize+8);
+      ctx.fillStyle="#000";
+      for(let rr=0;rr<size;rr++) for(let cc=0;cc<size;cc++) if(m[rr][cc]) ctx.fillRect(qx+cc*cell, qy+rr*cell, cell+0.5, cell+0.5);
+      text(room.code ? t("扫码加入房间") : t("扫码访问"), qx+qrSize/2, qy+qrSize+14, 11, "rgba(255,255,255,.65)", "500", "center");
+    }
+  }catch(e){}
+
+  text(gameTag() + " Scorer v0.7.5.1", W/2, H-18, 11, "rgba(255,255,255,.45)", "400", "center");
+
+  try{
+    const fname = GN() + (state.lang==='en'?'_recap_':'战绩回顾_') + fmtTime(Date.now()).replace(/[:\s]/g,"-") + ".png";
+    const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const finish = (url, blobUrl)=>{
+      const img = document.querySelector("#reportImg");
+      if(img){ img.src = url; img.classList.remove("hidden"); }
+      if(!isMobile && url){ const a=document.createElement("a"); a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); }
+      toast(isMobile ? t("reportImageSavedMobile") : t("reportImageSavedDesktop"));
+      if(blobUrl) setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} }, 5000);
+    };
+    if(cv.toBlob){ cv.toBlob((blob)=>{ if(!blob){ try{ finish(cv.toDataURL("image/png"), false); }catch(e){ toast(t("导出图片失败：")+e.message); } return; } finish(URL.createObjectURL(blob), true); }, "image/png"); }
+    else { finish(cv.toDataURL("image/png"), false); }
+  }catch(e){ toast(t("导出图片失败：")+e.message); console.error(e); }
+}
+
 /* ---------- chart ---------- */
 function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
 function drawChart(){
@@ -4187,9 +4316,10 @@ function openStats(){
     h += '</b> </div> </div>';
     return h;
   }).join("");
-  overlay.innerHTML = `${t(`<div class="modal"> <h2>🏅 玩家战绩</h2> <div class="stat-list">`)}${rows || t('<div style="color:var(--muted)">还没有提交过局数</div>')}${t(`</div> <div class="modal-actions"><button class="primary" id="stClose">关闭</button></div> </div>`)}`;
+  overlay.innerHTML = `${t(`<div class="modal"> <h2>🏅 玩家战绩</h2> <div class="stat-list">`)}${rows || t('<div style="color:var(--muted)">还没有提交过局数</div>')}${t(`</div> <div class="modal-actions"><button class="ghost" id="stRecap">📸 回顾海报</button><button class="primary" id="stClose">关闭</button></div> </div>`)}`;
   overlay.classList.remove("hidden");
   document.querySelector("#stClose").onclick = ()=> overlay.classList.add("hidden");
+  document.querySelector("#stRecap").onclick = ()=>{ overlay.classList.add("hidden"); exportRecapPoster(); };
 }
 
 /* ---------- 导出 / 导入 / 分享 ---------- */
