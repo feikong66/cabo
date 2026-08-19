@@ -2419,19 +2419,8 @@ function renderGame(){
   const ub = document.querySelector("#undoBtn");
   if(state.rounds.length===0){ ub.disabled=true; ub.style.opacity=.45; }
   checkEnd(ts);
-  // 整桌 OCR 入口（显眼）：跳 ocr-auto.html 一拍识别 16 张牌
-  if(state.game==='cabo' || state.game==='skyjo'){
-    const _ab = document.querySelector(".action-bar");
-    if(_ab && !document.getElementById("ocrAutoBtn")){
-      const _ob = document.createElement("button");
-      _ob.id = "ocrAutoBtn"; _ob.className = "ghost";
-      _ob.innerHTML = "📷 整桌识别";
-      _ob.title = state.lang==='en' ? "Auto-read the whole table (16 cards)" : "拍整桌照片，自动识别 16 张牌";
-      _ob.style.background = "rgba(45,212,191,.15)"; _ob.style.border = "1px solid rgba(45,212,191,.4)"; _ob.style.color = "var(--text)";
-      _ob.onclick = ()=>{ location.href = "ocr-auto.html"; };
-      _ab.insertBefore(_ob, _ab.firstChild);
-    }
-  }
+  // 注：整桌 OCR 已统一收敛到「快捷录入 → 拍照识别」应用内模态，
+  // 不再在 action-bar 挂跳转型「整桌识别」按钮（避免打断本局录入、且与内部工具箱 ocr-auto.html 去重）。
   if(typeof mountPwaInstallBtn === "function") mountPwaInstallBtn();
   const _moreSheet = document.querySelector("#moreSheet");
   if(_moreSheet){
