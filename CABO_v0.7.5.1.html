@@ -2685,8 +2685,12 @@ function savedItemHtml(s){
     <div class="save-sub">${s.players.length}${t(`人 ·`)}${s.rounds.length}${t(`局 ·`)}${scores}${t(`· 胜：`)}${escapeHtml(winner)}</div>
     ${s.note ? `<div class="save-note">🏷 ${escapeHtml(s.note)}</div>` : ''}
     <div class="save-actions">
-      <button class="mini" data-report="${s.id}${t(`">查看战报</button> <button class="mini" data-load="`)}${s.id}${t(`">载入继续</button>`)}${s.auto?`<button class="mini" data-clearauto="${s.id}">${t('clearAuto')}</button>`:''}
-      <button class="mini danger" data-del="${s.id}${t(`">删除</button> </div> </div>`)}`;
+      <button class="mini" data-report="${s.id}">查看战报</button>
+      <button class="mini" data-load="${s.id}">载入继续</button>
+      ${s.auto ? `<button class="mini" data-clearauto="${s.id}">${t('clearAuto')}</button>` : ''}
+      <button class="mini danger" data-del="${s.id}">删除</button>
+    </div>
+  </div>`;
 }
 function homeHistoryHtml(){
   const list = loadSaves();
