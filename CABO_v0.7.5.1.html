@@ -2433,7 +2433,6 @@ function renderGame(){
     }
   }
   if(typeof mountPwaInstallBtn === "function") mountPwaInstallBtn();
-  if(typeof mountVoiceBtn === "function") mountVoiceBtn();
   const _moreSheet = document.querySelector("#moreSheet");
   if(_moreSheet){
     const _moreBtn = document.querySelector("#moreBtn");
@@ -5799,59 +5798,6 @@ function mountPwaInstallBtn(){
   }
 }
 
-/* ===== 语音识别报分（Web Speech API，本地识别不上云） ===== */
-function startVoiceInput(){
-  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){ toast(t("当前浏览器不支持语音识别，请用 Chrome / Edge")); return; }
-  try{
-    var rec = new SR();
-    rec.lang = (state && state.lang === 'en') ? 'en-US' : 'zh-CN';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    toast(t("请说分数，例如：5 分、8 分、12 分"));
-    rec.onresult = function(e){
-      var text = "";
-      try{ text = (e.results && e.results[0] && e.results[0][0] && e.results[0][0].transcript) || ""; }catch(_){}
-      var nums = (text.match(/-?\d+/g) || []).map(Number);
-      if(!nums.length){ toast(t("没听清数字，请重试。听到：") + (text || "空")); return; }
-      // 中文数字兜底：零一二三四五六七八九十 转阿拉伯
-      if(!nums.length){
-        var cn = {零:0,一:1,二:2,两:2,三:3,四:4,五:5,六:6,七:7,八:8,九:9,十:10,十一:11,十二:12,十三:13};
-        Object.keys(cn).forEach(function(k){ text = text.split(k).join(String(cn[k])); });
-        nums = (text.match(/-?\d+/g) || []).map(Number);
-      }
-      // 按玩家顺序填入第一个输入格（cards 模式填第 0 格，total 模式填 pts-i）
-      state.players.forEach(function(_,i){
-        if(i >= nums.length) return;
-        var v = nums[i];
-        if(state.rules.cardInput === 'cards'){
-          var el = document.getElementById("c" + i + "-0");
-          if(el){ el.value = v; try{ el.dispatchEvent(new Event("input")); }catch(_){ el.oninput && el.oninput(); } }
-        } else {
-          var el2 = document.getElementById("pts-" + i);
-          if(el2){ el2.value = v; try{ el2.dispatchEvent(new Event("input")); }catch(_){ el2.oninput && el2.oninput(); } }
-        }
-      });
-      toast(t("已填入：") + nums.slice(0, state.players.length).join("、"));
-    };
-    rec.onerror = function(e){ toast(t("语音识别失败：") + (e && e.error ? e.error : "")); };
-    rec.onend = function(){};
-    rec.start();
-  }catch(e){ toast(t("语音识别启动失败")); }
-}
-// 在提交栏加「🎤 语音报分」按钮（跟 OCR 按钮并排）
-function mountVoiceBtn(){
-  if(!(window.SpeechRecognition || window.webkitSpeechRecognition)) return;
-  var ab = document.querySelector(".action-bar");
-  if(ab && !document.getElementById("voiceInputBtn")){
-    var b = document.createElement("button");
-    b.id = "voiceInputBtn"; b.className = "ghost";
-    b.innerHTML = "🎤 语音报分";
-    b.title = t("用语音说出分数，自动填入");
-    b.onclick = startVoiceInput;
-    ab.insertBefore(b, ab.firstChild);
-  }
-}
 </script>
 <script>
 /* ===== 桌游记分 · 功能增强包（投屏 / 头像配色 / 分数变更高亮 / 复盘流水 / 房间密码） =====
