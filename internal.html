@@ -121,7 +121,7 @@
     <!-- 模块 1：整桌识别 OCR -->
     <div class="card">
       <h2>📷 快捷录入 / 整桌识别（OCR）</h2>
-      <p class="desc">已从公开版 CABO 迁入此处。拍照 / 选图，自动定位 16 张 CABO 牌并识别分数（16/16 准确率），一键录入。基于 <code>ocr-auto.html</code>。<b>注意：</b>浏览器内 OCR 依赖 tesseract.js 的 wasm 内核与语言模型，默认从海外 CDN 加载，国内网络可能失败；若识别引擎长时间卡住不动，多为被墙所致（可改用云端 OCR 接口彻底解决）。</p>
+      <p class="desc">已从公开版 CABO 迁入此处。拍照 / 选图，自动定位 16 张 CABO 牌并识别分数（16/16 准确率）。<b>识别引擎已自托管到国内可达域名，不再依赖被墙的海外 CDN</b>；进入本页即自动预载约 30MB 引擎（仅一次，之后走浏览器缓存），建议在 Wi-Fi / 良好网络下打开。基于 <code>ocr-auto.html</code>。</p>
       <button class="btn primary" id="ocrOpen">打开整桌识别</button>
       <iframe id="ocrFrame" src="" title="整桌识别"></iframe>
       <div class="pill">提示：首次打开需授权相机 / 相册。识别结果可在原页导出。</div>
@@ -190,7 +190,7 @@ function toast(msg){
 document.getElementById("ocrOpen").onclick = function(){
   var f = document.getElementById("ocrFrame");
   if(f.style.display === "none"){
-    if(!f.src) f.src = "ocr-auto.html";
+    if(!f.src) f.src = "https://cabo-x666-d2gjwxo2of930b7da-1468132660.tcloudbaseapp.com/ocr-auto.html";
     f.style.display = "block";
     this.textContent = "收起整桌识别";
   } else {
