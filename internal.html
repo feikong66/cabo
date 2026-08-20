@@ -65,8 +65,10 @@
   .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#08111a;border:none}
   .btn.danger{background:var(--danger);color:#fff;border:none}
   .pill{font-size:11px;color:var(--sub);border:1px dashed var(--line);border-radius:8px;padding:6px 8px;line-height:1.5}
+  .ocr-warn{background:linear-gradient(135deg,rgba(255,176,32,.14),rgba(255,176,32,.06));border:1px solid rgba(255,176,32,.4);color:#ffd68a;border-radius:10px;padding:9px 11px;font-size:12.5px;line-height:1.55;margin:8px 0 0}
+  .ocr-warn b{color:#ffe2a8}
   /* OCR 内嵌 */
-  #ocrFrame{width:100%;height:520px;border:1px solid var(--line);border-radius:12px;background:#000;display:none}
+  #ocrFrame{width:100%;height:520px;border:1px solid var(--line);border-radius:12px;background:#0a0e16;display:none}
   /* ASR */
   .asr-ctrl{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub)}
   .asr-ctrl button{width:30px;height:30px;border-radius:8px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--txt);cursor:pointer;font-size:16px}
@@ -122,8 +124,9 @@
     <div class="card">
       <h2>📷 快捷录入 / 整桌识别（OCR）</h2>
       <p class="desc">已从公开版 CABO 迁入此处。拍照 / 选图，自动定位 16 张 CABO 牌并识别分数（16/16 准确率）。<b>识别引擎已自托管到国内可达域名，不再依赖被墙的海外 CDN</b>；进入本页即自动预载约 30MB 引擎（仅一次，之后走浏览器缓存），建议在 Wi-Fi / 良好网络下打开。基于 <code>ocr-auto.html</code>。</p>
+      <div class="ocr-warn">⚠️ <b>首次需下载约 30MB 识别引擎（仅一次，之后走浏览器缓存）。</b>引擎自托管在国内可达域名，国内可正常下载，但首次会消耗流量且需等几十秒。<b>建议在 Wi-Fi / 良好网络下使用</b>。本卡片一打开就会在后台静默预载，你点下面的按钮时内容已就绪，不会黑屏。</div>
       <button class="btn primary" id="ocrOpen">打开整桌识别</button>
-      <iframe id="ocrFrame" src="" title="整桌识别"></iframe>
+      <iframe id="ocrFrame" src="https://cabo-x666-d2gjwxo2of930b7da-1468132660.tcloudbaseapp.com/ocr-auto.html" title="整桌识别"></iframe>
       <div class="pill">提示：首次打开需授权相机 / 相册。识别结果可在原页导出。</div>
     </div>
 
@@ -186,17 +189,13 @@ function toast(msg){
   clearTimeout(t._t); t._t = setTimeout(function(){ t.classList.remove("show"); }, 2200);
 }
 
-/* ===== OCR 内嵌（懒加载） ===== */
+/* ===== OCR 内嵌（src 在 HTML 写死，页面打开即后台预载，点按钮时不会黑屏） ===== */
+var ocrOpen = false;
 document.getElementById("ocrOpen").onclick = function(){
   var f = document.getElementById("ocrFrame");
-  if(f.style.display === "none"){
-    if(!f.src) f.src = "https://cabo-x666-d2gjwxo2of930b7da-1468132660.tcloudbaseapp.com/ocr-auto.html";
-    f.style.display = "block";
-    this.textContent = "收起整桌识别";
-  } else {
-    f.style.display = "none";
-    this.textContent = "打开整桌识别";
-  }
+  ocrOpen = !ocrOpen;
+  f.style.display = ocrOpen ? "block" : "none";
+  this.textContent = ocrOpen ? "收起整桌识别" : "打开整桌识别";
 };
 
 /* ===== 语音报分面板 ===== */
