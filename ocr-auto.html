@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>CABO 一拍出分（全自动）</title>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script src="https://cabo-x666-d2gjwxo2of930b7da-1468132660.tcloudbaseapp.com/ocr-assets/tesseract.min.js"></script>
 <style>
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   body { margin:0; font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; background:#0f1420; color:#e7ecf3; }
@@ -40,12 +40,22 @@
   #status { color:#9fc0ff; font-size:13px; min-height:20px; margin:4px 2px 10px; }
   .warnbox { background:#2a1f0c; border:1px solid #6b4d10; color:#ffd68a; border-radius:10px; padding:9px 11px; font-size:12.5px; margin:8px 0; }
   details { margin-top:10px; } summary { cursor:pointer; color:#8aa0bd; font-size:13px; }
+  .engine-note { background:#10202e; border:1px solid #1d3a55; border-radius:10px; padding:9px 11px; font-size:12.5px; margin:0 0 12px; color:#bcd; }
+  .engine-note.ready { border-color:#1f6b3f; background:#0e2418; color:#bff0cf; }
+  .engine-note.error { border-color:#6b2020; background:#241010; color:#ffb3b3; }
+  .engine-note .bar-bg { height:6px; background:#1a2740; border-radius:4px; margin-top:7px; overflow:hidden; }
+  .engine-note .bar-fill { height:100%; width:0%; background:linear-gradient(90deg,#2b6cff,#4dd07a); transition:width .25s; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>CABO 一拍出分 <span class="badge">全自动</span></h1>
   <p class="sub">直接拍整桌照片，自动找到 16 张牌上的数字并读出来。不用框牌、不用点桌角。</p>
+
+  <div class="engine-note" id="engineNote">
+    <div id="engineText">📦 首次识别需下载约 30MB 识别引擎（仅一次，之后走浏览器缓存）。建议在 Wi-Fi / 良好网络下使用；本页打开即自动准备，无需你先点任何按钮。</div>
+    <div class="bar-bg"><div class="bar-fill" id="engineBar"></div></div>
+  </div>
 
   <div class="bar">
     <button id="fileBtn" class="big">📷 拍照 / 选图</button>
@@ -386,13 +396,31 @@ function paint(){
   $('runBtn').disabled = n===0;
 }
 
-/* ---------- OCR ---------- */
+/* ---------- OCR (self-hosted on CloudBase: domestic, no overseas CDN) ---------- */
+const OCR_BASE='https://cabo-x666-d2gjwxo2of930b7da-1468132660.tcloudbaseapp.com/ocr-assets';
+let _workerPromise=null;
+function setEngine(text, progress, isError){
+  const note=$('engineNote'), t=$('engineText'), bar=$('engineBar');
+  if(t && text!=null) t.textContent=text;
+  if(bar && typeof progress==='number') bar.style.width=Math.max(2,Math.round(progress*100))+'%';
+  if(note){ note.classList.toggle('ready', progress===1); note.classList.toggle('error', !!isError); }
+}
 async function ensureWorker(){
-  if(worker) return worker;
-  setStatus('首次识别要下载识别引擎（约几 MB），请稍候…');
-  worker=await Tesseract.createWorker('eng',1,{ logger:()=>{} });
-  await worker.setParameters({ tessedit_char_whitelist:'0123456789', preserve_interword_spaces:'0' });
-  return worker;
+  if(_workerPromise) return _workerPromise;
+  _workerPromise=(async()=>{
+    setEngine('🔄 正在下载识别引擎（首次约 30MB，仅此一次，建议 Wi-Fi / 良好网络）…', 0.02);
+    const w=await Tesseract.createWorker('eng',1,{
+      workerPath: OCR_BASE+'/worker.min.js',
+      corePath:   OCR_BASE+'/tesseract-core.wasm.js',
+      langPath:   OCR_BASE+'/',
+      logger: m=>{ if(m && typeof m.progress==='number') setEngine('🔄 正在下载识别引擎… '+Math.round(m.progress*100)+'%', m.progress); }
+    });
+    await w.setParameters({ tessedit_char_whitelist:'0123456789', preserve_interword_spaces:'0' });
+    setEngine('✅ 识别引擎已就绪，可直接拍照 / 选图。', 1);
+    return w;
+  })();
+  _workerPromise.catch(e=>{ setEngine('❌ 引擎加载失败：'+((e&&e.message)||e)+'（请检查网络后刷新重试）', null, true); });
+  return _workerPromise;
 }
 function cropCanvas(c){
   const p=Math.round(Math.max(c.bw,c.bh)*0.28);
@@ -518,8 +546,10 @@ $('expBtn').onclick=()=>{
 $('copyBtn').onclick=async()=>{
   if(!$('outText').value) $('expBtn').onclick();
   try{ await navigator.clipboard.writeText($('outText').value); setStatus('已复制'); }
-  catch(e){ setStatus('复制失败，请手动选中文本'); }
+    catch(e){ setStatus('复制失败，请手动选中文本'); }
 };
+// 页面加载即开始预载识别引擎（先于任何点击），并在顶部横幅提示进度
+ensureWorker().catch(()=>{});
 </script>
 </body>
 </html>
